@@ -333,7 +333,11 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // Anonymous / no identity — reset to default starting page
       resetScene();
       setMessages([]);
-      setSuggestedActions([]);
+      setSuggestedActions([
+        'Show me moisturizers',
+        'I need travel products',
+        'What do you recommend?',
+      ]);
       setIsLoadingWelcome(false);
       return;
     }
@@ -441,6 +445,13 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     try {
       const response = await getAgentResponse(content);
+
+      // If the agent returns a WELCOME_SCENE during a normal conversation
+      // (user typed a message), strip it — welcome overlays should only
+      // appear in the initial welcome flow, not mid-conversation.
+      if (response.uiDirective?.action === 'WELCOME_SCENE') {
+        response.uiDirective = undefined;
+      }
 
       const agentMessage: AgentMessage = {
         id: uuidv4(),
