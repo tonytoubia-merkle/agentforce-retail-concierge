@@ -9,31 +9,80 @@ export interface PreseededAsset {
 
 /**
  * Pre-seeded background images shipped in the repo for instant load.
- * Each setting has a 'default' variant; some have mood variants for edit-mode demos.
- *
- * Place images in public/assets/backgrounds/ — they're served as static files by Vite.
+ * Each setting has 3 variants for variety. Images live in public/assets/backgrounds/.
  */
 export const PRESEEDED_BACKGROUNDS: PreseededAsset[] = [
-  { setting: 'neutral', variant: 'default', path: '/backgrounds/default.png', tags: ['scene-neutral'] },
-  { setting: 'bathroom', variant: 'default', path: '/assets/backgrounds/bathroom-default.jpg', tags: ['scene-bathroom'] },
-  { setting: 'bathroom', variant: 'evening', path: '/assets/backgrounds/bathroom-evening.jpg', tags: ['scene-bathroom-evening'] },
-  { setting: 'travel', variant: 'default', path: '/assets/backgrounds/travel-default.jpg', tags: ['scene-travel'] },
-  { setting: 'outdoor', variant: 'default', path: '/assets/backgrounds/outdoor-default.jpg', tags: ['scene-outdoor'] },
-  { setting: 'lifestyle', variant: 'default', path: '/assets/backgrounds/lifestyle-default.jpg', tags: ['scene-lifestyle'] },
-  { setting: 'bedroom', variant: 'default', path: '/assets/backgrounds/bedroom-default.jpg', tags: ['scene-bedroom'] },
-  { setting: 'vanity', variant: 'default', path: '/assets/backgrounds/vanity-default.jpg', tags: ['scene-vanity'] },
-  { setting: 'gym', variant: 'default', path: '/assets/backgrounds/gym-default.jpg', tags: ['scene-gym'] },
-  { setting: 'office', variant: 'default', path: '/assets/backgrounds/office-default.jpg', tags: ['scene-office'] },
+  // Neutral
+  { setting: 'neutral', variant: '1', path: '/assets/backgrounds/neutral-1.jpg', tags: ['scene-neutral'] },
+  { setting: 'neutral', variant: '2', path: '/assets/backgrounds/neutral-2.jpg', tags: ['scene-neutral'] },
+  { setting: 'neutral', variant: '3', path: '/assets/backgrounds/neutral-3.jpg', tags: ['scene-neutral'] },
+
+  // Bathroom
+  { setting: 'bathroom', variant: '1', path: '/assets/backgrounds/bathroom-1.jpg', tags: ['scene-bathroom'] },
+  { setting: 'bathroom', variant: '2', path: '/assets/backgrounds/bathroom-2.jpg', tags: ['scene-bathroom'] },
+  { setting: 'bathroom', variant: '3', path: '/assets/backgrounds/bathroom-3.jpg', tags: ['scene-bathroom'] },
+
+  // Travel
+  { setting: 'travel', variant: '1', path: '/assets/backgrounds/travel-1.jpg', tags: ['scene-travel'] },
+  { setting: 'travel', variant: '2', path: '/assets/backgrounds/travel-2.jpg', tags: ['scene-travel'] },
+  { setting: 'travel', variant: '3', path: '/assets/backgrounds/travel-3.jpg', tags: ['scene-travel'] },
+
+  // Outdoor
+  { setting: 'outdoor', variant: '1', path: '/assets/backgrounds/outdoor-1.jpg', tags: ['scene-outdoor'] },
+  { setting: 'outdoor', variant: '2', path: '/assets/backgrounds/outdoor-2.jpg', tags: ['scene-outdoor'] },
+  { setting: 'outdoor', variant: '3', path: '/assets/backgrounds/outdoor-3.jpg', tags: ['scene-outdoor'] },
+
+  // Lifestyle
+  { setting: 'lifestyle', variant: '2', path: '/assets/backgrounds/lifestyle-2.jpg', tags: ['scene-lifestyle'] },
+  { setting: 'lifestyle', variant: '3', path: '/assets/backgrounds/lifestyle-3.jpg', tags: ['scene-lifestyle'] },
+
+  // Bedroom
+  { setting: 'bedroom', variant: '1', path: '/assets/backgrounds/bedroom-1.jpg', tags: ['scene-bedroom'] },
+  { setting: 'bedroom', variant: '2', path: '/assets/backgrounds/bedroom-2.jpg', tags: ['scene-bedroom'] },
+  { setting: 'bedroom', variant: '3', path: '/assets/backgrounds/bedroom-3.jpg', tags: ['scene-bedroom'] },
+
+  // Vanity
+  { setting: 'vanity', variant: '1', path: '/assets/backgrounds/vanity-1.jpg', tags: ['scene-vanity'] },
+  { setting: 'vanity', variant: '2', path: '/assets/backgrounds/vanity-2.jpg', tags: ['scene-vanity'] },
+  { setting: 'vanity', variant: '3', path: '/assets/backgrounds/vanity-3.jpg', tags: ['scene-vanity'] },
+
+  // Gym
+  { setting: 'gym', variant: '1', path: '/assets/backgrounds/gym-1.jpg', tags: ['scene-gym'] },
+  { setting: 'gym', variant: '3', path: '/assets/backgrounds/gym-3.jpg', tags: ['scene-gym'] },
+
+  // Office
+  { setting: 'office', variant: '3', path: '/assets/backgrounds/office-3.jpg', tags: ['scene-office'] },
 ];
 
+/** Track last used variant per setting to avoid repeats. */
+const lastUsed: Record<string, string> = {};
+
 /**
- * Find a pre-seeded background for a setting.
- * If variant is specified, looks for that exact variant; otherwise returns 'default'.
+ * Pick a random pre-seeded background for a setting, avoiding the last-used variant.
+ */
+export function pickRandom(setting: SceneSetting): PreseededAsset | null {
+  const candidates = PRESEEDED_BACKGROUNDS.filter((a) => a.setting === setting);
+  if (candidates.length === 0) return null;
+
+  // Filter out last-used variant if we have multiple options
+  const last = lastUsed[setting];
+  const pool = candidates.length > 1
+    ? candidates.filter((a) => a.variant !== last)
+    : candidates;
+
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  lastUsed[setting] = pick.variant;
+  return pick;
+}
+
+/**
+ * Find a specific pre-seeded background by setting and variant.
+ * Without a variant, picks randomly with rotation.
  */
 export function findPreseeded(setting: SceneSetting, variant?: string): PreseededAsset | null {
-  const targetVariant = variant || 'default';
+  if (!variant) return pickRandom(setting);
   return PRESEEDED_BACKGROUNDS.find(
-    (a) => a.setting === setting && a.variant === targetVariant
+    (a) => a.setting === setting && a.variant === variant
   ) || null;
 }
 
@@ -42,7 +91,6 @@ export async function preseededExists(asset: PreseededAsset): Promise<boolean> {
   try {
     const resp = await fetch(asset.path, { method: 'HEAD' });
     if (!resp.ok) return false;
-    // Vite dev server returns 200 with text/html for missing files — verify content-type
     const ct = resp.headers.get('content-type') || '';
     return ct.startsWith('image/');
   } catch {

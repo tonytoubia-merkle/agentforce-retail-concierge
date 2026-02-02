@@ -28,6 +28,49 @@ function getProvider(): ImageProvider {
   return (import.meta.env.VITE_IMAGE_PROVIDER as ImageProvider) || 'none';
 }
 
+// Known scene settings — prompts matching these are "standard" and don't need generation
+const KNOWN_SETTINGS = new Set<string>([
+  'neutral', 'bathroom', 'travel', 'outdoor', 'lifestyle',
+  'bedroom', 'vanity', 'gym', 'office',
+]);
+
+// Patterns that indicate a truly novel/specific scene worth generating
+const NOVEL_PATTERNS = [
+  // Specific locations
+  /\b(nyc|new york|paris|tokyo|london|rome|dubai|miami|la|los angeles|san francisco|chicago|barcelona|berlin|amsterdam|sydney|seoul|mumbai|shanghai|hong kong)\b/i,
+  // Countries/regions
+  /\b(japan|france|italy|spain|brazil|india|china|thailand|mexico|greece|morocco|iceland|norway|scotland|ireland|hawaii|caribbean|mediterranean|bali|maldives)\b/i,
+  // Weather/nature specifics
+  /\b(rain|rainy|snow|snowy|storm|thunder|fog|foggy|misty|hurricane|blizzard)\b/i,
+  // Unusual/specific outdoor environments
+  /\b(desert|jungle|forest|mountain|volcano|cave|underwater|rooftop|alley|street|market|bazaar|temple|castle|ruins|bridge|pier|dock|harbor|boardwalk)\b/i,
+  // Specific time/season references
+  /\b(cherry blossom|autumn leaves|fall foliage|winter wonderland|northern lights|aurora|starry|moonlit|neon|cyberpunk)\b/i,
+  // Transportation/movement
+  /\b(airplane|train|subway|yacht|sailboat|cruise|helicopter|cable car|gondola)\b/i,
+  // Cultural/event specifics
+  /\b(festival|carnival|concert|gallery|museum|library|bookstore|cafe|restaurant|bar|club|lounge)\b/i,
+];
+
+/**
+ * Determine if a background prompt describes a novel scene that warrants
+ * dynamic image generation, vs a standard beauty scene that can use static assets.
+ */
+function isNovelPrompt(prompt: string, setting: SceneSetting): boolean {
+  // If the setting itself is not one of our known preseeded settings, it's novel
+  if (!KNOWN_SETTINGS.has(setting)) return true;
+
+  // Check for location/weather/specific-scene patterns
+  for (const pattern of NOVEL_PATTERNS) {
+    if (pattern.test(prompt)) {
+      console.log('[bg] Novel prompt detected:', prompt.substring(0, 80));
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export interface BackgroundOptions {
   cmsAssetId?: string;
   cmsTag?: string;
@@ -55,8 +98,10 @@ export function useGenerativeBackground() {
         ? `${setting}-prompt-${prompt.substring(0, 60)}`
         : options?.cmsAssetId || options?.cmsTag || setting;
 
-      // Whether the agent provided a rich scene description (prompt-first mode)
+      // Whether the agent provided a rich scene description
       const hasPrompt = !!options?.backgroundPrompt;
+      // Whether the prompt describes something truly novel (not a standard beauty scene)
+      const isNovel = hasPrompt && isNovelPrompt(options!.backgroundPrompt!, setting);
 
       if (cacheRef.current[cacheKey]) {
         return cacheRef.current[cacheKey];
@@ -90,7 +135,6 @@ export function useGenerativeBackground() {
             token
           );
           if (match?.imageUrl) {
-            // Only use registry URLs that are real (http/blob) — skip placeholder local paths
             const isReal = match.imageUrl.startsWith('http') || match.imageUrl.startsWith('blob:');
             if (isReal) {
               console.log('[bg] Using scene registry match for', setting, '→', match.id);
@@ -106,22 +150,23 @@ export function useGenerativeBackground() {
       }
 
       // 2. Try pre-seeded local background (instant, no network)
-      //    Skip when agent provided a backgroundPrompt — those should always generate fresh
-      if (!options?.editMode && !hasPrompt) {
+      //    Use static images for standard scenes — even when agent provides a backgroundPrompt,
+      //    unless the prompt is truly novel (specific location, weather, etc.)
+      if (!options?.editMode && !isNovel) {
         const { findPreseeded, preseededExists } = await import('@/data/preseededBackgrounds');
         const preseeded = findPreseeded(setting);
         if (preseeded) {
           const exists = await preseededExists(preseeded);
           if (exists) {
-            console.log('[bg] Using pre-seeded image for', setting);
+            console.log('[bg] Using pre-seeded image for', setting, '→', preseeded.path);
             cacheRef.current[cacheKey] = preseeded.path;
             return preseeded.path;
           }
         }
       }
 
-      // If generative backgrounds are disabled AND agent didn't provide a prompt, fallback
-      if (!enabled && !hasPrompt) {
+      // If generative backgrounds are disabled AND prompt isn't novel, fallback
+      if (!enabled && !isNovel) {
         return getFallbackGradient(setting);
       }
 
@@ -129,11 +174,11 @@ export function useGenerativeBackground() {
       let cmsImageUrl: string | null = null;
 
       // 3. Try Salesforce CMS + ContentVersion fallback
-      //    Skip when agent provided a backgroundPrompt — we want fresh generation
-      if (hasPrompt) {
-        console.log('[bg] Prompt-first mode — skipping CMS, will generate for:', setting);
+      //    Skip when prompt is novel — we want fresh generation for those
+      if (isNovel) {
+        console.log('[bg] Novel prompt — skipping CMS, will generate for:', setting);
       }
-      if (!hasPrompt) try {
+      if (!isNovel) try {
         const { fetchCmsBackgroundEnhanced } = await import('@/services/cms/backgroundAssets');
         const { getAgentforceClient } = await import('@/services/agentforce/client');
         const token = await getAgentforceClient().getAccessToken();
@@ -154,12 +199,12 @@ export function useGenerativeBackground() {
         console.warn('CMS background lookup failed:', err);
       }
 
-      // 3. If provider is cms-only or none, skip generation
+      // 4. If provider is cms-only or none, skip generation
       if (provider === 'cms-only' || provider === 'none') {
         return cmsImageUrl || getFallbackGradient(setting);
       }
 
-      // 4. Try image generation/editing
+      // 5. Try image generation/editing — only for novel prompts or edit mode
       try {
         let imageUrl: string;
 
@@ -182,13 +227,10 @@ export function useGenerativeBackground() {
           const client = getImagenClient();
 
           if (options?.editMode && seedImage && generationPrompt) {
-            // Edit mode: use seed image + prompt
             imageUrl = await client.editSceneBackground(seedImage, generationPrompt);
           } else if (generationPrompt) {
-            // Prompt-first: agent provided a rich scene description
             imageUrl = await client.generateFromPrompt(generationPrompt);
           } else {
-            // Fallback: generate from setting + products
             imageUrl = await client.generateSceneBackground(setting, products);
           }
         } else if (provider === 'firefly') {
@@ -210,7 +252,6 @@ export function useGenerativeBackground() {
             const { getAgentforceClient } = await import('@/services/agentforce/client');
             const tok = await getAgentforceClient().getAccessToken();
 
-            // CMS write-back
             if (import.meta.env.VITE_CMS_CHANNEL_ID) {
               const { uploadImageToCmsAsync } = await import('@/services/cms/uploadAsset');
               const cmsTags = [`scene-${setting}`];
@@ -219,7 +260,6 @@ export function useGenerativeBackground() {
               uploadImageToCmsAsync(imageUrl, cmsTitle, cmsTags, tok);
             }
 
-            // Scene_Asset__c registry write-back
             const { registerGeneratedScene } = await import('@/services/sceneRegistry/client');
             await registerGeneratedScene({
               setting,
