@@ -27,6 +27,20 @@ export function setMockCustomerContext(ctx: CustomerSessionContext | null): void
   state.hasGreeted = false;
 }
 
+export interface MockAgentSnapshot {
+  state: ConversationState;
+  customerCtx: CustomerSessionContext | null;
+}
+
+export function getMockAgentSnapshot(): MockAgentSnapshot {
+  return { state: { ...state }, customerCtx };
+}
+
+export function restoreMockAgentSnapshot(snapshot: MockAgentSnapshot): void {
+  Object.assign(state, snapshot.state);
+  customerCtx = snapshot.customerCtx;
+}
+
 const findProduct = (id: string) => MOCK_PRODUCTS.find((p) => p.id === id);
 
 // ─── Subtle enrichment probes ────────────────────────────────────

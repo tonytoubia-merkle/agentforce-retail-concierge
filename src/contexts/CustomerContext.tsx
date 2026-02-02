@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import type { CustomerProfile } from '@/types/customer';
 import { resolveMerkuryIdentity } from '@/services/merkury/mockTag';
 import { getPersonaById } from '@/mocks/customerPersonas';
@@ -13,6 +13,12 @@ interface CustomerContextValue {
   isResolving: boolean;
   error: Error | null;
   selectPersona: (personaId: string) => Promise<void>;
+  refreshProfile: () => Promise<void>;
+  resetPersonaSession: (personaId: string) => void;
+  /** @internal Used by ConversationContext to detect refresh vs switch. */
+  _isRefreshRef: React.MutableRefObject<boolean>;
+  /** @internal Register callback for session reset notifications. */
+  _onSessionReset: (cb: (personaId: string) => void) => () => void;
 }
 
 const CustomerContext = createContext<CustomerContextValue | null>(null);
@@ -23,6 +29,16 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isLoading, setIsLoading] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  /** When true, the next customer update is a profile refresh — don't reset conversation. */
+  const isRefreshRef = useRef(false);
+  /** Callbacks registered by ConversationContext to clear a persona's cached session. */
+  const sessionResetCallbacksRef = useRef<Set<(personaId: string) => void>>(new Set());
+
+  /** Register a callback to be notified when a persona session should be reset. */
+  const onSessionReset = useCallback((cb: (personaId: string) => void) => {
+    sessionResetCallbacksRef.current.add(cb);
+    return () => { sessionResetCallbacksRef.current.delete(cb); };
+  }, []);
 
   const selectPersona = useCallback(async (personaId: string) => {
     setSelectedPersonaId(personaId);
@@ -114,8 +130,29 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  /** Re-fetch the current persona's profile without resetting the conversation. */
+  const refreshProfile = useCallback(async () => {
+    if (!selectedPersonaId) return;
+    isRefreshRef.current = true;
+    await selectPersona(selectedPersonaId);
+    isRefreshRef.current = false;
+  }, [selectedPersonaId, selectPersona]);
+
+  /** Clear a persona's cached session so their next switch re-fires welcome. */
+  const resetPersonaSession = useCallback((personaId: string) => {
+    for (const cb of sessionResetCallbacksRef.current) cb(personaId);
+    // If resetting the active persona, re-select to trigger fresh welcome
+    if (personaId === selectedPersonaId) {
+      selectPersona(personaId);
+    }
+  }, [selectedPersonaId, selectPersona]);
+
   return (
-    <CustomerContext.Provider value={{ customer, selectedPersonaId, isLoading, isResolving, error, selectPersona }}>
+    <CustomerContext.Provider value={{
+      customer, selectedPersonaId, isLoading, isResolving, error,
+      selectPersona, refreshProfile, resetPersonaSession,
+      _isRefreshRef: isRefreshRef, _onSessionReset: onSessionReset,
+    }}>
       {children}
     </CustomerContext.Provider>
   );

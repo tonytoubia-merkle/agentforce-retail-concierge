@@ -249,6 +249,17 @@ export class AgentforceClient {
     };
   }
 
+  /** Snapshot current session state for later restoration. */
+  getSessionSnapshot(): { sessionId: string | null; sequenceId: number } {
+    return { sessionId: this.sessionId, sequenceId: this.sequenceId };
+  }
+
+  /** Restore a previously snapshotted session (no API call — session persists server-side). */
+  restoreSession(sessionId: string, sequenceId: number): void {
+    this.sessionId = sessionId;
+    this.sequenceId = sequenceId;
+  }
+
   async endSession(): Promise<void> {
     if (this.sessionId) {
       const token = await this.getAccessToken();

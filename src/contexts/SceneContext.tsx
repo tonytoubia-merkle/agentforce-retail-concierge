@@ -40,6 +40,8 @@ function inferSettingFromProducts(products: Product[]): SceneSetting {
   return 'bathroom'; // default for beauty products
 }
 
+export type SceneSnapshot = SceneState;
+
 interface SceneContextValue {
   scene: SceneState;
   transitionTo: (layout: SceneLayout, products?: Product[]) => void;
@@ -50,6 +52,8 @@ interface SceneContextValue {
   closeCheckout: () => void;
   dismissWelcome: () => void;
   resetScene: () => void;
+  getSceneSnapshot: () => SceneSnapshot;
+  restoreSceneSnapshot: (snapshot: SceneSnapshot) => void;
 }
 
 const initialScene: SceneState = {
@@ -75,7 +79,8 @@ type SceneAction =
   | { type: 'CLOSE_CHECKOUT' }
   | { type: 'SHOW_WELCOME'; welcomeData: WelcomeData }
   | { type: 'DISMISS_WELCOME' }
-  | { type: 'RESET' };
+  | { type: 'RESET' }
+  | { type: 'RESTORE'; snapshot: SceneState };
 
 function sceneReducer(state: SceneState, action: SceneAction): SceneState {
   switch (action.type) {
@@ -110,6 +115,8 @@ function sceneReducer(state: SceneState, action: SceneAction): SceneState {
       return { ...state, welcomeActive: false, welcomeData: undefined };
     case 'RESET':
       return initialScene;
+    case 'RESTORE':
+      return action.snapshot;
     default:
       return state;
   }
@@ -316,6 +323,14 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     dispatch({ type: 'RESET' });
   }, []);
 
+  const getSceneSnapshot = useCallback((): SceneSnapshot => {
+    return { ...sceneRef.current };
+  }, []);
+
+  const restoreSceneSnapshot = useCallback((snapshot: SceneSnapshot) => {
+    dispatch({ type: 'RESTORE', snapshot });
+  }, []);
+
   return (
     <SceneContext.Provider
       value={{
@@ -328,6 +343,8 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         closeCheckout,
         dismissWelcome,
         resetScene,
+        getSceneSnapshot,
+        restoreSceneSnapshot,
       }}
     >
       {children}

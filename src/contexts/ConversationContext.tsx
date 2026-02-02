@@ -5,14 +5,27 @@ import type { CustomerSessionContext, CustomerProfile, AgentCapturedProfile, Cap
 import { PROVENANCE_USAGE } from '@/types/customer';
 import { useScene } from './SceneContext';
 import { useCustomer } from './CustomerContext';
-import { generateMockResponse, setMockCustomerContext } from '@/services/mock/mockAgent';
+import { generateMockResponse, setMockCustomerContext, getMockAgentSnapshot, restoreMockAgentSnapshot } from '@/services/mock/mockAgent';
+import type { MockAgentSnapshot } from '@/services/mock/mockAgent';
 import type { AgentResponse } from '@/types/agent';
 import { getAgentforceClient } from '@/services/agentforce/client';
 import { getDataCloudWriteService } from '@/services/datacloud';
+import type { SceneSnapshot } from './SceneContext';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
 let sessionInitialized = false;
+
+/** Snapshot of a persona's full session state for instant restore. */
+interface SessionSnapshot {
+  messages: AgentMessage[];
+  suggestedActions: string[];
+  sceneSnapshot: SceneSnapshot;
+  agentSessionId: string | null;
+  agentSequenceId: number;
+  mockSnapshot: MockAgentSnapshot | null;
+  sessionInitialized: boolean;
+}
 
 function buildSessionContext(customer: CustomerProfile): CustomerSessionContext {
   // Flatten recent orders into readable purchase summaries
@@ -307,15 +320,29 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     'I need travel products',
     'What do you recommend?',
   ]);
-  const { processUIDirective, resetScene } = useScene();
-  const { customer } = useCustomer();
+  const { processUIDirective, resetScene, getSceneSnapshot, restoreSceneSnapshot } = useScene();
+  const { customer, selectedPersonaId, _isRefreshRef, _onSessionReset } = useCustomer();
   const messagesRef = useRef<AgentMessage[]>([]);
+  const suggestedActionsRef = useRef<string[]>([]);
   const prevCustomerIdRef = useRef<string | null>(null);
+  const prevPersonaIdRef = useRef<string | null>(null);
+  const sessionCacheRef = useRef<Map<string, SessionSnapshot>>(new Map());
 
-  // Keep messagesRef in sync
+  // Keep refs in sync
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+  useEffect(() => {
+    suggestedActionsRef.current = suggestedActions;
+  }, [suggestedActions]);
+
+  // Register for session reset notifications from CustomerContext
+  useEffect(() => {
+    return _onSessionReset((personaId: string) => {
+      sessionCacheRef.current.delete(personaId);
+      console.log('[session] Cleared cached session for', personaId);
+    });
+  }, [_onSessionReset]);
 
   // Write conversation summary when switching away from a customer
   useEffect(() => {
@@ -327,8 +354,39 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [customer?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Helper: save current persona's state into the session cache
+  const saveCurrentSession = useCallback((personaId: string) => {
+    const client = getAgentforceClient();
+    const agentSnap = client.getSessionSnapshot();
+    const snapshot: SessionSnapshot = {
+      messages: [...messagesRef.current],
+      suggestedActions: [...suggestedActionsRef.current],
+      sceneSnapshot: getSceneSnapshot(),
+      agentSessionId: agentSnap.sessionId,
+      agentSequenceId: agentSnap.sequenceId,
+      mockSnapshot: useMockData ? getMockAgentSnapshot() : null,
+      sessionInitialized,
+    };
+    sessionCacheRef.current.set(personaId, snapshot);
+    console.log('[session] Saved session for', personaId, `(${snapshot.messages.length} messages)`);
+  }, [getSceneSnapshot]);
+
   // When persona changes, reset conversation and trigger welcome
   useEffect(() => {
+    // If this is a profile refresh (not a persona switch), skip session reset
+    if (_isRefreshRef.current) {
+      console.log('[session] Profile refresh — keeping conversation intact');
+      return;
+    }
+
+    const prevPersonaId = prevPersonaIdRef.current;
+    prevPersonaIdRef.current = selectedPersonaId;
+
+    // Save outgoing persona's session (if any)
+    if (prevPersonaId && prevPersonaId !== selectedPersonaId && messagesRef.current.length > 0) {
+      saveCurrentSession(prevPersonaId);
+    }
+
     if (!customer) {
       // Anonymous / no identity — reset to default starting page
       resetScene();
@@ -342,6 +400,28 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
 
+    // Check if we have a cached session for this persona
+    const cached = selectedPersonaId ? sessionCacheRef.current.get(selectedPersonaId) : null;
+
+    if (cached) {
+      // ── Restore cached session instantly ──
+      console.log('[session] Restoring cached session for', selectedPersonaId, `(${cached.messages.length} messages)`);
+      setMessages(cached.messages);
+      setSuggestedActions(cached.suggestedActions);
+      restoreSceneSnapshot(cached.sceneSnapshot);
+      setIsLoadingWelcome(false);
+
+      // Restore agent client state
+      if (useMockData && cached.mockSnapshot) {
+        restoreMockAgentSnapshot(cached.mockSnapshot);
+      } else if (cached.agentSessionId) {
+        getAgentforceClient().restoreSession(cached.agentSessionId, cached.agentSequenceId);
+      }
+      sessionInitialized = cached.sessionInitialized;
+      return;
+    }
+
+    // ── No cache — fresh session ──
     const sessionCtx = buildSessionContext(customer);
 
     if (useMockData) {
@@ -430,7 +510,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [customer]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [customer, selectedPersonaId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendMessage = useCallback(async (content: string) => {
     const userMessage: AgentMessage = {
