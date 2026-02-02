@@ -447,10 +447,13 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const response = await getAgentResponse(content);
 
       // If the agent returns a WELCOME_SCENE during a normal conversation
-      // (user typed a message), strip it — welcome overlays should only
-      // appear in the initial welcome flow, not mid-conversation.
+      // (user typed a message), downgrade it to CHANGE_SCENE so products
+      // and background still render — just without the welcome overlay.
       if (response.uiDirective?.action === 'WELCOME_SCENE') {
-        response.uiDirective = undefined;
+        response.uiDirective = {
+          ...response.uiDirective,
+          action: (response.uiDirective.payload?.products?.length ? 'SHOW_PRODUCTS' : 'CHANGE_SCENE') as UIAction,
+        };
       }
 
       const agentMessage: AgentMessage = {
