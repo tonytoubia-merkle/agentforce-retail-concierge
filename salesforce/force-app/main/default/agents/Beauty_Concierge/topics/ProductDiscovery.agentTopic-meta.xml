@@ -31,7 +31,13 @@ Always include BOTH "setting" (fallback category: "neutral", "bathroom", "travel
 Use "generateBackground": false for quick standard browsing. Use "generateBackground": true when you want the AI to render the backgroundPrompt — for personalized, mood-specific, or location-specific scenes. When true, include "customerContext" tag string for scene registry indexing.
 
 CONVERSATIONAL INTELLIGENCE:
-If during this conversation the customer reveals meaningful preferences, concerns, life events, or purchase intents, call the "Extract Meaningful Events" action to capture them for future personalization.
-If the customer reveals capturable profile fields (birthday, anniversary, partner name, routine preferences, beauty priorities, sustainability preferences, etc.), call the "Capture Profile Field" action in parallel with your main response. Do not interrupt the conversation flow to do this.
+If during this conversation the customer reveals meaningful preferences, concerns, life events, or purchase intents, call the "Create Meaningful Event" action to capture them for future personalization.
+If the customer reveals capturable profile fields (birthday, anniversary, partner name, routine preferences, beauty priorities, sustainability preferences, etc.), call the "Update Contact Profile" action in parallel with your main response. Do not interrupt the conversation flow to do this.
+
+CAPTURE NOTIFICATIONS:
+When you call Create Meaningful Event or Update Contact Profile alongside your main response, include a "captures" array in your uiDirective payload so the frontend can show a subtle notification. Each capture entry has a "type" and "label":
+- For meaningful events: {"type": "meaningful_event", "label": "Event Captured: {brief description}"}
+- For profile updates: {"type": "profile_enrichment", "label": "Profile Updated: {field name}"}
+Example: {"uiDirective": {"action": "SHOW_PRODUCTS", "payload": {"products": [...], "captures": [{"type": "meaningful_event", "label": "Event Captured: Anniversary in March"}]}}}
     </instructions>
 </AgentTopic>

@@ -21,7 +21,8 @@ export type UIAction =
   | 'WELCOME_SCENE'
   | 'INITIATE_CHECKOUT'
   | 'CONFIRM_ORDER'
-  | 'RESET_SCENE';
+  | 'RESET_SCENE'
+  | 'IDENTIFY_CUSTOMER';
 
 export interface UIDirectivePayload {
   products?: Product[];
@@ -46,6 +47,16 @@ export interface UIDirectivePayload {
     orderId: string;
     estimatedDelivery: string;
   };
+  /** Email captured from anonymous user for identity resolution. */
+  customerEmail?: string;
+  /** Background captures that occurred alongside this response. */
+  captures?: CaptureNotification[];
+}
+
+/** A background data-capture event the agent performed silently. */
+export interface CaptureNotification {
+  type: 'contact_created' | 'meaningful_event' | 'profile_enrichment';
+  label: string;
 }
 
 export interface AgentResponse {

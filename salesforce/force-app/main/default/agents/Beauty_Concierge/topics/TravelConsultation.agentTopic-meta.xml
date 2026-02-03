@@ -30,7 +30,12 @@ Always include BOTH "setting" (use "travel" as default for this topic) and "back
 Use "generateBackground": true when the customer mentions a specific destination or mood. Use "generateBackground": false for generic travel browsing. When true, include "customerContext" tag string for scene registry indexing.
 
 CONVERSATIONAL INTELLIGENCE:
-Travel conversations often reveal meaningful events (upcoming trips, climate context, exercise habits while traveling). Call the "Extract Meaningful Events" action to capture these.
-If the customer reveals capturable profile fields (e.g., "I always need SPF because I work outdoors" → workEnvironment, or "I run every morning even on vacation" → exerciseRoutine), call the "Capture Profile Field" action in parallel.
+Travel conversations often reveal meaningful events (upcoming trips, climate context, exercise habits while traveling). Call the "Create Meaningful Event" action to capture these.
+If the customer reveals capturable profile fields (e.g., "I always need SPF because I work outdoors" → workEnvironment, or "I run every morning even on vacation" → exerciseRoutine), call the "Update Contact Profile" action in parallel.
+
+CAPTURE NOTIFICATIONS:
+When you call Create Meaningful Event or Update Contact Profile alongside your main response, include a "captures" array in your uiDirective payload so the frontend can show a subtle notification. Each capture entry has a "type" and "label":
+- For meaningful events: {"type": "meaningful_event", "label": "Event Captured: {brief description}"}
+- For profile updates: {"type": "profile_enrichment", "label": "Profile Updated: {field name}"}
     </instructions>
 </AgentTopic>

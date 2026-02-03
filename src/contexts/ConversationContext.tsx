@@ -11,6 +11,7 @@ import type { AgentResponse } from '@/types/agent';
 import { getAgentforceClient } from '@/services/agentforce/client';
 import { getDataCloudWriteService } from '@/services/datacloud';
 import type { SceneSnapshot } from './SceneContext';
+import { useActivityToast } from '@/components/ActivityToast';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
@@ -321,7 +322,8 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     'What do you recommend?',
   ]);
   const { processUIDirective, resetScene, getSceneSnapshot, restoreSceneSnapshot } = useScene();
-  const { customer, selectedPersonaId, _isRefreshRef, _onSessionReset } = useCustomer();
+  const { customer, selectedPersonaId, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
+  const { showCapture } = useActivityToast();
   const messagesRef = useRef<AgentMessage[]>([]);
   const suggestedActionsRef = useRef<string[]>([]);
   const prevCustomerIdRef = useRef<string | null>(null);
@@ -550,7 +552,25 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setIsAgentTyping(false);
 
       if (response.uiDirective) {
-        await processUIDirective(response.uiDirective);
+        // Handle identity capture: upgrade anonymous → known without resetting conversation
+        if (response.uiDirective.action === 'IDENTIFY_CUSTOMER' && response.uiDirective.payload?.customerEmail) {
+          const email = response.uiDirective.payload.customerEmail;
+          console.log('[conversation] IDENTIFY_CUSTOMER directive received for:', email);
+          const success = await identifyByEmail(email);
+          if (success) {
+            showCapture({ type: 'contact_created', label: 'New Contact Created' });
+          }
+        } else {
+          await processUIDirective(response.uiDirective);
+        }
+
+        // Show toast notifications for any background captures
+        const captures = response.uiDirective.payload?.captures;
+        if (captures?.length) {
+          for (const c of captures) {
+            showCapture(c);
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to get agent response:', error);
@@ -563,7 +583,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setMessages((prev) => [...prev, errorMessage]);
       setIsAgentTyping(false);
     }
-  }, [processUIDirective]);
+  }, [processUIDirective, identifyByEmail, showCapture]);
 
   const clearConversation = useCallback(() => {
     setMessages([]);

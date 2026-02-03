@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import type { CustomerProfile } from '@/types/customer';
 import { resolveMerkuryIdentity } from '@/services/merkury/mockTag';
-import { getPersonaById } from '@/mocks/customerPersonas';
+import { getPersonaById, PERSONAS } from '@/mocks/customerPersonas';
 import { getDataCloudService } from '@/services/datacloud';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
@@ -13,6 +13,7 @@ interface CustomerContextValue {
   isResolving: boolean;
   error: Error | null;
   selectPersona: (personaId: string) => Promise<void>;
+  identifyByEmail: (email: string) => Promise<boolean>;
   refreshProfile: () => Promise<void>;
   resetPersonaSession: (personaId: string) => void;
   /** @internal Used by ConversationContext to detect refresh vs switch. */
@@ -130,6 +131,94 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // Auto-select anonymous persona on mount so the app starts with a default experience
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      selectPersona('persona-anonymous');
+    }
+  }, [selectPersona]);
+
+  /** Identify an anonymous user by email — find existing profile or create a new one.
+   *  Uses isRefreshRef so the conversation is NOT reset. */
+  const identifyByEmail = useCallback(async (email: string): Promise<boolean> => {
+    setIsResolving(true);
+    setError(null);
+
+    try {
+      let profile: CustomerProfile | null = null;
+
+      if (useMockData) {
+        // Search mock personas by email
+        const match = PERSONAS.find(
+          (p) => p.profile.email.toLowerCase() === email.toLowerCase()
+        );
+        if (match) {
+          profile = match.profile;
+          console.log('[identity] Matched existing mock persona:', match.label);
+        } else {
+          // Create minimal new profile for unknown email
+          const firstName = email.split('@')[0].split('.')[0];
+          const name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+          profile = {
+            id: `customer-${Date.now()}`,
+            name,
+            email,
+            beautyProfile: { skinType: 'normal', concerns: [], allergies: [], preferredBrands: [] },
+            orders: [],
+            chatSummaries: [],
+            meaningfulEvents: [],
+            browseSessions: [],
+            loyalty: null,
+            purchaseHistory: [],
+            savedPaymentMethods: [],
+            shippingAddresses: [],
+            recentActivity: [],
+            merkuryIdentity: {
+              merkuryId: `MRK-${Date.now()}`,
+              identityTier: 'known',
+              confidence: 0.85,
+              resolvedAt: new Date().toISOString(),
+            },
+          };
+          console.log('[identity] Created new mock profile for:', email);
+        }
+      } else {
+        // Real mode: query Data Cloud by email
+        try {
+          const dataCloudService = getDataCloudService();
+          profile = await dataCloudService.getCustomerProfileByEmail(email);
+          profile.merkuryIdentity = {
+            merkuryId: profile.id,
+            identityTier: 'known',
+            confidence: 0.9,
+            resolvedAt: new Date().toISOString(),
+          };
+          console.log('[identity] Found existing profile in Data Cloud for:', email);
+        } catch {
+          console.warn('[identity] Email not found in Data Cloud:', email);
+          // The Agentforce agent should have already called CreateSalesContactRecord,
+          // so try again after a short delay to allow SF to process
+          return false;
+        }
+      }
+
+      // Mark as refresh so conversation is NOT reset
+      isRefreshRef.current = true;
+      setCustomer(profile);
+      // Reset refresh flag on next tick
+      setTimeout(() => { isRefreshRef.current = false; }, 0);
+      return true;
+    } catch (err) {
+      console.error('[identity] Email identification failed:', err);
+      setError(err instanceof Error ? err : new Error('Email identification failed'));
+      return false;
+    } finally {
+      setIsResolving(false);
+    }
+  }, []);
+
   /** Re-fetch the current persona's profile without resetting the conversation. */
   const refreshProfile = useCallback(async () => {
     if (!selectedPersonaId) return;
@@ -150,7 +239,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   return (
     <CustomerContext.Provider value={{
       customer, selectedPersonaId, isLoading, isResolving, error,
-      selectPersona, refreshProfile, resetPersonaSession,
+      selectPersona, identifyByEmail, refreshProfile, resetPersonaSession,
       _isRefreshRef: isRefreshRef, _onSessionReset: onSessionReset,
     }}>
       {children}
