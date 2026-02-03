@@ -419,7 +419,23 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.log('[session] Restoring cached session for', selectedPersonaId, `(${cached.messages.length} messages)`);
       setMessages(cached.messages);
       setSuggestedActions(cached.suggestedActions);
-      restoreSceneSnapshot(cached.sceneSnapshot);
+
+      // Check if the cached scene has an incomplete background (was still loading when saved)
+      const sceneBg = cached.sceneSnapshot.background;
+      const isIncompleteBackground =
+        (sceneBg.type === 'generative' && (!sceneBg.value || sceneBg.isLoading)) ||
+        (sceneBg.type === 'image' && !sceneBg.value);
+
+      if (isIncompleteBackground) {
+        // Restore scene but use fallback background instead of incomplete one
+        console.log('[session] Cached scene had incomplete background, using fallback');
+        restoreSceneSnapshot({
+          ...cached.sceneSnapshot,
+          background: { type: 'image', value: '/assets/backgrounds/default.png' },
+        });
+      } else {
+        restoreSceneSnapshot(cached.sceneSnapshot);
+      }
       setIsLoadingWelcome(false);
 
       // Restore agent client state
