@@ -321,7 +321,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     'I need travel products',
     'What do you recommend?',
   ]);
-  const { processUIDirective, resetScene, getSceneSnapshot, restoreSceneSnapshot } = useScene();
+  const { processUIDirective, resetScene, setBackground, getSceneSnapshot, restoreSceneSnapshot } = useScene();
   const { customer, selectedPersonaId, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
   const { showCapture } = useActivityToast();
   const messagesRef = useRef<AgentMessage[]>([]);
@@ -390,8 +390,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
 
     if (!customer) {
-      // Anonymous / no identity — reset to default starting page
+      // Anonymous / no identity — reset to default starting page with default background
       resetScene();
+      setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
       setMessages([]);
       setSuggestedActions([
         'Show me moisturizers',
