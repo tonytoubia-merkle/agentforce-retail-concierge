@@ -13,9 +13,40 @@
         <locationX>50</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Create_Event_Record</targetReference>
+            <targetReference>Check_Contact_Id</targetReference>
         </connector>
     </start>
+
+    <!-- Decision: Skip if no contactId (anonymous user) -->
+    <decisions>
+        <name>Check_Contact_Id</name>
+        <label>Check Contact Id</label>
+        <locationX>176</locationX>
+        <locationY>80</locationY>
+        <defaultConnector>
+            <targetReference>Set_Skipped</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Contact Id</defaultConnectorLabel>
+        <rules>
+            <name>Has_Contact_Id</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>contactId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue><booleanValue>false</booleanValue></rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>contactId</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue><stringValue></stringValue></rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Event_Record</targetReference>
+            </connector>
+            <label>Has Contact Id</label>
+        </rules>
+    </decisions>
+
     <status>Active</status>
 
     <!-- Input Variables -->
@@ -169,6 +200,24 @@
             <assignToReference>outputError</assignToReference>
             <operator>Assign</operator>
             <value><elementReference>$Flow.FaultMessage</elementReference></value>
+        </assignmentItems>
+    </assignments>
+
+    <!-- Skipped Assignment (anonymous user) -->
+    <assignments>
+        <name>Set_Skipped</name>
+        <label>Set Skipped</label>
+        <locationX>400</locationX>
+        <locationY>158</locationY>
+        <assignmentItems>
+            <assignToReference>outputSuccess</assignToReference>
+            <operator>Assign</operator>
+            <value><booleanValue>false</booleanValue></value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>outputError</assignToReference>
+            <operator>Assign</operator>
+            <value><stringValue>Skipped: No contactId provided (anonymous user)</stringValue></value>
         </assignmentItems>
     </assignments>
 </Flow>

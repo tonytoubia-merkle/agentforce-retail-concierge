@@ -219,6 +219,8 @@ export class AgentforceClient {
         displayMessage = parts.join(' ');
       } else if (uiDirective.action === 'INITIATE_CHECKOUT') {
         displayMessage = 'Let me start the checkout process.';
+      } else if (uiDirective.action === 'IDENTIFY_CUSTOMER') {
+        displayMessage = "Great, I've saved your profile! Now I can give you more personalized recommendations.";
       } else {
         displayMessage = "Here's what I found for you.";
       }

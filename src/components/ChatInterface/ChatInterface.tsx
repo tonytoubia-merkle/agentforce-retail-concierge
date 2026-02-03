@@ -5,6 +5,8 @@ import { ChatInput } from './ChatInput';
 import { ChatMessages } from './ChatMessages';
 import { TypingIndicator } from './TypingIndicator';
 import { SuggestedActions } from './SuggestedActions';
+import { RememberMeButton } from './RememberMeButton';
+import { useCustomer } from '@/contexts/CustomerContext';
 import type { AgentMessage } from '@/types/agent';
 import type { SceneLayout } from '@/types/scene';
 
@@ -28,6 +30,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   sceneLayout,
 }) => {
   const [inputValue, setInputValue] = useState('');
+  const { customer } = useCustomer();
+
+  // Show "Remember Me" button for users who are not fully identified
+  // (anonymous = no customer, appended = 3P data only, both should see it)
+  const showRememberMe = !customer || customer.merkuryIdentity?.identityTier !== 'known';
 
   const handleSubmit = () => {
     if (inputValue.trim()) {
@@ -84,6 +91,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             placeholder="Ask me anything..."
             isCentered
           />
+          {showRememberMe && (
+            <div className="flex justify-center mt-3">
+              <RememberMeButton onSubmit={onSendMessage} />
+            </div>
+          )}
         </div>
       </motion.div>
     );
@@ -122,6 +134,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           placeholder="Ask me anything..."
           isCentered={false}
         />
+        {showRememberMe && (
+          <div className="flex justify-center mt-2">
+            <RememberMeButton onSubmit={onSendMessage} />
+          </div>
+        )}
       </div>
     </motion.div>
   );
