@@ -172,12 +172,14 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           sceneCtx.setting = setting;
         }
 
-        // Skip regeneration if we already have (or are generating) an image for the same setting
+        // Skip regeneration if we already have (or are generating) an image for the same setting,
+        // OR if we have a valid image and agent didn't explicitly request a new background
         const cur = sceneRef.current;
-        const alreadyHasImage = cur.setting === setting && (
-          (cur.background.type === 'image' && cur.background.value) ||
-          (cur.background.type === 'generative' && cur.background.isLoading)
-        );
+        const hasValidImage = cur.background.type === 'image' && cur.background.value && !cur.background.value.includes('default');
+        const isGenerating = cur.background.type === 'generative' && cur.background.isLoading;
+        const agentRequestedGeneration = payload.sceneContext?.generateBackground === true;
+        const alreadyHasImage = (cur.setting === setting && (hasValidImage || isGenerating)) ||
+          (hasValidImage && !agentRequestedGeneration); // preserve existing image unless explicitly asked to regenerate
 
         dispatch({ type: 'SET_SETTING', setting });
 
