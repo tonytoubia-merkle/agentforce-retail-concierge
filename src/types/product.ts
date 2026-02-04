@@ -23,6 +23,15 @@ export interface ProductAttributes {
   ingredients?: string[];
   size?: string;
   isTravel?: boolean;
+  // Consumer preference flags
+  isFragranceFree?: boolean;
+  isVegan?: boolean;
+  isCrueltyFree?: boolean;
+  isParabenFree?: boolean;
+  isHypoallergenic?: boolean;
+  isDermatologistTested?: boolean;
+  // Key ingredients for matching/avoidance
+  keyIngredients?: string[];
 }
 
 export interface Product {

@@ -79,7 +79,15 @@ global with sharing class ProductCatalogService {
 
         List<String> conditions = new List<String>();
 
-        if (String.isNotBlank(request.category)) {
+        // Normalize category to proper case (Salesforce picklist values are case-sensitive)
+        String category = request.category;
+        if (String.isNotBlank(category)) {
+            // Convert to Title Case to match picklist values like 'Lipstick', 'Moisturizer', etc.
+            category = category.toLowerCase();
+            category = category.substring(0, 1).toUpperCase() + category.substring(1);
+            // Handle special cases
+            if (category == 'Eye care') category = 'Eye Care';
+            if (category == 'Spot treatment') category = 'Spot Treatment';
             conditions.add('Category__c = :category');
         }
         if (String.isNotBlank(request.skinType)) {
@@ -96,7 +104,7 @@ global with sharing class ProductCatalogService {
         Integer maxResults = request.maxResults != null ? request.maxResults : 10;
         soql += ' ORDER BY Rating__c DESC LIMIT ' + maxResults;
 
-        String category = request.category;
+        // category is already declared and normalized above
         String skinType = request.skinType;
         String searchQuery = request.query != null ? '%' + request.query + '%' : '';
 

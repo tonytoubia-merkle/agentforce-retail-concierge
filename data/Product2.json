@@ -1,11 +1,14 @@
 {
   "records": [
     {
-      "attributes": { "type": "Product2", "referenceId": "MoisturizerSensitive" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MoisturizerSensitive"
+      },
       "Name": "Hydra-Calm Sensitive Moisturizer",
       "Brand__c": "SERENE",
       "Category__c": "Moisturizer",
-      "Price__c": 58.00,
+      "Price__c": 58,
       "Description__c": "Deeply hydrating yet gentle moisturizer with centella asiatica, hyaluronic acid, and ceramides.",
       "Image_URL__c": "/assets/products/moisturizer-sensitive.png",
       "Skin_Types__c": "Sensitive;Dry",
@@ -13,14 +16,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Hyaluronic Acid;Centella Asiatica;Green Tea;Ceramides;Cholesterol"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SunscreenLightweight" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SunscreenLightweight"
+      },
       "Name": "Invisible Shield SPF 50",
       "Brand__c": "SERENE",
       "Category__c": "Sunscreen",
-      "Price__c": 42.00,
+      "Price__c": 42,
       "Description__c": "Ultra-lightweight invisible sunscreen that absorbs instantly without white cast.",
       "Image_URL__c": "/assets/products/sunscreen-lightweight.png",
       "Skin_Types__c": "Normal;Oily;Combination",
@@ -28,14 +41,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Zinc Oxide;Titanium Dioxide;Avobenzone"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MistRefreshing" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MistRefreshing"
+      },
       "Name": "Cooling Facial Mist",
       "Brand__c": "SERENE",
       "Category__c": "Toner",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Refreshing facial mist with cucumber and aloe vera for on-the-go hydration.",
       "Image_URL__c": "/assets/products/mist-refreshing.png",
       "Skin_Types__c": "Normal;Dry;Combination;Sensitive;Oily",
@@ -43,14 +66,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Cucumber Extract;Aloe Vera"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "BlottingSheets" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "BlottingSheets"
+      },
       "Name": "Oil Control Blotting Papers",
       "Brand__c": "SERENE",
       "Category__c": "Tool",
-      "Price__c": 12.00,
+      "Price__c": 12,
       "Description__c": "Natural bamboo charcoal blotting sheets that absorb excess oil. 100 sheets.",
       "Image_URL__c": "/assets/products/blotting-sheets.png",
       "Skin_Types__c": "Oily;Combination",
@@ -58,14 +91,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Activated Charcoal;Kaolin;Argan Oil;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "CleanserGentle" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanserGentle"
+      },
       "Name": "Cloud Cream Cleanser",
       "Brand__c": "SERENE",
       "Category__c": "Cleanser",
-      "Price__c": 36.00,
+      "Price__c": 36,
       "Description__c": "Creamy sulfate-free cleanser that melts away makeup while maintaining skin barrier.",
       "Image_URL__c": "/assets/products/cleanser-gentle.png",
       "Skin_Types__c": "Sensitive;Dry;Normal",
@@ -73,14 +116,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Aloe Vera"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MaskHydrating" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MaskHydrating"
+      },
       "Name": "Deep Dew Hydrating Mask",
       "Brand__c": "SERENE",
       "Category__c": "Mask",
-      "Price__c": 45.00,
+      "Price__c": 45,
       "Description__c": "Overnight sleeping mask with hyaluronic acid, honey, and squalane.",
       "Image_URL__c": "/assets/products/mask-hydrating.png",
       "Skin_Types__c": "Dry;Normal;Sensitive",
@@ -88,14 +141,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Hyaluronic Acid;Kaolin;Honey;Propolis;Squalane"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TonerAha" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TonerAha"
+      },
       "Name": "Glow Tonic AHA Toner",
       "Brand__c": "SERENE",
       "Category__c": "Toner",
-      "Price__c": 34.00,
+      "Price__c": 34,
       "Description__c": "Gentle exfoliating toner with 5% glycolic acid and witch hazel. Smooths texture and minimizes pores.",
       "Image_URL__c": "/assets/products/toner-aha.png",
       "Skin_Types__c": "Normal;Oily;Combination",
@@ -103,14 +166,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycolic Acid;Witch Hazel;Aloe Vera"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "EyeCream" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "EyeCream"
+      },
       "Name": "Bright Eyes Caffeine Cream",
       "Brand__c": "SERENE",
       "Category__c": "Eye Care",
-      "Price__c": 48.00,
+      "Price__c": 48,
       "Description__c": "Depuffing eye cream with caffeine and peptides targeting dark circles, puffiness, and fine lines.",
       "Image_URL__c": "/assets/products/eye-cream.png",
       "Skin_Types__c": "Normal;Dry;Sensitive",
@@ -118,14 +191,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Peptides;Amino Acids;Caffeine"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumVitaminC" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumVitaminC"
+      },
       "Name": "Glow Boost Vitamin C Serum",
       "Brand__c": "LUMIERE",
       "Category__c": "Serum",
-      "Price__c": 72.00,
+      "Price__c": 72,
       "Description__c": "Potent 15% L-ascorbic acid serum with ferulic acid and vitamin E for brightening.",
       "Image_URL__c": "/assets/products/serum-vitamin-c.png",
       "Skin_Types__c": "Normal;Combination;Dry",
@@ -133,14 +216,24 @@
       "Rating__c": 4.9,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Vitamin C;Ferulic Acid;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumRetinol" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumRetinol"
+      },
       "Name": "Midnight Renewal Retinol Serum",
       "Brand__c": "LUMIERE",
       "Category__c": "Serum",
-      "Price__c": 68.00,
+      "Price__c": 68,
       "Description__c": "Encapsulated retinol serum for overnight renewal with minimal irritation.",
       "Image_URL__c": "/assets/products/serum-retinol.png",
       "Skin_Types__c": "Normal;Combination;Oily",
@@ -148,14 +241,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Retinol;Vitamin E;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumAntiAging" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumAntiAging"
+      },
       "Name": "Peptide Lift Pro Serum",
       "Brand__c": "LUMIERE",
       "Category__c": "Serum",
-      "Price__c": 95.00,
+      "Price__c": 95,
       "Description__c": "Six-peptide complex serum that firms, lifts, and reduces visible wrinkles.",
       "Image_URL__c": "/assets/products/serum-anti-aging.png",
       "Skin_Types__c": "Normal;Dry;Combination",
@@ -163,14 +266,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Peptides;Amino Acids;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FoundationDewy" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FoundationDewy"
+      },
       "Name": "Skin Glow Serum Foundation",
       "Brand__c": "LUMIERE",
       "Category__c": "Foundation",
-      "Price__c": 52.00,
+      "Price__c": 52,
       "Description__c": "Lightweight serum foundation with buildable medium coverage and luminous, skin-like finish.",
       "Image_URL__c": "/assets/products/foundation-dewy.png",
       "Skin_Types__c": "Normal;Dry;Combination",
@@ -178,14 +291,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Hyaluronic Acid;Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "LipstickVelvet" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "LipstickVelvet"
+      },
       "Name": "Velvet Matte Lip Color",
       "Brand__c": "LUMIERE",
       "Category__c": "Lipstick",
-      "Price__c": 34.00,
+      "Price__c": 34,
       "Description__c": "Hydrating matte lipstick with velvety soft texture. Long-lasting color in 24 curated shades.",
       "Image_URL__c": "/assets/products/lipstick-velvet.png",
       "Skin_Types__c": "",
@@ -193,14 +316,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Vitamin E;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MascaraVolume" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MascaraVolume"
+      },
       "Name": "Lash Drama Volume Mascara",
       "Brand__c": "LUMIERE",
       "Category__c": "Mascara",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Volumizing mascara with hourglass brush that coats every lash. Buildable for natural to dramatic looks.",
       "Image_URL__c": "/assets/products/mascara-volume.png",
       "Skin_Types__c": "",
@@ -208,14 +341,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Beeswax;Carnauba Wax"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "BlushSilk" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "BlushSilk"
+      },
       "Name": "Silk Petal Blush",
       "Brand__c": "LUMIERE",
       "Category__c": "Blush",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "Cream-to-powder blush that melts into skin for a natural, lit-from-within flush.",
       "Image_URL__c": "/assets/products/blush-silk.png",
       "Skin_Types__c": "",
@@ -223,14 +366,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Vitamin E;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "CleanserAcne" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanserAcne"
+      },
       "Name": "Clear Start Salicylic Cleanser",
       "Brand__c": "DERMAFIX",
       "Category__c": "Cleanser",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "2% salicylic acid cleanser that unclogs pores and controls excess oil.",
       "Image_URL__c": "/assets/products/cleanser-acne.png",
       "Skin_Types__c": "Oily;Combination",
@@ -238,14 +391,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Salicylic Acid;Glycerin;Aloe Vera;Argan Oil;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumNiacinamide" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumNiacinamide"
+      },
       "Name": "Pore Refine Niacinamide Serum",
       "Brand__c": "DERMAFIX",
       "Category__c": "Serum",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "10% niacinamide serum with zinc PCA that minimizes pores and regulates oil production.",
       "Image_URL__c": "/assets/products/serum-niacinamide.png",
       "Skin_Types__c": "Oily;Combination;Normal",
@@ -253,14 +416,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Niacinamide;Zinc PCA;Kaolin;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SpotTreatment" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SpotTreatment"
+      },
       "Name": "SOS Blemish Patch",
       "Brand__c": "DERMAFIX",
       "Category__c": "Spot Treatment",
-      "Price__c": 18.00,
+      "Price__c": 18,
       "Description__c": "Hydrocolloid patches with salicylic acid and tea tree oil. Draws out impurities overnight.",
       "Image_URL__c": "/assets/products/spot-treatment.png",
       "Skin_Types__c": "Oily;Combination;Normal",
@@ -268,14 +441,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Salicylic Acid;Argan Oil;Jojoba Oil;Tea Tree Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SunscreenMineral" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SunscreenMineral"
+      },
       "Name": "Barrier Shield Mineral SPF 40",
       "Brand__c": "DERMAFIX",
       "Category__c": "Sunscreen",
-      "Price__c": 36.00,
+      "Price__c": 36,
       "Description__c": "Mineral-only sunscreen with zinc oxide for broad-spectrum protection. Ideal for sensitive and acne-prone skin.",
       "Image_URL__c": "/assets/products/sunscreen-mineral.png",
       "Skin_Types__c": "Sensitive;Oily;Combination",
@@ -283,14 +466,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc PCA;Kaolin;Zinc Oxide;Titanium Dioxide;Avobenzone"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FragranceFloral" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FragranceFloral"
+      },
       "Name": "Jardin de Nuit Eau de Parfum",
       "Brand__c": "MAISON",
       "Category__c": "Fragrance",
-      "Price__c": 125.00,
+      "Price__c": 125,
       "Description__c": "Sophisticated floral fragrance with jasmine, peony, and sandalwood. Opens with bright bergamot.",
       "Image_URL__c": "/assets/products/fragrance-floral.png",
       "Skin_Types__c": "",
@@ -298,14 +491,24 @@
       "Rating__c": 4.9,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Essential Oils"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FragranceWoody" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FragranceWoody"
+      },
       "Name": "Bois Sauvage Eau de Toilette",
       "Brand__c": "MAISON",
       "Category__c": "Fragrance",
-      "Price__c": 98.00,
+      "Price__c": 98,
       "Description__c": "Fresh woody fragrance with cedarwood, vetiver, and black pepper. Crisp grapefruit opening.",
       "Image_URL__c": "/assets/products/fragrance-woody.png",
       "Skin_Types__c": "",
@@ -313,14 +516,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Essential Oils;Argan Oil;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ShampooRepair" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ShampooRepair"
+      },
       "Name": "Bond Repair Shampoo",
       "Brand__c": "MAISON",
       "Category__c": "Shampoo",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Bond-repairing shampoo that restores damaged, color-treated, and heat-styled hair.",
       "Image_URL__c": "/assets/products/shampoo-repair.png",
       "Skin_Types__c": "",
@@ -328,14 +541,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Keratin;Panthenol"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ConditionerHydrating" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ConditionerHydrating"
+      },
       "Name": "Silk Hydration Conditioner",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 34.00,
+      "Price__c": 34,
       "Description__c": "Deeply hydrating conditioner with silk proteins and coconut oil. Detangles, softens, and adds shine.",
       "Image_URL__c": "/assets/products/conditioner-hydrating.png",
       "Skin_Types__c": "",
@@ -343,15 +566,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Argan Oil;Keratin;Jojoba Oil"
     },
-
     {
-      "attributes": { "type": "Product2", "referenceId": "MoisturizerOilFree" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MoisturizerOilFree"
+      },
       "Name": "Oil-Free Hydra Gel",
       "Brand__c": "SERENE",
       "Category__c": "Moisturizer",
-      "Price__c": 48.00,
+      "Price__c": 48,
       "Description__c": "Lightweight gel moisturizer that delivers deep hydration without any oiliness. Perfect for oily and combination skin.",
       "Image_URL__c": "/assets/products/moisturizer-oil-free.png",
       "Skin_Types__c": "Oily;Combination",
@@ -359,14 +591,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Hyaluronic Acid;Glycerin;Argan Oil;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MoisturizerRich" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MoisturizerRich"
+      },
       "Name": "Ultra Rich Barrier Cream",
       "Brand__c": "SERENE",
       "Category__c": "Moisturizer",
-      "Price__c": 64.00,
+      "Price__c": 64,
       "Description__c": "Intensely nourishing cream for very dry and compromised skin with triple ceramide complex and shea butter.",
       "Image_URL__c": "/assets/products/moisturizer-rich.png",
       "Skin_Types__c": "Dry;Sensitive",
@@ -374,14 +616,24 @@
       "Rating__c": 4.9,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Ceramides;Cholesterol;Fatty Acids"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MoisturizerSpf" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MoisturizerSpf"
+      },
       "Name": "Daily Defense Moisturizer SPF 30",
       "Brand__c": "SERENE",
       "Category__c": "Moisturizer",
-      "Price__c": 52.00,
+      "Price__c": 52,
       "Description__c": "Multitasking moisturizer with built-in broad spectrum SPF 30 protection.",
       "Image_URL__c": "/assets/products/moisturizer-spf.png",
       "Skin_Types__c": "Normal;Combination;Dry",
@@ -389,14 +641,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Zinc Oxide;Titanium Dioxide;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MoisturizerNight" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MoisturizerNight"
+      },
       "Name": "Overnight Recovery Cream",
       "Brand__c": "SERENE",
       "Category__c": "Moisturizer",
-      "Price__c": 58.00,
+      "Price__c": 58,
       "Description__c": "Rich night cream that works while you sleep to repair and regenerate skin with peptides and plant stem cells.",
       "Image_URL__c": "/assets/products/moisturizer-night.png",
       "Skin_Types__c": "Normal;Dry;Combination",
@@ -404,14 +666,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Peptides;Amino Acids"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "CleanserMicellar" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanserMicellar"
+      },
       "Name": "Micellar Cleansing Water",
       "Brand__c": "SERENE",
       "Category__c": "Cleanser",
-      "Price__c": 24.00,
+      "Price__c": 24,
       "Description__c": "Gentle no-rinse cleansing water that removes makeup, dirt, and impurities in one swipe.",
       "Image_URL__c": "/assets/products/cleanser-micellar.png",
       "Skin_Types__c": "Normal;Sensitive;Dry;Combination;Oily",
@@ -419,14 +691,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "CleanserOil" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanserOil"
+      },
       "Name": "Pure Cleansing Oil",
       "Brand__c": "SERENE",
       "Category__c": "Cleanser",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "Luxurious oil cleanser that dissolves even waterproof makeup and sunscreen.",
       "Image_URL__c": "/assets/products/cleanser-oil.png",
       "Skin_Types__c": "Normal;Dry;Combination",
@@ -434,14 +716,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc Oxide;Avobenzone;Glycerin;Aloe Vera;Argan Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "CleanserFoam" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanserFoam"
+      },
       "Name": "Gentle Foaming Cleanser",
       "Brand__c": "SERENE",
       "Category__c": "Cleanser",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Cloud-like foam cleanser that transforms from gel to foam on contact.",
       "Image_URL__c": "/assets/products/cleanser-foam.png",
       "Skin_Types__c": "Normal;Combination;Oily",
@@ -449,14 +741,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Aloe Vera"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "CleanserExfoliating" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanserExfoliating"
+      },
       "Name": "Daily Micro-Exfoliating Cleanser",
       "Brand__c": "SERENE",
       "Category__c": "Cleanser",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Gentle daily exfoliating cleanser with fine rice bran particles.",
       "Image_URL__c": "/assets/products/cleanser-exfoliating.png",
       "Skin_Types__c": "Normal;Combination;Oily",
@@ -464,14 +766,24 @@
       "Rating__c": 4.4,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Aloe Vera"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SunscreenTinted" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SunscreenTinted"
+      },
       "Name": "Tinted Glow Screen SPF 45",
       "Brand__c": "SERENE",
       "Category__c": "Sunscreen",
-      "Price__c": 46.00,
+      "Price__c": 46,
       "Description__c": "Tinted sunscreen that provides sheer coverage while protecting against UV rays.",
       "Image_URL__c": "/assets/products/sunscreen-tinted.png",
       "Skin_Types__c": "Normal;Combination;Dry",
@@ -479,14 +791,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc Oxide;Titanium Dioxide;Avobenzone"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SunscreenStick" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SunscreenStick"
+      },
       "Name": "On-the-Go Sun Stick SPF 50",
       "Brand__c": "SERENE",
       "Category__c": "Sunscreen",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Portable sunscreen stick perfect for reapplication on the go. Water-resistant for 80 minutes.",
       "Image_URL__c": "/assets/products/sunscreen-stick.png",
       "Skin_Types__c": "Normal;Combination;Oily;Dry;Sensitive",
@@ -494,14 +816,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc Oxide;Titanium Dioxide;Avobenzone"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SunscreenBody" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SunscreenBody"
+      },
       "Name": "Body Shield Sunscreen SPF 50",
       "Brand__c": "SERENE",
       "Category__c": "Sunscreen",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Fast-absorbing body sunscreen that protects without the greasy feel.",
       "Image_URL__c": "/assets/products/sunscreen-body.png",
       "Skin_Types__c": "Normal;Combination;Oily",
@@ -509,14 +841,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Zinc Oxide;Titanium Dioxide;Avobenzone"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TonerHydrating" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TonerHydrating"
+      },
       "Name": "Essence Hydrating Toner",
       "Brand__c": "SERENE",
       "Category__c": "Toner",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Hydrating essence-toner hybrid that layers like water and delivers intensive moisture.",
       "Image_URL__c": "/assets/products/toner-hydrating.png",
       "Skin_Types__c": "Normal;Dry;Sensitive",
@@ -524,14 +866,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Witch Hazel;Aloe Vera"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TonerCalming" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TonerCalming"
+      },
       "Name": "Centella Calming Toner",
       "Brand__c": "SERENE",
       "Category__c": "Toner",
-      "Price__c": 30.00,
+      "Price__c": 30,
       "Description__c": "Soothing toner for irritated and reactive skin with centella asiatica and green tea.",
       "Image_URL__c": "/assets/products/toner-calming.png",
       "Skin_Types__c": "Sensitive;Normal;Combination",
@@ -539,14 +891,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Centella Asiatica;Green Tea;Witch Hazel;Aloe Vera"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MaskClay" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MaskClay"
+      },
       "Name": "Pore Purifying Clay Mask",
       "Brand__c": "SERENE",
       "Category__c": "Mask",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "Kaolin clay mask that draws out impurities and excess oil without over-drying.",
       "Image_URL__c": "/assets/products/mask-clay.png",
       "Skin_Types__c": "Oily;Combination;Normal",
@@ -554,14 +916,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Kaolin Clay;Bentonite;Kaolin;Hyaluronic Acid;Argan Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MaskSheetHydrating" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MaskSheetHydrating"
+      },
       "Name": "Hydra-Boost Sheet Mask (5-Pack)",
       "Brand__c": "SERENE",
       "Category__c": "Mask",
-      "Price__c": 25.00,
+      "Price__c": 25,
       "Description__c": "Biodegradable sheet masks soaked in hyaluronic acid essence for instant hydration.",
       "Image_URL__c": "/assets/products/mask-sheet-hydrating.png",
       "Skin_Types__c": "Normal;Dry;Combination;Sensitive",
@@ -569,14 +941,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Hyaluronic Acid;Kaolin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MaskExfoliating" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MaskExfoliating"
+      },
       "Name": "Enzyme Renewal Mask",
       "Brand__c": "SERENE",
       "Category__c": "Mask",
-      "Price__c": 42.00,
+      "Price__c": 42,
       "Description__c": "Gentle enzyme mask with papaya and pineapple extracts that dissolves dead skin cells.",
       "Image_URL__c": "/assets/products/mask-exfoliating.png",
       "Skin_Types__c": "Normal;Dry;Sensitive;Combination",
@@ -584,14 +966,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Kaolin;Hyaluronic Acid"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "EyeCreamBrightening" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "EyeCreamBrightening"
+      },
       "Name": "Vitamin C Eye Brightener",
       "Brand__c": "SERENE",
       "Category__c": "Eye Care",
-      "Price__c": 52.00,
+      "Price__c": 52,
       "Description__c": "Brightening eye cream with stabilized vitamin C and licorice root.",
       "Image_URL__c": "/assets/products/eye-cream-brightening.png",
       "Skin_Types__c": "Normal;Combination;Dry",
@@ -599,14 +991,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Vitamin C;Ferulic Acid"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "EyeCreamFirming" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "EyeCreamFirming"
+      },
       "Name": "Peptide Lift Eye Cream",
       "Brand__c": "SERENE",
       "Category__c": "Eye Care",
-      "Price__c": 58.00,
+      "Price__c": 58,
       "Description__c": "Anti-aging eye cream with peptides and retinol that firms sagging lids and reduces crow's feet.",
       "Image_URL__c": "/assets/products/eye-cream-firming.png",
       "Skin_Types__c": "Normal;Dry;Combination",
@@ -614,14 +1016,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Retinol;Vitamin E;Peptides;Amino Acids"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TravelKitEssentials" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TravelKitEssentials"
+      },
       "Name": "Travel Essentials Kit",
       "Brand__c": "SERENE",
       "Category__c": "Tool",
-      "Price__c": 45.00,
+      "Price__c": 45,
       "Description__c": "TSA-approved kit with mini sizes of bestselling cleanser, moisturizer, and SPF.",
       "Image_URL__c": "/assets/products/travel-kit-essentials.png",
       "Skin_Types__c": "Normal;Combination",
@@ -629,14 +1041,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc Oxide;Titanium Dioxide;Hyaluronic Acid;Glycerin;Aloe Vera"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TravelKitHydration" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TravelKitHydration"
+      },
       "Name": "Hydration Hero Travel Set",
       "Brand__c": "SERENE",
       "Category__c": "Tool",
-      "Price__c": 55.00,
+      "Price__c": 55,
       "Description__c": "Hydration-focused travel set with essence toner, hyaluronic serum, and rich moisturizer.",
       "Image_URL__c": "/assets/products/travel-kit-hydration.png",
       "Skin_Types__c": "Dry;Normal;Sensitive",
@@ -644,14 +1066,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Hyaluronic Acid;Glycerin;Witch Hazel;Aloe Vera"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "LipBalmSpf" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "LipBalmSpf"
+      },
       "Name": "Protective Lip Balm SPF 25",
       "Brand__c": "SERENE",
       "Category__c": "Lipstick",
-      "Price__c": 14.00,
+      "Price__c": 14,
       "Description__c": "Nourishing lip balm with SPF protection that shields lips from sun damage.",
       "Image_URL__c": "/assets/products/lip-balm-spf.png",
       "Skin_Types__c": "Normal;Dry;Sensitive",
@@ -659,14 +1091,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc Oxide;Titanium Dioxide"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumHyaluronic" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumHyaluronic"
+      },
       "Name": "Pure Hyaluronic Acid Serum",
       "Brand__c": "LUMIERE",
       "Category__c": "Serum",
-      "Price__c": 48.00,
+      "Price__c": 48,
       "Description__c": "Multi-weight hyaluronic acid serum that hydrates at every skin level.",
       "Image_URL__c": "/assets/products/serum-hyaluronic.png",
       "Skin_Types__c": "Normal;Dry;Combination;Sensitive",
@@ -674,14 +1116,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumBakuchiol" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumBakuchiol"
+      },
       "Name": "Gentle Retinol Alternative Serum",
       "Brand__c": "LUMIERE",
       "Category__c": "Serum",
-      "Price__c": 62.00,
+      "Price__c": 62,
       "Description__c": "Plant-based retinol alternative with bakuchiol that delivers anti-aging benefits without irritation.",
       "Image_URL__c": "/assets/products/serum-bakuchiol.png",
       "Skin_Types__c": "Sensitive;Dry;Normal",
@@ -689,14 +1141,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Retinol;Vitamin E;Bakuchiol;Squalane;Hyaluronic Acid"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumBrightening" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumBrightening"
+      },
       "Name": "Dark Spot Correcting Serum",
       "Brand__c": "LUMIERE",
       "Category__c": "Serum",
-      "Price__c": 78.00,
+      "Price__c": 78,
       "Description__c": "Targeted serum with tranexamic acid and kojic acid that fades dark spots and melasma.",
       "Image_URL__c": "/assets/products/serum-brightening.png",
       "Skin_Types__c": "Normal;Combination;Oily",
@@ -704,14 +1166,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumBarrier" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumBarrier"
+      },
       "Name": "Ceramide Barrier Repair Serum",
       "Brand__c": "LUMIERE",
       "Category__c": "Serum",
-      "Price__c": 58.00,
+      "Price__c": 58,
       "Description__c": "Strengthening serum with ceramides, cholesterol, and fatty acids that rebuilds damaged skin barriers.",
       "Image_URL__c": "/assets/products/serum-barrier.png",
       "Skin_Types__c": "Dry;Sensitive;Normal",
@@ -719,14 +1191,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Ceramides;Cholesterol;Fatty Acids;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumGlow" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumGlow"
+      },
       "Name": "Instant Glow Priming Serum",
       "Brand__c": "LUMIERE",
       "Category__c": "Serum",
-      "Price__c": 52.00,
+      "Price__c": 52,
       "Description__c": "Light-reflecting serum that creates an instant lit-from-within glow.",
       "Image_URL__c": "/assets/products/serum-glow.png",
       "Skin_Types__c": "Normal;Dry;Combination",
@@ -734,14 +1216,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumAcne" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumAcne"
+      },
       "Name": "Clarifying BHA Serum",
       "Brand__c": "LUMIERE",
       "Category__c": "Serum",
-      "Price__c": 45.00,
+      "Price__c": 45,
       "Description__c": "2% salicylic acid serum that penetrates pores to clear congestion and prevent breakouts.",
       "Image_URL__c": "/assets/products/serum-acne.png",
       "Skin_Types__c": "Oily;Combination",
@@ -749,14 +1241,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Salicylic Acid;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FoundationMatte" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FoundationMatte"
+      },
       "Name": "Velvet Matte Foundation",
       "Brand__c": "LUMIERE",
       "Category__c": "Foundation",
-      "Price__c": 48.00,
+      "Price__c": 48,
       "Description__c": "Long-wearing matte foundation that controls oil and shine for up to 24 hours.",
       "Image_URL__c": "/assets/products/foundation-matte.png",
       "Skin_Types__c": "Oily;Combination",
@@ -764,14 +1266,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Hyaluronic Acid;Vitamin E;Argan Oil;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FoundationStick" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FoundationStick"
+      },
       "Name": "Cover & Go Stick Foundation",
       "Brand__c": "LUMIERE",
       "Category__c": "Foundation",
-      "Price__c": 42.00,
+      "Price__c": 42,
       "Description__c": "Portable stick foundation for touch-ups and on-the-go application.",
       "Image_URL__c": "/assets/products/foundation-stick.png",
       "Skin_Types__c": "Normal;Combination;Dry",
@@ -779,14 +1291,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Hyaluronic Acid;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ConcealerBrightening" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ConcealerBrightening"
+      },
       "Name": "Brightening Under-Eye Concealer",
       "Brand__c": "LUMIERE",
       "Category__c": "Foundation",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Hydrating concealer with light-diffusing pigments that brightens under-eyes.",
       "Image_URL__c": "/assets/products/concealer-brightening.png",
       "Skin_Types__c": "Normal;Dry;Combination",
@@ -794,14 +1316,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ConcealerFull" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ConcealerFull"
+      },
       "Name": "Full Coverage Concealer",
       "Brand__c": "LUMIERE",
       "Category__c": "Foundation",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "High-coverage concealer that hides blemishes, redness, and discoloration with one swipe.",
       "Image_URL__c": "/assets/products/concealer-full.png",
       "Skin_Types__c": "Normal;Oily;Combination",
@@ -809,14 +1341,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "LipstickSatin" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "LipstickSatin"
+      },
       "Name": "Silk Satin Lipstick",
       "Brand__c": "LUMIERE",
       "Category__c": "Lipstick",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Creamy satin lipstick with high color payoff and a comfortable, moisturizing feel.",
       "Image_URL__c": "/assets/products/lipstick-satin.png",
       "Skin_Types__c": "",
@@ -824,14 +1366,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Vitamin E;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "LipstickLiquid" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "LipstickLiquid"
+      },
       "Name": "Liquid Lip Color",
       "Brand__c": "LUMIERE",
       "Category__c": "Lipstick",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Long-wearing liquid lipstick that dries to a comfortable matte finish.",
       "Image_URL__c": "/assets/products/lipstick-liquid.png",
       "Skin_Types__c": "",
@@ -839,14 +1391,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Vitamin E;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "LipGloss" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "LipGloss"
+      },
       "Name": "High Shine Lip Gloss",
       "Brand__c": "LUMIERE",
       "Category__c": "Lipstick",
-      "Price__c": 24.00,
+      "Price__c": 24,
       "Description__c": "Non-sticky lip gloss with mirror-like shine and a hint of color. Plumping formula.",
       "Image_URL__c": "/assets/products/lip-gloss.png",
       "Skin_Types__c": "",
@@ -854,14 +1416,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "LipLiner" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "LipLiner"
+      },
       "Name": "Precision Lip Liner",
       "Brand__c": "LUMIERE",
       "Category__c": "Lipstick",
-      "Price__c": 22.00,
+      "Price__c": 22,
       "Description__c": "Creamy lip liner that defines and prevents feathering.",
       "Image_URL__c": "/assets/products/lip-liner.png",
       "Skin_Types__c": "",
@@ -869,14 +1441,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MascaraLengthening" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MascaraLengthening"
+      },
       "Name": "Lash Extend Lengthening Mascara",
       "Brand__c": "LUMIERE",
       "Category__c": "Mascara",
-      "Price__c": 26.00,
+      "Price__c": 26,
       "Description__c": "Fiber-infused mascara that adds dramatic length to every lash.",
       "Image_URL__c": "/assets/products/mascara-lengthening.png",
       "Skin_Types__c": "",
@@ -884,14 +1466,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Beeswax;Carnauba Wax"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MascaraWaterproof" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MascaraWaterproof"
+      },
       "Name": "All-Day Waterproof Mascara",
       "Brand__c": "LUMIERE",
       "Category__c": "Mascara",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Smudge-proof, waterproof mascara that withstands humidity, tears, and sweat.",
       "Image_URL__c": "/assets/products/mascara-waterproof.png",
       "Skin_Types__c": "",
@@ -899,14 +1491,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Beeswax;Carnauba Wax"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MascaraTubing" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MascaraTubing"
+      },
       "Name": "Easy-Off Tubing Mascara",
       "Brand__c": "LUMIERE",
       "Category__c": "Mascara",
-      "Price__c": 24.00,
+      "Price__c": 24,
       "Description__c": "Tubing mascara that coats lashes in tiny tubes of color. Removes easily with warm water.",
       "Image_URL__c": "/assets/products/mascara-tubing.png",
       "Skin_Types__c": "",
@@ -914,14 +1516,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Beeswax;Carnauba Wax"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "BlushPowder" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "BlushPowder"
+      },
       "Name": "Soft Focus Powder Blush",
       "Brand__c": "LUMIERE",
       "Category__c": "Blush",
-      "Price__c": 34.00,
+      "Price__c": 34,
       "Description__c": "Finely milled powder blush with buildable color and a soft-focus finish.",
       "Image_URL__c": "/assets/products/blush-powder.png",
       "Skin_Types__c": "",
@@ -929,14 +1541,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Vitamin E;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "BlushLiquid" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "BlushLiquid"
+      },
       "Name": "Dewy Liquid Blush",
       "Brand__c": "LUMIERE",
       "Category__c": "Blush",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Lightweight liquid blush that melts into skin for a dewy, flushed-from-within look.",
       "Image_URL__c": "/assets/products/blush-liquid.png",
       "Skin_Types__c": "",
@@ -944,14 +1566,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Vitamin E;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "HighlighterCream" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HighlighterCream"
+      },
       "Name": "Lit From Within Highlighter",
       "Brand__c": "LUMIERE",
       "Category__c": "Blush",
-      "Price__c": 36.00,
+      "Price__c": 36,
       "Description__c": "Cream-to-powder highlighter that delivers a natural, buildable glow.",
       "Image_URL__c": "/assets/products/highlighter-cream.png",
       "Skin_Types__c": "",
@@ -959,14 +1591,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "BronzerMatte" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "BronzerMatte"
+      },
       "Name": "Sun-Kissed Matte Bronzer",
       "Brand__c": "LUMIERE",
       "Category__c": "Blush",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "Matte bronzer that adds warmth and dimension without shimmer.",
       "Image_URL__c": "/assets/products/bronzer-matte.png",
       "Skin_Types__c": "",
@@ -974,14 +1616,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SettingPowder" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SettingPowder"
+      },
       "Name": "Invisible Set Finishing Powder",
       "Brand__c": "LUMIERE",
       "Category__c": "Foundation",
-      "Price__c": 42.00,
+      "Price__c": 42,
       "Description__c": "Translucent setting powder that locks in makeup and reduces shine without adding coverage.",
       "Image_URL__c": "/assets/products/setting-powder.png",
       "Skin_Types__c": "Normal;Oily;Combination",
@@ -989,14 +1641,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SettingSpray" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SettingSpray"
+      },
       "Name": "All-Day Lock Setting Spray",
       "Brand__c": "LUMIERE",
       "Category__c": "Toner",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Weightless setting spray that locks makeup in place for up to 16 hours.",
       "Image_URL__c": "/assets/products/setting-spray.png",
       "Skin_Types__c": "Normal;Dry;Combination;Oily",
@@ -1004,14 +1666,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "PrimerPore" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "PrimerPore"
+      },
       "Name": "Pore Blur Primer",
       "Brand__c": "LUMIERE",
       "Category__c": "Foundation",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "Silky primer that fills in pores and fine lines for a smooth, filtered look.",
       "Image_URL__c": "/assets/products/primer-pore.png",
       "Skin_Types__c": "Oily;Combination;Normal",
@@ -1019,14 +1691,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "PrimerHydrating" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "PrimerHydrating"
+      },
       "Name": "Hydra Glow Primer",
       "Brand__c": "LUMIERE",
       "Category__c": "Foundation",
-      "Price__c": 36.00,
+      "Price__c": 36,
       "Description__c": "Hydrating primer that plumps skin with moisture and creates a luminous base.",
       "Image_URL__c": "/assets/products/primer-hydrating.png",
       "Skin_Types__c": "Dry;Normal;Combination",
@@ -1034,14 +1716,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "EyeshadowPaletteNeutral" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "EyeshadowPaletteNeutral"
+      },
       "Name": "Everyday Neutrals Eyeshadow Palette",
       "Brand__c": "LUMIERE",
       "Category__c": "Blush",
-      "Price__c": 52.00,
+      "Price__c": 52,
       "Description__c": "Versatile 12-shade palette of mattes and shimmers in everyday neutral tones.",
       "Image_URL__c": "/assets/products/eyeshadow-palette-neutral.png",
       "Skin_Types__c": "",
@@ -1049,14 +1741,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "EyeshadowPaletteWarm" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "EyeshadowPaletteWarm"
+      },
       "Name": "Sunset Glow Eyeshadow Palette",
       "Brand__c": "LUMIERE",
       "Category__c": "Blush",
-      "Price__c": 52.00,
+      "Price__c": 52,
       "Description__c": "Warm-toned 12-shade palette with rich coppers, oranges, and burgundies.",
       "Image_URL__c": "/assets/products/eyeshadow-palette-warm.png",
       "Skin_Types__c": "",
@@ -1064,14 +1766,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "BrowPencil" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "BrowPencil"
+      },
       "Name": "Micro Brow Pencil",
       "Brand__c": "LUMIERE",
       "Category__c": "Mascara",
-      "Price__c": 24.00,
+      "Price__c": 24,
       "Description__c": "Ultra-fine brow pencil that mimics natural hair strokes. Includes spoolie.",
       "Image_URL__c": "/assets/products/brow-pencil.png",
       "Skin_Types__c": "",
@@ -1079,14 +1791,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "BrowGel" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "BrowGel"
+      },
       "Name": "Tinted Brow Gel",
       "Brand__c": "LUMIERE",
       "Category__c": "Mascara",
-      "Price__c": 22.00,
+      "Price__c": 22,
       "Description__c": "Tinted brow gel that adds color, fullness, and hold in one step.",
       "Image_URL__c": "/assets/products/brow-gel.png",
       "Skin_Types__c": "",
@@ -1094,14 +1816,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumAzelaic" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumAzelaic"
+      },
       "Name": "Azelaic Acid 10% Serum",
       "Brand__c": "DERMAFIX",
       "Category__c": "Serum",
-      "Price__c": 42.00,
+      "Price__c": 42,
       "Description__c": "Targeted serum with azelaic acid that addresses rosacea, acne, and hyperpigmentation.",
       "Image_URL__c": "/assets/products/serum-azelaic.png",
       "Skin_Types__c": "Normal;Oily;Combination;Sensitive",
@@ -1109,14 +1841,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Azelaic Acid;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumAhaBha" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumAhaBha"
+      },
       "Name": "AHA/BHA Exfoliating Serum",
       "Brand__c": "DERMAFIX",
       "Category__c": "Serum",
-      "Price__c": 48.00,
+      "Price__c": 48,
       "Description__c": "Powerful exfoliating serum with glycolic and salicylic acid.",
       "Image_URL__c": "/assets/products/serum-aha-bha.png",
       "Skin_Types__c": "Normal;Oily;Combination",
@@ -1124,14 +1866,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Salicylic Acid;Glycolic Acid;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SerumZinc" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SerumZinc"
+      },
       "Name": "Oil Control Zinc Serum",
       "Brand__c": "DERMAFIX",
       "Category__c": "Serum",
-      "Price__c": 35.00,
+      "Price__c": 35,
       "Description__c": "Lightweight serum with zinc PCA and kaolin that mattifies oily skin.",
       "Image_URL__c": "/assets/products/serum-zinc.png",
       "Skin_Types__c": "Oily;Combination",
@@ -1139,14 +1891,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc PCA;Kaolin;Hyaluronic Acid;Glycerin;Argan Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TreatmentRetinoid" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TreatmentRetinoid"
+      },
       "Name": "Retinoid 0.3% Treatment",
       "Brand__c": "DERMAFIX",
       "Category__c": "Serum",
-      "Price__c": 65.00,
+      "Price__c": 65,
       "Description__c": "Clinical-strength retinoid treatment for advanced anti-aging and acne.",
       "Image_URL__c": "/assets/products/treatment-retinoid.png",
       "Skin_Types__c": "Normal;Oily;Combination",
@@ -1154,14 +1916,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Retinoid;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TreatmentBenzoyl" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TreatmentBenzoyl"
+      },
       "Name": "Benzoyl Peroxide 2.5% Gel",
       "Brand__c": "DERMAFIX",
       "Category__c": "Spot Treatment",
-      "Price__c": 24.00,
+      "Price__c": 24,
       "Description__c": "Micronized benzoyl peroxide gel that kills acne bacteria without excessive drying.",
       "Image_URL__c": "/assets/products/treatment-benzoyl.png",
       "Skin_Types__c": "Oily;Combination;Normal",
@@ -1169,14 +1941,24 @@
       "Rating__c": 4.4,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Benzoyl Peroxide"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TreatmentSulfur" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TreatmentSulfur"
+      },
       "Name": "Sulfur Acne Drying Treatment",
       "Brand__c": "DERMAFIX",
       "Category__c": "Spot Treatment",
-      "Price__c": 22.00,
+      "Price__c": 22,
       "Description__c": "Traditional sulfur treatment that dries out active pimples overnight.",
       "Image_URL__c": "/assets/products/treatment-sulfur.png",
       "Skin_Types__c": "Oily;Combination",
@@ -1184,14 +1966,24 @@
       "Rating__c": 4.3,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Sulfur"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MoisturizerAcne" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MoisturizerAcne"
+      },
       "Name": "Acne-Safe Oil-Free Moisturizer",
       "Brand__c": "DERMAFIX",
       "Category__c": "Moisturizer",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "Lightweight, non-comedogenic moisturizer formulated for acne-prone skin.",
       "Image_URL__c": "/assets/products/moisturizer-acne.png",
       "Skin_Types__c": "Oily;Combination",
@@ -1199,14 +1991,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Hyaluronic Acid;Glycerin;Argan Oil;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "CleanserBenzoyl" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanserBenzoyl"
+      },
       "Name": "Benzoyl Peroxide Wash 4%",
       "Brand__c": "DERMAFIX",
       "Category__c": "Cleanser",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Antibacterial wash with benzoyl peroxide that treats and prevents body and facial acne.",
       "Image_URL__c": "/assets/products/cleanser-benzoyl.png",
       "Skin_Types__c": "Oily;Combination;Normal",
@@ -1214,14 +2016,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Benzoyl Peroxide"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "PeelGlycolic" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "PeelGlycolic"
+      },
       "Name": "Glycolic Acid 10% Peel Pads",
       "Brand__c": "DERMAFIX",
       "Category__c": "Exfoliant",
-      "Price__c": 52.00,
+      "Price__c": 52,
       "Description__c": "Pre-soaked pads with glycolic acid that exfoliate dead skin cells.",
       "Image_URL__c": "/assets/products/peel-glycolic.png",
       "Skin_Types__c": "Normal;Oily;Combination",
@@ -1229,14 +2041,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycolic Acid"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "MaskCharcoal" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "MaskCharcoal"
+      },
       "Name": "Activated Charcoal Detox Mask",
       "Brand__c": "DERMAFIX",
       "Category__c": "Mask",
-      "Price__c": 35.00,
+      "Price__c": 35,
       "Description__c": "Detoxifying mask with activated charcoal that draws out impurities.",
       "Image_URL__c": "/assets/products/mask-charcoal.png",
       "Skin_Types__c": "Oily;Combination;Normal",
@@ -1244,14 +2066,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Activated Charcoal;Kaolin;Hyaluronic Acid"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "SunscreenAcne" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SunscreenAcne"
+      },
       "Name": "Clear Skin SPF 50 Fluid",
       "Brand__c": "DERMAFIX",
       "Category__c": "Sunscreen",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "Ultra-light fluid sunscreen designed for acne-prone skin.",
       "Image_URL__c": "/assets/products/sunscreen-acne.png",
       "Skin_Types__c": "Oily;Combination",
@@ -1259,14 +2091,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc Oxide;Titanium Dioxide;Avobenzone"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TreatmentRosacea" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TreatmentRosacea"
+      },
       "Name": "Redness Relief Serum",
       "Brand__c": "DERMAFIX",
       "Category__c": "Serum",
-      "Price__c": 55.00,
+      "Price__c": 55,
       "Description__c": "Calming serum for rosacea-prone skin with centella, green tea, and licorice root.",
       "Image_URL__c": "/assets/products/treatment-rosacea.png",
       "Skin_Types__c": "Sensitive;Normal;Dry",
@@ -1274,14 +2116,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Centella Asiatica;Green Tea;Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "TreatmentScar" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "TreatmentScar"
+      },
       "Name": "Scar Fading Gel",
       "Brand__c": "DERMAFIX",
       "Category__c": "Serum",
-      "Price__c": 48.00,
+      "Price__c": 48,
       "Description__c": "Silicone-based gel that flattens and fades scars from acne, surgery, or injury.",
       "Image_URL__c": "/assets/products/treatment-scar.png",
       "Skin_Types__c": "Normal;Oily;Combination;Dry;Sensitive",
@@ -1289,14 +2141,24 @@
       "Rating__c": 4.4,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FragranceFresh" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FragranceFresh"
+      },
       "Name": "Mer Bleue Eau de Toilette",
       "Brand__c": "MAISON",
       "Category__c": "Fragrance",
-      "Price__c": 85.00,
+      "Price__c": 85,
       "Description__c": "Fresh aquatic fragrance with sea salt, cucumber, and white tea.",
       "Image_URL__c": "/assets/products/fragrance-fresh.png",
       "Skin_Types__c": "",
@@ -1304,14 +2166,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Essential Oils;Cucumber Extract;Aloe Vera;Argan Oil;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FragranceOriental" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FragranceOriental"
+      },
       "Name": "Velvet Oud Eau de Parfum",
       "Brand__c": "MAISON",
       "Category__c": "Fragrance",
-      "Price__c": 145.00,
+      "Price__c": 145,
       "Description__c": "Rich oriental fragrance with oud, amber, and rose.",
       "Image_URL__c": "/assets/products/fragrance-oriental.png",
       "Skin_Types__c": "",
@@ -1319,14 +2191,24 @@
       "Rating__c": 4.9,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Essential Oils"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FragranceCitrus" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FragranceCitrus"
+      },
       "Name": "Citrus Garden Cologne",
       "Brand__c": "MAISON",
       "Category__c": "Fragrance",
-      "Price__c": 68.00,
+      "Price__c": 68,
       "Description__c": "Bright citrus cologne with bergamot, lemon, and orange blossom.",
       "Image_URL__c": "/assets/products/fragrance-citrus.png",
       "Skin_Types__c": "",
@@ -1334,14 +2216,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Essential Oils;Alcohol"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FragranceTravel" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FragranceTravel"
+      },
       "Name": "Discovery Set (4 x 10ml)",
       "Brand__c": "MAISON",
       "Category__c": "Fragrance",
-      "Price__c": 65.00,
+      "Price__c": 65,
       "Description__c": "Travel-size set featuring four bestselling fragrances.",
       "Image_URL__c": "/assets/products/fragrance-travel.png",
       "Skin_Types__c": "",
@@ -1349,14 +2241,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Essential Oils"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "FragranceSolid" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FragranceSolid"
+      },
       "Name": "Solid Perfume Compact",
       "Brand__c": "MAISON",
       "Category__c": "Fragrance",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "Portable solid perfume in a sleek compact. TSA-friendly.",
       "Image_URL__c": "/assets/products/fragrance-solid.png",
       "Skin_Types__c": "",
@@ -1364,14 +2266,24 @@
       "Rating__c": 4.4,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Essential Oils;Alcohol"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ShampooVolumizing" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ShampooVolumizing"
+      },
       "Name": "Root Lift Volumizing Shampoo",
       "Brand__c": "MAISON",
       "Category__c": "Shampoo",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Lightweight shampoo that adds body and lift to fine, limp hair.",
       "Image_URL__c": "/assets/products/shampoo-volumizing.png",
       "Skin_Types__c": "",
@@ -1379,14 +2291,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Keratin;Panthenol"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ShampooHydrating" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ShampooHydrating"
+      },
       "Name": "Moisture Drench Shampoo",
       "Brand__c": "MAISON",
       "Category__c": "Shampoo",
-      "Price__c": 30.00,
+      "Price__c": 30,
       "Description__c": "Deeply hydrating shampoo for dry, coarse, and curly hair.",
       "Image_URL__c": "/assets/products/shampoo-hydrating.png",
       "Skin_Types__c": "",
@@ -1394,14 +2316,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Keratin;Panthenol"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ShampooClarifying" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ShampooClarifying"
+      },
       "Name": "Deep Clean Clarifying Shampoo",
       "Brand__c": "MAISON",
       "Category__c": "Shampoo",
-      "Price__c": 26.00,
+      "Price__c": 26,
       "Description__c": "Clarifying shampoo that removes product buildup and hard water minerals.",
       "Image_URL__c": "/assets/products/shampoo-clarifying.png",
       "Skin_Types__c": "",
@@ -1409,14 +2341,24 @@
       "Rating__c": 4.4,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc Oxide;Keratin;Panthenol"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ShampooColor" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ShampooColor"
+      },
       "Name": "Color Protect Shampoo",
       "Brand__c": "MAISON",
       "Category__c": "Shampoo",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Gentle shampoo formulated for color-treated hair.",
       "Image_URL__c": "/assets/products/shampoo-color.png",
       "Skin_Types__c": "",
@@ -1424,14 +2366,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Keratin;Panthenol"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ConditionerVolumizing" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ConditionerVolumizing"
+      },
       "Name": "Weightless Volume Conditioner",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 30.00,
+      "Price__c": 30,
       "Description__c": "Lightweight conditioner that detangles and adds body without weighing down fine hair.",
       "Image_URL__c": "/assets/products/conditioner-volumizing.png",
       "Skin_Types__c": "",
@@ -1439,14 +2391,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Argan Oil;Keratin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ConditionerRepair" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ConditionerRepair"
+      },
       "Name": "Intensive Repair Conditioner",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 34.00,
+      "Price__c": 34,
       "Description__c": "Deeply nourishing conditioner for damaged, processed hair.",
       "Image_URL__c": "/assets/products/conditioner-repair.png",
       "Skin_Types__c": "",
@@ -1454,14 +2416,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Argan Oil;Keratin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ConditionerColor" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ConditionerColor"
+      },
       "Name": "Color Lock Conditioner",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 34.00,
+      "Price__c": 34,
       "Description__c": "Color-protecting conditioner that seals the cuticle and locks in vibrancy.",
       "Image_URL__c": "/assets/products/conditioner-color.png",
       "Skin_Types__c": "",
@@ -1469,14 +2441,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Argan Oil;Keratin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "HairMask" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HairMask"
+      },
       "Name": "Weekly Repair Hair Mask",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 42.00,
+      "Price__c": 42,
       "Description__c": "Intensive weekly treatment that transforms dry, damaged hair.",
       "Image_URL__c": "/assets/products/hair-mask.png",
       "Skin_Types__c": "",
@@ -1484,14 +2466,24 @@
       "Rating__c": 4.8,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Kaolin;Hyaluronic Acid"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "HairOil" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HairOil"
+      },
       "Name": "Shine & Smooth Hair Oil",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 38.00,
+      "Price__c": 38,
       "Description__c": "Lightweight finishing oil that tames frizz, adds shine, and protects against heat damage.",
       "Image_URL__c": "/assets/products/hair-oil.png",
       "Skin_Types__c": "",
@@ -1499,14 +2491,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Argan Oil;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "HairSerum" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HairSerum"
+      },
       "Name": "Split End Repair Serum",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 32.00,
+      "Price__c": 32,
       "Description__c": "Leave-in serum that temporarily binds split ends and prevents future breakage.",
       "Image_URL__c": "/assets/products/hair-serum.png",
       "Skin_Types__c": "",
@@ -1514,14 +2516,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Hyaluronic Acid;Glycerin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "HairSpray" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HairSpray"
+      },
       "Name": "Flexible Hold Hairspray",
       "Brand__c": "MAISON",
       "Category__c": "Shampoo",
-      "Price__c": 24.00,
+      "Price__c": 24,
       "Description__c": "Lightweight hairspray that provides flexible, brushable hold without stiffness.",
       "Image_URL__c": "/assets/products/hair-spray.png",
       "Skin_Types__c": "",
@@ -1529,14 +2541,24 @@
       "Rating__c": 4.4,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "HairMousse" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HairMousse"
+      },
       "Name": "Volume Boost Styling Mousse",
       "Brand__c": "MAISON",
       "Category__c": "Shampoo",
-      "Price__c": 26.00,
+      "Price__c": 26,
       "Description__c": "Lightweight mousse that adds body, lift, and texture to fine hair.",
       "Image_URL__c": "/assets/products/hair-mousse.png",
       "Skin_Types__c": "",
@@ -1544,14 +2566,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "HeatProtectant" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HeatProtectant"
+      },
       "Name": "Thermal Shield Heat Protectant",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Lightweight spray that protects hair from heat damage up to 450°F.",
       "Image_URL__c": "/assets/products/heat-protectant.png",
       "Skin_Types__c": "",
@@ -1559,14 +2591,24 @@
       "Rating__c": 4.6,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": false,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Glycerin;Vitamin E"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "DryShampoo" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "DryShampoo"
+      },
       "Name": "Refresh & Go Dry Shampoo",
       "Brand__c": "MAISON",
       "Category__c": "Shampoo",
-      "Price__c": 22.00,
+      "Price__c": 22,
       "Description__c": "Fast-absorbing dry shampoo that refreshes oily roots and adds volume.",
       "Image_URL__c": "/assets/products/dry-shampoo.png",
       "Skin_Types__c": "",
@@ -1574,14 +2616,24 @@
       "Rating__c": 4.5,
       "Is_Travel__c": true,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Keratin;Panthenol;Argan Oil;Jojoba Oil"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "LeaveInConditioner" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "LeaveInConditioner"
+      },
       "Name": "Detangling Leave-In Conditioner",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 28.00,
+      "Price__c": 28,
       "Description__c": "Lightweight leave-in conditioner that detangles, moisturizes, and protects.",
       "Image_URL__c": "/assets/products/leave-in-conditioner.png",
       "Skin_Types__c": "",
@@ -1589,14 +2641,24 @@
       "Rating__c": 4.7,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Argan Oil;Keratin"
     },
     {
-      "attributes": { "type": "Product2", "referenceId": "ScalpTreatment" },
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "ScalpTreatment"
+      },
       "Name": "Scalp Revitalizing Treatment",
       "Brand__c": "MAISON",
       "Category__c": "Conditioner",
-      "Price__c": 45.00,
+      "Price__c": 45,
       "Description__c": "Targeted scalp treatment with salicylic acid and tea tree that exfoliates buildup.",
       "Image_URL__c": "/assets/products/scalp-treatment.png",
       "Skin_Types__c": "",
@@ -1604,7 +2666,589 @@
       "Rating__c": 4.6,
       "Is_Travel__c": false,
       "In_Stock__c": true,
-      "IsActive": true
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Salicylic Acid;Tea Tree Oil"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FFMoisturizerDaily"
+      },
+      "Name": "Pure Comfort Daily Moisturizer",
+      "Brand__c": "SERENE",
+      "Category__c": "Moisturizer",
+      "Price__c": 52,
+      "Description__c": "100% fragrance-free daily moisturizer for extremely sensitive and reactive skin. Formulated without any perfumes or masking agents.",
+      "Image_URL__c": "/assets/products/ff-moisturizer-daily.png",
+      "Skin_Types__c": "Sensitive;Dry;Normal",
+      "Concerns__c": "fragrance sensitivity;reactive skin;minimal ingredients",
+      "Rating__c": 4.9,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Ceramides;Squalane;Glycerin"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FFCleanserMild"
+      },
+      "Name": "Zero Fragrance Gentle Cleanser",
+      "Brand__c": "SERENE",
+      "Category__c": "Cleanser",
+      "Price__c": 32,
+      "Description__c": "Ultra-mild cleanser with absolutely no fragrance. Perfect for those with fragrance allergies or sensitivities.",
+      "Image_URL__c": "/assets/products/ff-cleanser-mild.png",
+      "Skin_Types__c": "Sensitive;Normal;Dry;Combination",
+      "Concerns__c": "fragrance sensitivity;allergies;gentle cleansing",
+      "Rating__c": 4.8,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Aloe Vera;Chamomile"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FFSunscreenSensitive"
+      },
+      "Name": "Pure Protect Mineral Sunscreen SPF 50",
+      "Brand__c": "SERENE",
+      "Category__c": "Sunscreen",
+      "Price__c": 42,
+      "Description__c": "Fragrance-free mineral sunscreen with zinc oxide only. Designed for the most sensitive skin types including babies.",
+      "Image_URL__c": "/assets/products/ff-sunscreen-sensitive.png",
+      "Skin_Types__c": "Sensitive;Normal;Dry",
+      "Concerns__c": "fragrance sensitivity;baby-safe;mineral protection",
+      "Rating__c": 4.7,
+      "Is_Travel__c": true,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc Oxide;Vitamin E;Aloe Vera"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "VeganFoundation"
+      },
+      "Name": "Plant Power Serum Foundation",
+      "Brand__c": "LUMIERE",
+      "Category__c": "Foundation",
+      "Price__c": 48,
+      "Description__c": "100% vegan and plant-derived serum foundation. No animal-derived ingredients or byproducts. Buildable medium coverage.",
+      "Image_URL__c": "/assets/products/vegan-foundation.png",
+      "Skin_Types__c": "Normal;Combination;Dry",
+      "Concerns__c": "vegan;plant-based;ethical beauty",
+      "Rating__c": 4.7,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Plant Squalane;Vitamin E;Jojoba Oil"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "VeganMascara"
+      },
+      "Name": "Lash Love Vegan Mascara",
+      "Brand__c": "LUMIERE",
+      "Category__c": "Mascara",
+      "Price__c": 26,
+      "Description__c": "Vegan mascara made without beeswax or carmine. Uses plant-based waxes for volume and length.",
+      "Image_URL__c": "/assets/products/vegan-mascara.png",
+      "Skin_Types__c": "",
+      "Concerns__c": "vegan;no beeswax;plant-based",
+      "Rating__c": 4.6,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Candelilla Wax;Rice Bran Wax;Vitamin E"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "VeganLipstick"
+      },
+      "Name": "Botanical Lip Color",
+      "Brand__c": "LUMIERE",
+      "Category__c": "Lipstick",
+      "Price__c": 32,
+      "Description__c": "100% vegan lipstick colored with mineral pigments and fruit extracts. No carmine or animal-derived ingredients.",
+      "Image_URL__c": "/assets/products/vegan-lipstick.png",
+      "Skin_Types__c": "",
+      "Concerns__c": "vegan;no carmine;plant-based",
+      "Rating__c": 4.8,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": false,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Shea Butter;Coconut Oil;Fruit Extracts"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "VeganBlush"
+      },
+      "Name": "Garden Glow Vegan Blush",
+      "Brand__c": "LUMIERE",
+      "Category__c": "Blush",
+      "Price__c": 34,
+      "Description__c": "Plant-based cream blush made entirely from vegan ingredients. Natural flush from botanical extracts.",
+      "Image_URL__c": "/assets/products/vegan-blush.png",
+      "Skin_Types__c": "",
+      "Concerns__c": "vegan;plant-based;natural color",
+      "Rating__c": 4.7,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": false,
+      "Key_Ingredients__c": "Jojoba Oil;Plant Pigments;Vitamin E"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HypoMoisturizer"
+      },
+      "Name": "Eczema Relief Moisturizing Cream",
+      "Brand__c": "DERMAFIX",
+      "Category__c": "Moisturizer",
+      "Price__c": 45,
+      "Description__c": "Hypoallergenic moisturizer specifically formulated for eczema-prone skin. Dermatologist tested and approved.",
+      "Image_URL__c": "/assets/products/hypo-moisturizer.png",
+      "Skin_Types__c": "Sensitive;Dry",
+      "Concerns__c": "eczema;extremely sensitive;barrier repair",
+      "Rating__c": 4.9,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Colloidal Oatmeal;Ceramides;Shea Butter"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HypoCleanser"
+      },
+      "Name": "Ultra-Gentle Hypoallergenic Cleanser",
+      "Brand__c": "DERMAFIX",
+      "Category__c": "Cleanser",
+      "Price__c": 28,
+      "Description__c": "Minimal ingredient cleanser for highly reactive and allergy-prone skin. Contains only 6 essential ingredients.",
+      "Image_URL__c": "/assets/products/hypo-cleanser.png",
+      "Skin_Types__c": "Sensitive;Normal;Dry",
+      "Concerns__c": "allergies;minimal ingredients;reactive skin",
+      "Rating__c": 4.8,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Water;Aloe Vera"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "HypoSerum"
+      },
+      "Name": "Allergy-Safe Hydrating Serum",
+      "Brand__c": "DERMAFIX",
+      "Category__c": "Serum",
+      "Price__c": 52,
+      "Description__c": "Hypoallergenic serum tested on 500+ allergy-prone individuals. Zero common allergens formula.",
+      "Image_URL__c": "/assets/products/hypo-serum.png",
+      "Skin_Types__c": "Sensitive;Normal;Dry;Combination",
+      "Concerns__c": "allergies;zero allergens;hydration",
+      "Rating__c": 4.7,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Hyaluronic Acid;Glycerin;Panthenol"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanSerumAntiAge"
+      },
+      "Name": "Clean Age-Defying Serum",
+      "Brand__c": "LUMIERE",
+      "Category__c": "Serum",
+      "Price__c": 75,
+      "Description__c": "Clean beauty anti-aging serum. Free from parabens, sulfates, phthalates, and synthetic fragrances.",
+      "Image_URL__c": "/assets/products/clean-serum-antiage.png",
+      "Skin_Types__c": "Normal;Dry;Combination",
+      "Concerns__c": "clean beauty;anti-aging;no parabens",
+      "Rating__c": 4.8,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": false,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Bakuchiol;Vitamin C;Peptides"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanMoisturizerDaily"
+      },
+      "Name": "Clean Slate Daily Moisturizer",
+      "Brand__c": "SERENE",
+      "Category__c": "Moisturizer",
+      "Price__c": 48,
+      "Description__c": "Clean formula moisturizer with only naturally-derived preservatives. No synthetic chemicals.",
+      "Image_URL__c": "/assets/products/clean-moisturizer-daily.png",
+      "Skin_Types__c": "Normal;Combination;Dry",
+      "Concerns__c": "clean beauty;natural preservatives;no synthetics",
+      "Rating__c": 4.6,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Aloe Vera;Jojoba Oil;Vitamin E"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "PregSafeMoisturizer"
+      },
+      "Name": "Expecting Glow Moisturizer",
+      "Brand__c": "SERENE",
+      "Category__c": "Moisturizer",
+      "Price__c": 55,
+      "Description__c": "Pregnancy-safe moisturizer free from retinoids, salicylic acid, and other ingredients to avoid during pregnancy.",
+      "Image_URL__c": "/assets/products/preg-safe-moisturizer.png",
+      "Skin_Types__c": "Normal;Dry;Combination;Sensitive",
+      "Concerns__c": "pregnancy-safe;retinoid-free;gentle",
+      "Rating__c": 4.9,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Hyaluronic Acid;Vitamin E;Shea Butter"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "PregSafeSunscreen"
+      },
+      "Name": "Mama Shield Mineral SPF 40",
+      "Brand__c": "SERENE",
+      "Category__c": "Sunscreen",
+      "Price__c": 38,
+      "Description__c": "Pregnancy-safe mineral sunscreen using only zinc oxide. No chemical filters or retinyl palmitate.",
+      "Image_URL__c": "/assets/products/preg-safe-sunscreen.png",
+      "Skin_Types__c": "Normal;Sensitive;Dry;Combination",
+      "Concerns__c": "pregnancy-safe;mineral-only;gentle",
+      "Rating__c": 4.8,
+      "Is_Travel__c": true,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Zinc Oxide;Vitamin E;Aloe Vera"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "PregSafeSerum"
+      },
+      "Name": "Bump-Safe Brightening Serum",
+      "Brand__c": "LUMIERE",
+      "Category__c": "Serum",
+      "Price__c": 62,
+      "Description__c": "Pregnancy-safe brightening serum using azelaic acid and vitamin C instead of retinoids or hydroquinone.",
+      "Image_URL__c": "/assets/products/preg-safe-serum.png",
+      "Skin_Types__c": "Normal;Combination;Dry",
+      "Concerns__c": "pregnancy-safe;brightening;melasma",
+      "Rating__c": 4.7,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Azelaic Acid;Vitamin C;Niacinamide"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FFShampooSensitive"
+      },
+      "Name": "Scalp Comfort Fragrance-Free Shampoo",
+      "Brand__c": "MAISON",
+      "Category__c": "Shampoo",
+      "Price__c": 28,
+      "Description__c": "Fragrance-free shampoo for sensitive scalps. No perfumes, dyes, or irritating sulfates.",
+      "Image_URL__c": "/assets/products/ff-shampoo-sensitive.png",
+      "Skin_Types__c": "",
+      "Concerns__c": "sensitive scalp;fragrance-free;gentle",
+      "Rating__c": 4.7,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Aloe Vera;Chamomile;Glycerin"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FFConditionerSensitive"
+      },
+      "Name": "Scalp Comfort Fragrance-Free Conditioner",
+      "Brand__c": "MAISON",
+      "Category__c": "Conditioner",
+      "Price__c": 30,
+      "Description__c": "Fragrance-free conditioner for sensitive scalps. Gentle formula that won't irritate.",
+      "Image_URL__c": "/assets/products/ff-conditioner-sensitive.png",
+      "Skin_Types__c": "",
+      "Concerns__c": "sensitive scalp;fragrance-free;gentle",
+      "Rating__c": 4.6,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Argan Oil;Aloe Vera;Panthenol"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "DermRecMoisturizer"
+      },
+      "Name": "Clinician's Choice Barrier Cream",
+      "Brand__c": "DERMAFIX",
+      "Category__c": "Moisturizer",
+      "Price__c": 58,
+      "Description__c": "Dermatologist-developed moisturizer used in clinical settings. Hospital-grade formula for post-procedure care.",
+      "Image_URL__c": "/assets/products/derm-rec-moisturizer.png",
+      "Skin_Types__c": "Sensitive;Normal;Dry;Combination",
+      "Concerns__c": "post-procedure;clinical-grade;healing",
+      "Rating__c": 4.9,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": false,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Petrolatum;Ceramides;Panthenol"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "DermRecCleanser"
+      },
+      "Name": "Clinical Gentle Cleanser",
+      "Brand__c": "DERMAFIX",
+      "Category__c": "Cleanser",
+      "Price__c": 32,
+      "Description__c": "pH-balanced cleanser recommended by dermatologists for daily use on compromised skin.",
+      "Image_URL__c": "/assets/products/derm-rec-cleanser.png",
+      "Skin_Types__c": "Sensitive;Normal;Dry;Combination;Oily",
+      "Concerns__c": "pH-balanced;dermatologist recommended;gentle",
+      "Rating__c": 4.8,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Glycerin;Ceramides;Niacinamide"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "SensitiveEyeCream"
+      },
+      "Name": "Gentle Eyes Sensitive Eye Cream",
+      "Brand__c": "SERENE",
+      "Category__c": "Eye Care",
+      "Price__c": 48,
+      "Description__c": "Fragrance-free, hypoallergenic eye cream for sensitive eyes. Ophthalmologist tested.",
+      "Image_URL__c": "/assets/products/sensitive-eye-cream.png",
+      "Skin_Types__c": "Sensitive;Normal;Dry",
+      "Concerns__c": "sensitive eyes;ophthalmologist tested;gentle",
+      "Rating__c": 4.7,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Caffeine;Peptides;Vitamin K"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "VeganSerumHA"
+      },
+      "Name": "Plant-Pure Hyaluronic Serum",
+      "Brand__c": "LUMIERE",
+      "Category__c": "Serum",
+      "Price__c": 52,
+      "Description__c": "100% vegan hyaluronic acid serum. HA derived from plant fermentation, not animal sources.",
+      "Image_URL__c": "/assets/products/vegan-serum-ha.png",
+      "Skin_Types__c": "Normal;Dry;Combination;Sensitive",
+      "Concerns__c": "vegan;plant-derived;hydration",
+      "Rating__c": 4.8,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Vegan Hyaluronic Acid;Glycerin;Aloe Vera"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "FFTonerCalming"
+      },
+      "Name": "Pure Calm Fragrance-Free Toner",
+      "Brand__c": "SERENE",
+      "Category__c": "Toner",
+      "Price__c": 28,
+      "Description__c": "Zero fragrance toner that soothes and preps sensitive skin. Alcohol-free formula.",
+      "Image_URL__c": "/assets/products/ff-toner-calming.png",
+      "Skin_Types__c": "Sensitive;Normal;Dry;Combination",
+      "Concerns__c": "fragrance-free;alcohol-free;calming",
+      "Rating__c": 4.6,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Centella Asiatica;Aloe Vera;Panthenol"
+    },
+    {
+      "attributes": {
+        "type": "Product2",
+        "referenceId": "CleanMaskHydrating"
+      },
+      "Name": "Pure Glow Clean Beauty Mask",
+      "Brand__c": "SERENE",
+      "Category__c": "Mask",
+      "Price__c": 42,
+      "Description__c": "Clean beauty hydrating mask with only 10 ingredients. No synthetics, parabens, or fragrances.",
+      "Image_URL__c": "/assets/products/clean-mask-hydrating.png",
+      "Skin_Types__c": "Normal;Dry;Sensitive;Combination",
+      "Concerns__c": "clean beauty;minimal ingredients;hydration",
+      "Rating__c": 4.7,
+      "Is_Travel__c": false,
+      "In_Stock__c": true,
+      "IsActive": true,
+      "Is_Fragrance_Free__c": true,
+      "Is_Vegan__c": true,
+      "Is_Cruelty_Free__c": true,
+      "Is_Paraben_Free__c": true,
+      "Is_Hypoallergenic__c": true,
+      "Is_Dermatologist_Tested__c": true,
+      "Key_Ingredients__c": "Honey;Aloe Vera;Glycerin"
     }
   ]
 }
