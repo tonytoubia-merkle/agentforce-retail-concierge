@@ -4,12 +4,15 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 
+const API_BASE = 'http://localhost:3001';
+
 export const CheckoutPage: React.FC = () => {
   const { navigateToOrderConfirmation, goBack } = useStore();
   const { items, subtotal, clearCart } = useCart();
   const { customer } = useCustomer();
 
   const [step, setStep] = useState<'info' | 'shipping' | 'payment' | 'processing'>('info');
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: customer?.email || '',
     firstName: customer?.name?.split(' ')[0] || '',
@@ -27,6 +30,15 @@ export const CheckoutPage: React.FC = () => {
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
+  const fillTestCard = () => {
+    setFormData((prev) => ({
+      ...prev,
+      cardNumber: '4242 4242 4242 4242',
+      expiry: '12/28',
+      cvv: '123',
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (step === 'info') {
@@ -35,12 +47,56 @@ export const CheckoutPage: React.FC = () => {
       setStep('payment');
     } else if (step === 'payment') {
       setStep('processing');
-      // Simulate processing
-      setTimeout(() => {
-        const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
-        clearCart();
-        navigateToOrderConfirmation(orderId);
-      }, 2000);
+      setCheckoutError(null);
+
+      const useMock = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
+      if (useMock) {
+        setTimeout(() => {
+          const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
+          clearCart();
+          navigateToOrderConfirmation(orderId);
+        }, 2000);
+        return;
+      }
+
+      // Real Salesforce checkout
+      const last4 = formData.cardNumber.replace(/\s/g, '').slice(-4);
+      const paymentMethod = `Visa ending in ${last4}`;
+      const payload = {
+        contactId: customer?.id || undefined,
+        items: items.map((item) => ({
+          product2Id: item.product.id,
+          productName: item.product.name,
+          quantity: item.quantity,
+          unitPrice: item.product.price,
+        })),
+        paymentMethod,
+        subtotal,
+        shipping,
+        tax,
+        total,
+      };
+
+      fetch(`${API_BASE}/api/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.success) {
+            clearCart();
+            navigateToOrderConfirmation(result.orderNumber || result.orderId, result);
+          } else {
+            setCheckoutError(result.error || 'Checkout failed');
+            setStep('payment');
+          }
+        })
+        .catch((err) => {
+          console.error('[checkout] Error:', err);
+          setCheckoutError(err.message || 'Network error');
+          setStep('payment');
+        });
     }
   };
 
@@ -250,7 +306,21 @@ export const CheckoutPage: React.FC = () => {
 
                   {step === 'payment' && (
                     <>
-                      <h2 className="text-lg font-medium text-stone-900 mb-6">Payment Method</h2>
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-medium text-stone-900">Payment Method</h2>
+                        <button
+                          type="button"
+                          onClick={fillTestCard}
+                          className="px-3 py-1.5 text-xs font-medium bg-amber-100 text-amber-800 rounded-full hover:bg-amber-200 transition-colors"
+                        >
+                          Use Test Card
+                        </button>
+                      </div>
+                      {checkoutError && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                          {checkoutError}
+                        </div>
+                      )}
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-stone-700 mb-1">

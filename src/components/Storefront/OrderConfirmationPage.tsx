@@ -1,19 +1,39 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
+
+const API_BASE = 'http://localhost:3001';
 
 interface OrderConfirmationPageProps {
   onBeautyAdvisor: () => void;
 }
 
 export const OrderConfirmationPage: React.FC<OrderConfirmationPageProps> = ({ onBeautyAdvisor }) => {
-  const { lastOrderId, navigateHome } = useStore();
+  const { lastOrderId, lastOrderResult, navigateHome } = useStore();
   const { customer } = useCustomer();
+  const [shipmentStatus, setShipmentStatus] = useState(lastOrderResult?.shippingStatus || 'Processing');
+  const [simulating, setSimulating] = useState(false);
 
-  const estimatedDelivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString(
-    'en-US',
-    { weekday: 'long', month: 'long', day: 'numeric' }
-  );
+  const estimatedDelivery = lastOrderResult?.estimatedDelivery
+    ? new Date(lastOrderResult.estimatedDelivery + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+    : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const simulateShipment = (newStatus: string) => {
+    if (!lastOrderResult?.orderId) return;
+    setSimulating(true);
+    fetch(`${API_BASE}/api/order/simulate-shipment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: lastOrderResult.orderId, newStatus }),
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success) setShipmentStatus(newStatus);
+      })
+      .catch((err) => console.error('[simulate-shipment]', err))
+      .finally(() => setSimulating(false));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 to-rose-50 flex items-center justify-center py-12">
@@ -48,16 +68,61 @@ export const OrderConfirmationPage: React.FC<OrderConfirmationPageProps> = ({ on
             </p>
 
             {/* Order details */}
-            <div className="bg-stone-50 rounded-2xl p-4 mb-6 text-left">
-              <div className="flex justify-between items-center mb-2">
+            <div className="bg-stone-50 rounded-2xl p-4 mb-6 text-left space-y-2">
+              <div className="flex justify-between items-center">
                 <span className="text-sm text-stone-500">Order Number</span>
-                <span className="text-sm font-medium text-stone-900">{lastOrderId}</span>
+                <span className="text-sm font-medium text-stone-900">{lastOrderResult?.orderNumber || lastOrderId}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-stone-500">Estimated Delivery</span>
                 <span className="text-sm font-medium text-stone-900">{estimatedDelivery}</span>
               </div>
+              {lastOrderResult?.trackingNumber && (
+                <>
+                  <div className="border-t border-stone-200 my-2" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-stone-500">Carrier</span>
+                    <span className="text-sm font-medium text-stone-900">{lastOrderResult.carrier}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-stone-500">Tracking #</span>
+                    <span className="text-sm font-mono font-medium text-stone-900">{lastOrderResult.trackingNumber}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-stone-500">Status</span>
+                    <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+                      shipmentStatus === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                      shipmentStatus === 'Shipped' ? 'bg-blue-100 text-blue-700' :
+                      'bg-amber-100 text-amber-700'
+                    }`}>{shipmentStatus}</span>
+                  </div>
+                </>
+              )}
             </div>
+
+            {/* Simulate shipment buttons (demo only) */}
+            {lastOrderResult?.orderId && shipmentStatus !== 'Delivered' && (
+              <div className="flex gap-2 mb-6">
+                {shipmentStatus === 'Processing' && (
+                  <button
+                    onClick={() => simulateShipment('Shipped')}
+                    disabled={simulating}
+                    className="flex-1 px-3 py-2 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-50"
+                  >
+                    Simulate: Mark Shipped
+                  </button>
+                )}
+                {(shipmentStatus === 'Processing' || shipmentStatus === 'Shipped') && (
+                  <button
+                    onClick={() => simulateShipment('Delivered')}
+                    disabled={simulating}
+                    className="flex-1 px-3 py-2 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                  >
+                    Simulate: Mark Delivered
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Confirmation email note */}
             <p className="text-sm text-stone-500 mb-8">
@@ -86,8 +151,8 @@ export const OrderConfirmationPage: React.FC<OrderConfirmationPageProps> = ({ on
           </motion.div>
         </div>
 
-        {/* Loyalty points earned (if applicable) */}
-        {customer?.loyalty && (
+        {/* Loyalty points earned */}
+        {(lastOrderResult?.pointsEarned ?? (customer?.loyalty ? 50 : 0)) > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -95,8 +160,8 @@ export const OrderConfirmationPage: React.FC<OrderConfirmationPageProps> = ({ on
             className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 text-center"
           >
             <p className="text-sm text-amber-800">
-              <span className="font-semibold">+50 points</span> added to your{' '}
-              <span className="capitalize">{customer.loyalty.tier}</span> rewards account!
+              <span className="font-semibold">+{lastOrderResult?.pointsEarned || 50} points</span> added to your{' '}
+              <span className="capitalize">{customer?.loyalty?.tier || ''}</span> rewards account!
             </p>
           </motion.div>
         )}

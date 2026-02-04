@@ -59,11 +59,19 @@ export interface OrderLineItem {
 
 export interface OrderRecord {
   orderId: string;
+  orderNumber?: string;
   orderDate: string;
   channel: 'online' | 'in-store' | 'mobile-app';
   lineItems: OrderLineItem[];
   totalAmount: number;
   status: 'completed' | 'shipped' | 'returned';
+  trackingNumber?: string;
+  carrier?: string;
+  shippingStatus?: string;
+  estimatedDelivery?: string;
+  shippedDate?: string;
+  deliveredDate?: string;
+  paymentMethod?: string;
 }
 
 // ─── Summarized Chat Context (Agent-generated) ──────────────────

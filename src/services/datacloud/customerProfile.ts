@@ -211,7 +211,7 @@ export class DataCloudCustomerService {
 
   async getCustomerOrders(customerId: string): Promise<OrderRecord[]> {
     const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,OrderNumber,EffectiveDate,Status,TotalAmount,Channel__c+FROM+Order+WHERE+AccountId+IN+(SELECT+AccountId+FROM+Contact+WHERE+Id='${customerId}')+ORDER+BY+EffectiveDate+DESC+LIMIT+10`
+      `/services/data/v60.0/query/?q=SELECT+Id,OrderNumber,EffectiveDate,Status,TotalAmount,Channel__c,Tracking_Number__c,Carrier__c,Shipping_Status__c,Estimated_Delivery__c,Shipped_Date__c,Delivered_Date__c,Payment_Method__c+FROM+Order+WHERE+AccountId+IN+(SELECT+AccountId+FROM+Contact+WHERE+Id='${customerId}')+ORDER+BY+EffectiveDate+DESC+LIMIT+10`
     );
 
     const orders: OrderRecord[] = [];
@@ -234,11 +234,19 @@ export class DataCloudCustomerService {
 
       orders.push({
         orderId: record.OrderNumber || record.Id,
+        orderNumber: record.OrderNumber,
         orderDate: record.EffectiveDate,
         channel: record.Channel__c || 'online',
         lineItems,
         totalAmount: record.TotalAmount || 0,
         status: record.Status === 'Activated' ? 'completed' : (record.Status?.toLowerCase() as any) || 'completed',
+        trackingNumber: record.Tracking_Number__c || undefined,
+        carrier: record.Carrier__c || undefined,
+        shippingStatus: record.Shipping_Status__c || undefined,
+        estimatedDelivery: record.Estimated_Delivery__c || undefined,
+        shippedDate: record.Shipped_Date__c || undefined,
+        deliveredDate: record.Delivered_Date__c || undefined,
+        paymentMethod: record.Payment_Method__c || undefined,
       });
     }
 

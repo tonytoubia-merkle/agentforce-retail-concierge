@@ -3,18 +3,30 @@ import type { Product, ProductCategory } from '@/types/product';
 
 export type StoreView = 'home' | 'category' | 'product' | 'cart' | 'checkout' | 'order-confirmation';
 
+export interface OrderResult {
+  success: boolean;
+  orderId: string;
+  orderNumber: string;
+  trackingNumber: string;
+  carrier: string;
+  estimatedDelivery: string;
+  shippingStatus: string;
+  pointsEarned: number;
+}
+
 interface StoreContextValue {
   view: StoreView;
   selectedCategory: ProductCategory | null;
   selectedProduct: Product | null;
   searchQuery: string;
   lastOrderId: string | null;
+  lastOrderResult: OrderResult | null;
   navigateHome: () => void;
   navigateToCategory: (category: ProductCategory) => void;
   navigateToProduct: (product: Product) => void;
   navigateToCart: () => void;
   navigateToCheckout: () => void;
-  navigateToOrderConfirmation: (orderId: string) => void;
+  navigateToOrderConfirmation: (orderId: string, result?: OrderResult) => void;
   setSearchQuery: (query: string) => void;
   goBack: () => void;
 }
@@ -27,6 +39,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [lastOrderId, setLastOrderId] = useState<string | null>(null);
+  const [lastOrderResult, setLastOrderResult] = useState<OrderResult | null>(null);
   const [history, setHistory] = useState<StoreView[]>(['home']);
 
   const pushView = useCallback((newView: StoreView) => {
@@ -61,8 +74,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     pushView('checkout');
   }, [pushView]);
 
-  const navigateToOrderConfirmation = useCallback((orderId: string) => {
+  const navigateToOrderConfirmation = useCallback((orderId: string, result?: OrderResult) => {
     setLastOrderId(orderId);
+    setLastOrderResult(result || null);
     setHistory(['home', 'order-confirmation']);
     setView('order-confirmation');
   }, []);
@@ -90,6 +104,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         selectedProduct,
         searchQuery,
         lastOrderId,
+        lastOrderResult,
         navigateHome,
         navigateToCategory,
         navigateToProduct,

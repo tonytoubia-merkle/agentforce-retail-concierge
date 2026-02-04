@@ -375,6 +375,24 @@ async function seedPersona(token, persona, productMap) {
       const activated = await sfUpdate(token, 'Order', orderId, { Status: 'Activated' });
       if (activated) {
         console.log(`    ✓ Order ${order.id} activated`);
+
+        // Add tracking/shipping data for past orders
+        const carriers = ['UPS', 'FedEx', 'USPS'];
+        const carrier = carriers[Math.floor(Math.random() * carriers.length)];
+        const trackingNumber = `1Z${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
+        const orderDate = new Date(order.date);
+        const shippedDate = new Date(orderDate.getTime() + 2 * 86400000).toISOString().split('T')[0];
+        const deliveredDate = new Date(orderDate.getTime() + 5 * 86400000).toISOString().split('T')[0];
+
+        await sfUpdate(token, 'Order', orderId, {
+          Tracking_Number__c: trackingNumber,
+          Carrier__c: carrier,
+          Shipping_Status__c: 'Delivered',
+          Shipped_Date__c: shippedDate,
+          Delivered_Date__c: deliveredDate,
+          Estimated_Delivery__c: deliveredDate,
+          Payment_Method__c: 'Visa ending in 4242',
+        });
       }
     }
   }
