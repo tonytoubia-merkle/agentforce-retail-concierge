@@ -207,6 +207,72 @@ export class DataCloudCustomerService {
     };
   }
 
+  // ─── Lookup by Contact ID ──────────────────────────────────────
+
+  async getCustomerProfileById(contactId: string): Promise<CustomerProfile> {
+    const contactData = await this.fetchJson(
+      `/services/data/v60.0/query/?q=SELECT+Id,FirstName,LastName,Email,Merkury_Id__c,Skin_Type__c,Skin_Concerns__c,Allergies__c,Preferred_Brands__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry+FROM+Contact+WHERE+Id='${contactId}'+LIMIT+1`
+    );
+
+    const records = contactData.records || [];
+    if (records.length === 0) {
+      throw new Error(`No Contact found with Id = ${contactId}`);
+    }
+    const raw = records[0];
+
+    const parseSemicolon = (val: string | null | undefined): string[] =>
+      val ? val.split(';').map((s: string) => s.trim()).filter(Boolean) : [];
+
+    const [orders, chatSummaries, meaningfulEvents, browseSessions, loyalty, agentCapturedProfile] =
+      await Promise.all([
+        this.getCustomerOrders(contactId).catch(() => [] as OrderRecord[]),
+        this.getCustomerChatSummaries(contactId).catch(() => [] as ChatSummary[]),
+        this.getCustomerMeaningfulEvents(contactId).catch(() => [] as MeaningfulEvent[]),
+        this.getCustomerBrowseSessions(contactId).catch(() => [] as BrowseSession[]),
+        this.getCustomerLoyalty(contactId).catch(() => null),
+        this.getCustomerCapturedProfile(contactId).catch(() => undefined),
+      ]);
+
+    return {
+      id: contactId,
+      name: raw.FirstName || 'Guest',
+      email: raw.Email || '',
+      beautyProfile: {
+        skinType: (raw.Skin_Type__c || 'normal').toLowerCase(),
+        concerns: parseSemicolon(raw.Skin_Concerns__c),
+        allergies: parseSemicolon(raw.Allergies__c),
+        preferredBrands: parseSemicolon(raw.Preferred_Brands__c),
+        ageRange: '',
+      },
+      orders,
+      chatSummaries,
+      meaningfulEvents,
+      browseSessions,
+      loyalty,
+      agentCapturedProfile,
+      merkuryIdentity: raw.Merkury_Id__c ? {
+        merkuryId: raw.Merkury_Id__c,
+        identityTier: 'known' as const,
+        confidence: 1.0,
+        resolvedAt: new Date().toISOString(),
+      } : undefined,
+      appendedProfile: undefined,
+      purchaseHistory: [],
+      savedPaymentMethods: [],
+      shippingAddresses: raw.MailingStreet ? [{
+        id: 'primary',
+        name: `${raw.FirstName} ${raw.LastName}`,
+        line1: raw.MailingStreet,
+        city: raw.MailingCity || '',
+        state: raw.MailingState || '',
+        postalCode: raw.MailingPostalCode || '',
+        country: raw.MailingCountry || '',
+        isDefault: true,
+      }] : [],
+      travelPreferences: undefined,
+    };
+  }
+
   // ─── Sub-queries ────────────────────────────────────────────────
 
   async getCustomerOrders(customerId: string): Promise<OrderRecord[]> {

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/metadataApi">
+    <fullName>Merkury_Id__c</fullName>
+    <label>Merkury ID</label>
+    <type>Text</type>
+    <length>50</length>
+    <unique>true</unique>
+    <externalId>true</externalId>
+    <required>false</required>
+    <caseSensitive>true</caseSensitive>
+    <description>Merkury identity graph ID for cross-device resolution.</description>
+</CustomField>

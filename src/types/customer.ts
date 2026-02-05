@@ -48,6 +48,16 @@ export interface AppendedProfile {
   geoRegion?: string;
 }
 
+// ─── Demo Contact (lightweight CRM record) ─────────────────────
+export interface DemoContact {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  demoProfile: 'Seeded' | 'Merkury' | 'Created';
+  merkuryId: string | null;
+}
+
 // ─── Purchase Data (Order-level) ────────────────────────────────
 export interface OrderLineItem {
   productId: string;

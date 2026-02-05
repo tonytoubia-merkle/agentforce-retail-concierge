@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/metadataApi">
+    <fullName>Demo_Profile__c</fullName>
+    <label>Demo Profile</label>
+    <type>Text</type>
+    <length>50</length>
+    <required>false</required>
+    <description>Categorizes contacts for demo purposes. Values: Seeded (rich history), Merkury (3P identity only), Created (registered during demo).</description>
+</CustomField>

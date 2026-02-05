@@ -3,16 +3,24 @@ import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 
 const API_BASE = 'http://localhost:3001';
 
 export const CheckoutPage: React.FC = () => {
   const { navigateToOrderConfirmation, goBack } = useStore();
   const { items, subtotal, clearCart } = useCart();
-  const { customer, isAuthenticated, signIn } = useCustomer();
+  const { customer, isAuthenticated, signIn, createGuestContact } = useCustomer();
 
   const [step, setStep] = useState<'info' | 'shipping' | 'payment' | 'processing'>('info');
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [guestMode, setGuestMode] = useState(false);
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestFirstName, setGuestFirstName] = useState('');
+  const [guestLastName, setGuestLastName] = useState('');
+  const [guestLoading, setGuestLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: customer?.email || '',
     firstName: customer?.name?.split(' ')[0] || '',
@@ -123,8 +131,31 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated) {
+  const handleGuestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGuestLoading(true);
+    try {
+      await createGuestContact({
+        email: guestEmail,
+        firstName: guestFirstName,
+        lastName: guestLastName,
+      });
+      setFormData((prev) => ({
+        ...prev,
+        email: guestEmail,
+        firstName: guestFirstName,
+        lastName: guestLastName,
+      }));
+      setGuestMode(true);
+      setShowGuestForm(false);
+    } finally {
+      setGuestLoading(false);
+    }
+  };
+
+  if (!isAuthenticated && !guestMode) {
     return (
+      <>
       <div className="min-h-screen bg-stone-50 flex items-center justify-center py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -138,26 +169,106 @@ export const CheckoutPage: React.FC = () => {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-stone-900 mb-2">
-              {isKnown && firstName ? `Almost there, ${firstName}!` : 'Sign in to checkout'}
+              {isKnown && firstName ? `Almost there, ${firstName}!` : 'How would you like to checkout?'}
             </h2>
             <p className="text-stone-500 mb-6">
-              Sign in to complete your purchase and earn rewards.
+              {isKnown && firstName
+                ? 'Sign in to earn rewards, or continue as a guest.'
+                : 'Sign in, create an account, or checkout as a guest.'}
             </p>
+
+            {/* Option 1: Sign In */}
             <button
               onClick={signIn}
               className="w-full px-6 py-3 bg-stone-900 text-white font-medium rounded-full hover:bg-stone-800 transition-colors mb-3"
             >
               Sign In
             </button>
+
+            {/* Option 2: Create Account */}
             <button
-              onClick={goBack}
-              className="text-sm text-stone-500 hover:text-stone-700 transition-colors"
+              onClick={() => setShowCreateAccount(true)}
+              className="w-full px-6 py-3 border border-stone-300 text-stone-700 font-medium rounded-full hover:bg-stone-50 transition-colors mb-3"
             >
-              Back to cart
+              Create Account
             </button>
+
+            {/* Option 3: Guest Checkout */}
+            {!showGuestForm ? (
+              <button
+                onClick={() => setShowGuestForm(true)}
+                className="text-sm text-stone-500 hover:text-stone-700 transition-colors"
+              >
+                Continue as Guest
+              </button>
+            ) : (
+              <motion.form
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                onSubmit={handleGuestSubmit}
+                className="mt-4 pt-4 border-t border-stone-100 text-left space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-medium text-stone-600 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    required
+                    placeholder="your@email.com"
+                    className="w-full px-3 py-2 text-sm border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-stone-600 mb-1">First Name</label>
+                    <input
+                      type="text"
+                      value={guestFirstName}
+                      onChange={(e) => setGuestFirstName(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-stone-600 mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      value={guestLastName}
+                      onChange={(e) => setGuestLastName(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 text-sm border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={guestLoading}
+                  className="w-full px-4 py-2.5 text-sm bg-stone-700 text-white font-medium rounded-full hover:bg-stone-600 transition-colors disabled:opacity-50"
+                >
+                  {guestLoading ? 'Setting up...' : 'Continue to Checkout'}
+                </button>
+              </motion.form>
+            )}
+
+            <div className="mt-4">
+              <button
+                onClick={goBack}
+                className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
+              >
+                Back to cart
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
+
+      {/* Create Account → Merkury Picker */}
+      <MerkuryProfilePicker
+        isOpen={showCreateAccount}
+        onClose={() => setShowCreateAccount(false)}
+      />
+      </>
     );
   }
 

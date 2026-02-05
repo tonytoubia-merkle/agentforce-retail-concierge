@@ -913,6 +913,131 @@ const server = http.createServer((req, res) => {
     });
   }
 
+  // --- GET /api/demo/contacts — List demo contacts from CRM ---
+  if (req.url.startsWith('/api/demo/contacts') && req.method === 'GET') {
+    withServerToken(req.headers.authorization, (token) => {
+      if (!token) {
+        const json = JSON.stringify({ contacts: [] });
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+        res.end(json);
+        return;
+      }
+      (async () => {
+        try {
+          const soql = "SELECT Id, FirstName, LastName, Email, Demo_Profile__c, Merkury_Id__c FROM Contact WHERE Demo_Profile__c != null ORDER BY Demo_Profile__c, LastName";
+          const result = await sfFetch(token, 'GET', `/services/data/v60.0/query?q=${encodeURIComponent(soql)}`);
+          const contacts = (result.data?.records || []).map(r => ({
+            id: r.Id,
+            firstName: r.FirstName,
+            lastName: r.LastName,
+            email: r.Email,
+            demoProfile: r.Demo_Profile__c,
+            merkuryId: r.Merkury_Id__c || null,
+          }));
+          const json = JSON.stringify({ contacts });
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+          res.end(json);
+        } catch (err) {
+          console.error('[demo/contacts] Error:', err);
+          const json = JSON.stringify({ contacts: [], error: err.message });
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+          res.end(json);
+        }
+      })();
+    });
+    return;
+  }
+
+  // --- POST /api/contacts — Create Account + Contact in CRM ---
+  if (req.url === '/api/contacts' && req.method === 'POST') {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      try {
+        const body = JSON.parse(Buffer.concat(chunks).toString());
+        const { firstName, lastName, email, merkuryId, demoProfile, leadSource, beautyFields } = body;
+
+        if (!email) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Missing email' }));
+          return;
+        }
+
+        withServerToken(req.headers.authorization, (token) => {
+          if (!token) {
+            res.writeHead(401, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: 'Unauthorized' }));
+            return;
+          }
+
+          (async () => {
+            try {
+              // Check if contact already exists
+              const existingQ = await sfFetch(token, 'GET',
+                `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, AccountId FROM Contact WHERE Email = '${email.replace(/'/g, "\\'")}' LIMIT 1`)}`);
+              const existing = existingQ.data?.records?.[0];
+
+              if (existing) {
+                // Return existing contact
+                const json = JSON.stringify({ success: true, contactId: existing.Id, accountId: existing.AccountId, existing: true });
+                res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+                res.end(json);
+                return;
+              }
+
+              // 1. Create Account
+              const fName = firstName || email.split('@')[0];
+              const lName = lastName || 'Customer';
+              const accountRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/Account', {
+                Name: `${fName} ${lName} Household`,
+              });
+              const accountId = accountRes.data?.id;
+              if (!accountId) {
+                res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: 'Failed to create Account', details: accountRes.data }));
+                return;
+              }
+
+              // 2. Create Contact
+              const contactFields = {
+                FirstName: fName,
+                LastName: lName,
+                Email: email,
+                AccountId: accountId,
+                Demo_Profile__c: demoProfile || 'Created',
+                LeadSource: leadSource || 'Web',
+                ...(merkuryId && { Merkury_Id__c: merkuryId }),
+                ...(beautyFields || {}),
+              };
+              const contactRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/Contact', contactFields);
+              const contactId = contactRes.data?.id;
+              if (!contactId) {
+                res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: 'Failed to create Contact', details: contactRes.data }));
+                return;
+              }
+
+              console.log(`[contacts] Created Account ${accountId} + Contact ${contactId} for ${email}`);
+              const json = JSON.stringify({ success: true, contactId, accountId });
+              res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+              res.end(json);
+            } catch (err) {
+              console.error('[contacts] Error:', err);
+              if (!res.headersSent) {
+                res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+                res.end(JSON.stringify({ error: err.message || 'Contact creation failed' }));
+              }
+            }
+          })();
+        });
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Invalid request body' }));
+      }
+    });
+    return;
+  }
+
   // --- POST /api/checkout — Create real Salesforce Order with OrderItems ---
   if (req.url === '/api/checkout' && req.method === 'POST') {
     const chunks = [];

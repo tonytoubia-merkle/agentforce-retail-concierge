@@ -7,6 +7,7 @@ import { ProductDetailPage } from './ProductDetailPage';
 import { CartPage } from './CartPage';
 import { CheckoutPage } from './CheckoutPage';
 import { OrderConfirmationPage } from './OrderConfirmationPage';
+import { EmailSignup } from './EmailSignup';
 import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import type { Product, ProductCategory } from '@/types/product';
@@ -208,6 +209,9 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
                 />
               </div>
             )}
+
+            {/* Email Signup */}
+            <EmailSignup />
 
             {/* Footer */}
             <footer className="bg-stone-900 text-white py-16">

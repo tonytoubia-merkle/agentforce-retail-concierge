@@ -3,6 +3,8 @@ import type { CustomerProfile } from '@/types/customer';
 import { resolveMerkuryIdentity } from '@/services/merkury/mockTag';
 import { getPersonaById, PERSONAS } from '@/mocks/customerPersonas';
 import { getDataCloudService } from '@/services/datacloud';
+import { getMerkuryArchetypeByMerkuryId, getMerkuryArchetypeById } from '@/mocks/merkuryProfiles';
+import { createContact } from '@/services/demo/contacts';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
@@ -17,6 +19,8 @@ interface CustomerContextValue {
   signIn: () => void;
   signOut: () => void;
   identifyByEmail: (email: string) => Promise<boolean>;
+  registerContact: (id: string) => Promise<void>;
+  createGuestContact: (data: { email: string; firstName?: string; lastName?: string; merkuryId?: string }) => Promise<{ contactId: string; accountId: string } | null>;
   refreshProfile: () => Promise<void>;
   resetPersonaSession: (personaId: string) => void;
   /** @internal Used by ConversationContext to detect refresh vs switch. */
@@ -55,6 +59,35 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setError(null);
 
     try {
+      // ─── CRM Contact ID branch ───────────────────────────────────
+      // Detect Salesforce Contact IDs (15-18 char alphanumeric starting with 003).
+      // Bypass Merkury resolution and fetch directly from Data Cloud.
+      const isSalesforceId = /^[a-zA-Z0-9]{15,18}$/.test(personaId) && personaId.startsWith('003');
+      if (isSalesforceId && !useMockData) {
+        setIsLoading(true);
+        try {
+          const dataCloudService = getDataCloudService();
+          const profile = await dataCloudService.getCustomerProfileById(personaId);
+          // Cross-reference Merkury archetype for appended profile data
+          const merkuryId = profile.merkuryIdentity?.merkuryId;
+          if (merkuryId) {
+            const archetype = getMerkuryArchetypeByMerkuryId(merkuryId);
+            if (archetype) {
+              profile.appendedProfile = archetype.appendedProfile;
+            }
+          }
+          setCustomer(profile);
+        } catch (err) {
+          console.error('[customer] CRM profile fetch failed:', err);
+          setError(err instanceof Error ? err : new Error('Failed to load CRM profile'));
+          setCustomer(null);
+        } finally {
+          setIsLoading(false);
+          setIsResolving(false);
+        }
+        return;
+      }
+
       // Simulate Merkury tag resolution
       const resolution = await resolveMerkuryIdentity(personaId);
       console.log('[merkury] Identity resolved:', resolution.identityTier, 'confidence:', resolution.confidence);
@@ -245,10 +278,117 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [selectedPersonaId, selectPersona]);
 
+  /** Register as a pre-seeded Merkury contact.
+   *  In real mode, `id` is a Salesforce Contact ID.
+   *  In mock mode, `id` is a merkury archetype ID from merkuryProfiles.ts. */
+  const registerContact = useCallback(async (id: string) => {
+    const isSalesforceId = /^[a-zA-Z0-9]{15,18}$/.test(id) && id.startsWith('003');
+    if (isSalesforceId || !useMockData) {
+      // Real mode — id is a Salesforce Contact ID
+      await selectPersona(id);
+      setIsAuthenticated(true);
+    } else {
+      // Mock mode — id is a merkury archetype ID
+      const archetype = getMerkuryArchetypeById(id);
+      if (archetype) {
+        const profile: CustomerProfile = {
+          id: archetype.merkuryId,
+          name: archetype.label,
+          email: `${archetype.id}@example.com`,
+          beautyProfile: {
+            skinType: (archetype.beautyHints.skinType || 'normal').toLowerCase() as CustomerProfile['beautyProfile']['skinType'],
+            concerns: archetype.beautyHints.concerns || [],
+            allergies: [],
+            preferredBrands: archetype.beautyHints.preferredBrands || [],
+          },
+          orders: [],
+          purchaseHistory: [],
+          chatSummaries: [],
+          meaningfulEvents: [],
+          browseSessions: [],
+          loyalty: null,
+          savedPaymentMethods: [],
+          shippingAddresses: [],
+          recentActivity: [],
+          merkuryIdentity: {
+            merkuryId: archetype.merkuryId,
+            identityTier: 'known',
+            confidence: 0.95,
+            resolvedAt: new Date().toISOString(),
+          },
+          appendedProfile: archetype.appendedProfile,
+        };
+        setSelectedPersonaId(id);
+        setCustomer(profile);
+        setIsAuthenticated(true);
+      }
+    }
+  }, [selectPersona]);
+
+  /** Create a guest contact (email signup / guest checkout).
+   *  In real mode, creates a Contact in CRM via POST /api/contacts.
+   *  In mock mode, creates an in-memory profile. */
+  const createGuestContact = useCallback(async (data: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    merkuryId?: string;
+  }): Promise<{ contactId: string; accountId: string } | null> => {
+    if (useMockData) {
+      const name = [data.firstName, data.lastName].filter(Boolean).join(' ') || data.email.split('@')[0];
+      const profile: CustomerProfile = {
+        id: `guest-${Date.now()}`,
+        name,
+        email: data.email,
+        beautyProfile: { skinType: 'normal', concerns: [], allergies: [], preferredBrands: [] },
+        orders: [],
+        purchaseHistory: [],
+        chatSummaries: [],
+        meaningfulEvents: [],
+        browseSessions: [],
+        loyalty: null,
+        savedPaymentMethods: [],
+        shippingAddresses: [],
+        recentActivity: [],
+        merkuryIdentity: {
+          merkuryId: data.merkuryId || `MRK-GUEST-${Date.now()}`,
+          identityTier: 'known',
+          confidence: 0.7,
+          resolvedAt: new Date().toISOString(),
+        },
+      };
+      if (data.merkuryId) {
+        const archetype = getMerkuryArchetypeByMerkuryId(data.merkuryId);
+        if (archetype) profile.appendedProfile = archetype.appendedProfile;
+      }
+      setCustomer(profile);
+      return { contactId: profile.id, accountId: `acct-${Date.now()}` };
+    }
+
+    // Real mode: create Contact in CRM
+    const result = await createContact({
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      merkuryId: data.merkuryId,
+      demoProfile: 'Created',
+      leadSource: 'Web',
+    });
+
+    if (result) {
+      isRefreshRef.current = true;
+      await selectPersona(result.contactId);
+      isRefreshRef.current = false;
+    }
+
+    return result;
+  }, [selectPersona]);
+
   return (
     <CustomerContext.Provider value={{
       customer, selectedPersonaId, isAuthenticated, isLoading, isResolving, error,
-      selectPersona, signIn, signOut, identifyByEmail, refreshProfile, resetPersonaSession,
+      selectPersona, signIn, signOut, identifyByEmail, registerContact, createGuestContact,
+      refreshProfile, resetPersonaSession,
       _isRefreshRef: isRefreshRef, _onSessionReset: onSessionReset,
     }}>
       {children}

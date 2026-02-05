@@ -133,6 +133,16 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Contact.Demo_Profile__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.Merkury_Id__c</field>
+        <editable>true</editable>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Contact.Allergies__c</field>
         <editable>true</editable>
         <readable>true</readable>

@@ -293,6 +293,20 @@ const personas = [
   },
 ];
 
+// ─── Merkury-Only Contacts (identity profiles for demo enrichment) ──
+const merkuryOnlyContacts = [
+  { name: { first: 'Elena', last: 'Vasquez' }, email: 'elena.v@example.com', merkuryId: 'MRK-UC-20001', skinType: 'Combination', concerns: 'hydration;brightening', preferredBrands: 'SERENE', beautyPriority: 'Clean ingredients, sustainability-focused' },
+  { name: { first: 'Catherine', last: 'Whitfield' }, email: 'catherine.w@example.com', merkuryId: 'MRK-LP-20002', skinType: 'Normal', concerns: 'anti-aging;firmness', preferredBrands: 'LUMIERE;MAISON', beautyPriority: 'Premium anti-aging, results-driven' },
+  { name: { first: 'Rachel', last: 'Park' }, email: 'rachel.park@example.com', merkuryId: 'MRK-KB-20003', skinType: 'Normal', concerns: 'brightening;glow;pores', preferredBrands: 'LUMIERE', beautyPriority: 'Multi-step routine, glass skin aesthetic' },
+  { name: { first: 'Margaret', last: 'Thornton' }, email: 'margaret.t@example.com', merkuryId: 'MRK-PR-20004', skinType: 'Mature', concerns: 'anti-aging;hydration;firmness', preferredBrands: 'LUMIERE;MAISON', beautyPriority: 'Dermatologist-grade, proven ingredients' },
+  { name: { first: 'Zoe', last: 'Martinez' }, email: 'zoe.m@example.com', merkuryId: 'MRK-BS-20005', skinType: 'Oily', concerns: 'acne;oil control', preferredBrands: 'DERMAFIX', beautyPriority: 'Affordable, effective basics' },
+  { name: { first: 'Ryan', last: "O'Brien" }, email: 'ryan.ob@example.com', merkuryId: 'MRK-MM-20006', skinType: 'Combination', concerns: 'oil control;razor irritation', preferredBrands: 'DERMAFIX', beautyPriority: 'Simple, no-fuss routine' },
+  { name: { first: 'Amanda', last: 'Foster' }, email: 'amanda.f@example.com', merkuryId: 'MRK-WM-20007', skinType: 'Sensitive', concerns: 'hydration;redness', preferredBrands: 'SERENE', beautyPriority: 'Natural/organic, safe for sensitive skin' },
+  { name: { first: 'Jordan', last: 'Rivera' }, email: 'jordan.r@example.com', merkuryId: 'MRK-GZ-20008', skinType: 'Normal', concerns: 'brightening;glow', preferredBrands: 'LUMIERE', beautyPriority: 'Trend-forward, bold self-expression' },
+  { name: { first: 'Susan', last: 'Callahan' }, email: 'susan.c@example.com', merkuryId: 'MRK-AP-20009', skinType: 'Combination', concerns: 'anti-aging;texture;dark spots', preferredBrands: 'LUMIERE;DERMAFIX', beautyPriority: 'Clinically proven, results-driven ingredients' },
+  { name: { first: 'Derek', last: 'Hansen' }, email: 'derek.h@example.com', merkuryId: 'MRK-AO-20010', skinType: 'Normal', concerns: 'sun protection;hydration', preferredBrands: 'SERENE', beautyPriority: 'SPF protection, outdoor-ready' },
+];
+
 // ─── Seed Logic ─────────────────────────────────────────────────
 async function deleteRelatedRecords(token, contactId, sobject) {
   const data = await sfQuery(token, `SELECT Id FROM ${sobject} WHERE Customer_Id__c = '${contactId}'`);
@@ -338,6 +352,16 @@ async function seedPersona(token, persona, productMap) {
     accountId = existing.records[0].AccountId;
     console.log(`  ↻ Found existing Contact: ${contactId} (Account: ${accountId})`);
 
+    // Ensure Demo_Profile__c, Merkury_Id__c, and beauty fields are set
+    await sfUpdate(token, 'Contact', contactId, {
+      Demo_Profile__c: 'Seeded',
+      Merkury_Id__c: persona.merkuryId,
+      Skin_Type__c: persona.skinType || null,
+      Skin_Concerns__c: persona.concerns || null,
+      Allergies__c: persona.allergies || null,
+      Preferred_Brands__c: persona.preferredBrands || null,
+    });
+
     // Clean up old related records to avoid duplicates on re-seed
     console.log('  🧹 Cleaning up old related records...');
     await deleteRelatedRecords(token, contactId, 'Chat_Summary__c');
@@ -360,6 +384,12 @@ async function seedPersona(token, persona, productMap) {
       LastName: persona.name.last,
       Email: persona.email,
       AccountId: accountId,
+      Demo_Profile__c: 'Seeded',
+      Merkury_Id__c: persona.merkuryId,
+      Skin_Type__c: persona.skinType || null,
+      Skin_Concerns__c: persona.concerns || null,
+      Allergies__c: persona.allergies || null,
+      Preferred_Brands__c: persona.preferredBrands || null,
       MailingStreet: persona.address.street,
       MailingCity: persona.address.city,
       MailingState: persona.address.state,
@@ -499,6 +529,56 @@ async function seedPersona(token, persona, productMap) {
   return contactId;
 }
 
+// ─── Seed Merkury-Only Contact ──────────────────────────────────
+async function seedMerkuryContact(token, contact) {
+  console.log(`\n──────────────────────────────────────`);
+  console.log(`Seeding Merkury contact: ${contact.name.first} ${contact.name.last} (${contact.merkuryId})`);
+  console.log(`──────────────────────────────────────`);
+
+  // Escape single quotes in last name for SOQL
+  const escapedEmail = contact.email.replace(/'/g, "\\'");
+
+  // Check if already exists
+  const existing = await sfQuery(token, `SELECT Id, AccountId FROM Contact WHERE Email = '${escapedEmail}' LIMIT 1`);
+  if (existing.records?.length > 0) {
+    const contactId = existing.records[0].Id;
+    console.log(`  ↻ Found existing Contact: ${contactId}`);
+    await sfUpdate(token, 'Contact', contactId, {
+      Demo_Profile__c: 'Merkury',
+      Merkury_Id__c: contact.merkuryId,
+      Skin_Type__c: contact.skinType || null,
+      Skin_Concerns__c: contact.concerns || null,
+      Preferred_Brands__c: contact.preferredBrands || null,
+      Beauty_Priority__c: contact.beautyPriority || null,
+    });
+    console.log(`  ✅ Updated existing Merkury contact`);
+    return contactId;
+  }
+
+  // Create Account
+  const accountId = await sfCreate(token, 'Account', {
+    Name: `${contact.name.first} ${contact.name.last} Household`,
+  });
+  if (!accountId) return null;
+
+  // Create Contact with minimal data + Merkury identity
+  const contactId = await sfCreate(token, 'Contact', {
+    FirstName: contact.name.first,
+    LastName: contact.name.last,
+    Email: contact.email,
+    AccountId: accountId,
+    Demo_Profile__c: 'Merkury',
+    Merkury_Id__c: contact.merkuryId,
+    Skin_Type__c: contact.skinType || null,
+    Skin_Concerns__c: contact.concerns || null,
+    Preferred_Brands__c: contact.preferredBrands || null,
+    Beauty_Priority__c: contact.beautyPriority || null,
+  });
+
+  console.log(`  ✅ Done: ${contact.name.first} ${contact.name.last}`);
+  return contactId;
+}
+
 // ─── Main ───────────────────────────────────────────────────────
 async function main() {
   console.log('🔐 Authenticating with Salesforce...');
@@ -516,14 +596,28 @@ async function main() {
     }
   }
 
+  // Seed Merkury-only contacts (identity profiles for demo enrichment)
+  console.log('\n\n🔮 Seeding Merkury-only identity profiles...');
+  const merkuryMap = {};
+  for (const contact of merkuryOnlyContacts) {
+    const contactId = await seedMerkuryContact(token, contact);
+    if (contactId) {
+      merkuryMap[contact.merkuryId] = contactId;
+    }
+  }
+
   console.log('\n\n══════════════════════════════════════');
-  console.log('📋 Merkury ID → Contact ID mapping:');
+  console.log('📋 Seeded Persona Merkury ID → Contact ID:');
   console.log('══════════════════════════════════════');
   for (const [merkuryId, contactId] of Object.entries(contactMap)) {
     console.log(`  ${merkuryId} → ${contactId}`);
   }
-  console.log('\nUpdate your customerProfile.ts to query by Contact fields (Email or Merkury_Id__c)');
-  console.log('instead of the SSOT /ssot/customers/ endpoint.\n');
+  console.log('\n📋 Merkury-Only Profile ID → Contact ID:');
+  console.log('──────────────────────────────────────');
+  for (const [merkuryId, contactId] of Object.entries(merkuryMap)) {
+    console.log(`  ${merkuryId} → ${contactId}`);
+  }
+  console.log(`\n✅ Total: ${Object.keys(contactMap).length} seeded + ${Object.keys(merkuryMap).length} Merkury profiles`);
   console.log('If the CRM Connector is set up, these records will sync to Data Cloud automatically.');
 }
 

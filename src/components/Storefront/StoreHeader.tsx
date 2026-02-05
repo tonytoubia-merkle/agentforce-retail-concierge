@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
+import { useCustomer } from '@/contexts/CustomerContext';
 import { ProfileDropdown } from './ProfileDropdown';
 import { WelcomeBar } from './WelcomeBar';
+import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 import type { ProductCategory } from '@/types/product';
 
 const CATEGORIES: { label: string; value: ProductCategory }[] = [
@@ -24,10 +26,13 @@ interface StoreHeaderProps {
 export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }) => {
   const { navigateHome, navigateToCategory, navigateToCart, searchQuery, setSearchQuery } = useStore();
   const { itemCount } = useCart();
+  const { isAuthenticated } = useCustomer();
   const [showSearch, setShowSearch] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
 
   return (
+    <>
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
       {/* Top bar - promo */}
       <div className="bg-stone-900 text-white text-center py-2 text-xs tracking-wide">
@@ -133,6 +138,16 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }
               )}
             </button>
 
+            {/* Register - visible when not authenticated */}
+            {!isAuthenticated && (
+              <button
+                onClick={() => setShowRegister(true)}
+                className="hidden sm:block px-3 py-1.5 text-sm font-medium border border-stone-300 text-stone-700 rounded-full hover:bg-stone-100 transition-colors"
+              >
+                Register
+              </button>
+            )}
+
             {/* Profile */}
             <ProfileDropdown />
 
@@ -190,5 +205,12 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }
         )}
       </AnimatePresence>
     </header>
+
+    {/* Merkury Profile Picker Modal */}
+    <MerkuryProfilePicker
+      isOpen={showRegister}
+      onClose={() => setShowRegister(false)}
+    />
+    </>
   );
 };
