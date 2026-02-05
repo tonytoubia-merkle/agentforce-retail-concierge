@@ -106,7 +106,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvis
         <div className="absolute bottom-10 right-20 w-96 h-96 bg-purple-200 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 lg:py-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Text content */}
           <motion.div
@@ -178,27 +178,41 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvis
                 <div className="absolute w-48 h-48 rounded-full bg-gradient-to-br from-rose-100 to-purple-100" />
               </div>
 
-              {/* Product images */}
+              {/* Product images — 5 scattered products */}
               <motion.img
                 src="/assets/products/moisturizer-sensitive.png"
-                alt="Featured product"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 object-contain drop-shadow-2xl"
+                alt="Featured moisturizer"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 object-contain drop-shadow-2xl"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
               <motion.img
                 src="/assets/products/serum-vitamin-c.png"
                 alt="Featured serum"
-                className="absolute top-10 right-10 w-24 h-24 object-contain drop-shadow-xl"
+                className="absolute top-4 right-6 w-32 h-32 object-contain drop-shadow-xl"
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
               />
               <motion.img
                 src="/assets/products/sunscreen-lightweight.png"
                 alt="Featured sunscreen"
-                className="absolute bottom-16 left-10 w-28 h-28 object-contain drop-shadow-xl"
+                className="absolute bottom-12 left-4 w-36 h-36 object-contain drop-shadow-xl"
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              />
+              <motion.img
+                src="/assets/products/lipstick-velvet.png"
+                alt="Featured lipstick"
+                className="absolute top-8 left-6 w-28 h-28 object-contain drop-shadow-xl"
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+              />
+              <motion.img
+                src="/assets/products/eye-cream.png"
+                alt="Featured eye cream"
+                className="absolute bottom-8 right-4 w-32 h-32 object-contain drop-shadow-xl"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
               />
             </div>
           </motion.div>

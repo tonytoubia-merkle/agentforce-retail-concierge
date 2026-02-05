@@ -374,6 +374,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (archetype) profile.appendedProfile = archetype.appendedProfile;
       }
       setCustomer(profile);
+      setIsAuthenticated(true);
       return { contactId: profile.id, accountId: `acct-${Date.now()}` };
     }
 
@@ -390,6 +391,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (result) {
       isRefreshRef.current = true;
       await selectPersona(result.contactId);
+      setIsAuthenticated(true);
       isRefreshRef.current = false;
     }
 

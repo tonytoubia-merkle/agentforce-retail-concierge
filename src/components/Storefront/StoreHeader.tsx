@@ -4,7 +4,6 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { ProfileDropdown } from './ProfileDropdown';
-import { WelcomeBar } from './WelcomeBar';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 import type { ProductCategory } from '@/types/product';
 
@@ -26,14 +25,17 @@ interface StoreHeaderProps {
 export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }) => {
   const { navigateHome, navigateToCategory, navigateToCart, navigateToAccount, searchQuery, setSearchQuery } = useStore();
   const { itemCount } = useCart();
-  const { isAuthenticated, customer } = useCustomer();
+  const { isAuthenticated, customer, signIn } = useCustomer();
   const [showSearch, setShowSearch] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
 
-  // Only show Register for truly anonymous visitors (not pseudonymous known/appended)
   const isAnonymous = !customer || !customer.merkuryIdentity || customer.merkuryIdentity.identityTier === 'anonymous';
+  const isKnown = customer?.merkuryIdentity?.identityTier === 'known';
+  const isAppended = customer?.merkuryIdentity?.identityTier === 'appended';
+  const isPseudonymous = (isKnown || isAppended) && !isAuthenticated;
   const showRegisterButton = !isAuthenticated && isAnonymous;
+  const showSignInButton = isPseudonymous;
 
   return (
     <>
@@ -48,9 +50,6 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }
           Try our AI Beauty Advisor
         </button>
       </div>
-
-      {/* Pseudonymous welcome bar */}
-      <WelcomeBar />
 
       {/* Main header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -155,7 +154,17 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }
               </button>
             )}
 
-            {/* Register - visible only for anonymous visitors */}
+            {/* Sign In - visible for pseudonymous (known/appended but not authenticated) */}
+            {showSignInButton && (
+              <button
+                onClick={signIn}
+                className="hidden sm:block px-3 py-1.5 text-sm font-medium bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-colors"
+              >
+                Sign In
+              </button>
+            )}
+
+            {/* Register - visible only for truly anonymous visitors */}
             {showRegisterButton && (
               <button
                 onClick={() => setShowRegister(true)}

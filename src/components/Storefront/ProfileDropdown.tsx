@@ -24,9 +24,9 @@ export const ProfileDropdown: React.FC = () => {
   const isPseudonymous = (isKnown || isAppended) && !isAuthenticated;
   const firstName = customer?.name?.split(' ')[0] || 'Guest';
 
-  // Lazy-load CRM contacts when demo section is opened (real mode only)
+  // Re-fetch CRM contacts each time the demo section is opened (real mode only)
   useEffect(() => {
-    if (!showDemoProfiles || useMockData || contactsFetched) return;
+    if (!showDemoProfiles || useMockData) return;
     setContactsLoading(true);
     fetchDemoContacts()
       .then((contacts) => {
@@ -34,7 +34,7 @@ export const ProfileDropdown: React.FC = () => {
         setContactsFetched(true);
       })
       .finally(() => setContactsLoading(false));
-  }, [showDemoProfiles, contactsFetched]);
+  }, [showDemoProfiles]);
 
   const handleSelect = async (personaId: string) => {
     await selectPersona(personaId);
@@ -119,13 +119,13 @@ export const ProfileDropdown: React.FC = () => {
           aria-label="Account"
         >
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
-            isKnown
+            isAuthenticated && isKnown
               ? 'bg-gradient-to-br from-rose-400 to-purple-500'
-              : isAppended
+              : isAuthenticated && isAppended
                 ? 'bg-gradient-to-br from-amber-400 to-orange-400'
                 : 'bg-stone-400'
           }`}>
-            {(isKnown || isAppended) && customer?.name !== 'Guest' ? firstName.charAt(0).toUpperCase() : (
+            {isAuthenticated && customer?.name && customer?.name !== 'Guest' ? firstName.charAt(0).toUpperCase() : (
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -183,12 +183,6 @@ export const ProfileDropdown: React.FC = () => {
                           className="px-4 py-1.5 text-sm font-medium bg-stone-900 text-white rounded-full hover:bg-stone-800 transition-colors"
                         >
                           Sign In
-                        </button>
-                        <button
-                          onClick={handleRegister}
-                          className="px-4 py-1.5 text-sm font-medium border border-stone-300 text-stone-700 rounded-full hover:bg-stone-100 transition-colors"
-                        >
-                          Register
                         </button>
                         {isKnown && (
                           <button

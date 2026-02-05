@@ -27,7 +27,7 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
   onClose,
   onComplete,
 }) => {
-  const { registerContact, createGuestContact, isResolving } = useCustomer();
+  const { createGuestContact, isResolving } = useCustomer();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<DisplayProfile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -115,17 +115,16 @@ export const MerkuryProfilePicker: React.FC<MerkuryProfilePickerProps> = ({
 
     setRegistering(true);
     try {
-      const profile = profiles.find((p) => p.id === selectedId);
       const archetype = getMerkuryArchetypeById(selectedId);
 
-      if (useMockData) {
-        // Mock mode: use registerContact with archetype ID
-        await registerContact(selectedId);
-      } else {
-        // Real mode: the contact already exists in CRM — just select it
-        const registrationId = profile?.contactId || selectedId;
-        await registerContact(registrationId);
-      }
+      // Create a new contact (CRM in real mode, in-memory in mock mode).
+      // createGuestContact also sets isAuthenticated = true.
+      await createGuestContact({
+        email: regEmail,
+        firstName: regFirstName,
+        lastName: regLastName,
+        merkuryId: archetype?.merkuryId,
+      });
 
       onComplete?.();
       onClose();
