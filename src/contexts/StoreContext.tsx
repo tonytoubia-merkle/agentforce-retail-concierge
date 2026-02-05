@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { Product, ProductCategory } from '@/types/product';
 
-export type StoreView = 'home' | 'category' | 'product' | 'cart' | 'checkout' | 'order-confirmation';
+export type StoreView = 'home' | 'category' | 'product' | 'cart' | 'checkout' | 'order-confirmation' | 'account';
 
 export interface OrderResult {
   success: boolean;
@@ -27,6 +27,7 @@ interface StoreContextValue {
   navigateToCart: () => void;
   navigateToCheckout: () => void;
   navigateToOrderConfirmation: (orderId: string, result?: OrderResult) => void;
+  navigateToAccount: () => void;
   setSearchQuery: (query: string) => void;
   goBack: () => void;
 }
@@ -81,6 +82,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setView('order-confirmation');
   }, []);
 
+  const navigateToAccount = useCallback(() => {
+    pushView('account');
+  }, [pushView]);
+
   const goBack = useCallback(() => {
     if (history.length > 1) {
       const newHistory = history.slice(0, -1);
@@ -111,6 +116,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         navigateToCart,
         navigateToCheckout,
         navigateToOrderConfirmation,
+        navigateToAccount,
         setSearchQuery,
         goBack,
       }}

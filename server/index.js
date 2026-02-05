@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { isMcConfigured, fireJourneyEntry } from './mcAdvanced.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function loadEnv() {
@@ -1018,6 +1020,18 @@ const server = http.createServer((req, res) => {
               }
 
               console.log(`[contacts] Created Account ${accountId} + Contact ${contactId} for ${email}`);
+
+              // Fire MC Advanced Welcome Journey (non-blocking)
+              if (isMcConfigured(env)) {
+                fireJourneyEntry(env, 'APIEvent-welcome', email, {
+                  EmailAddress: email,
+                  FirstName: fName,
+                  LastName: lName,
+                  ContactId: contactId,
+                  LeadSource: leadSource || 'Web',
+                }).catch(err => console.error('[mc] Welcome journey error:', err.message));
+              }
+
               const json = JSON.stringify({ success: true, contactId, accountId });
               res.writeHead(201, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
               res.end(json);
@@ -1159,7 +1173,29 @@ const server = http.createServer((req, res) => {
                 }
               }
 
-              // 8. Return result
+              // 8. Fire MC Advanced Post-Purchase Journey (non-blocking)
+              if (isMcConfigured(env)) {
+                // Fetch contact email for journey entry
+                const contactForMc = contactId ? await sfFetch(token, 'GET',
+                  `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Email, FirstName, LastName FROM Contact WHERE Id = '${contactId}' LIMIT 1`)}`)
+                  .catch(() => null) : null;
+                const mcContact = contactForMc?.data?.records?.[0];
+                const mcEmail = mcContact?.Email || contactId || 'unknown';
+                fireJourneyEntry(env, 'APIEvent-post-purchase', mcEmail, {
+                  EmailAddress: mcEmail,
+                  FirstName: mcContact?.FirstName || '',
+                  LastName: mcContact?.LastName || '',
+                  OrderId: orderId,
+                  OrderNumber: orderNumber,
+                  OrderTotal: total,
+                  TrackingNumber: trackingNumber,
+                  Carrier: carrier,
+                  EstimatedDelivery: estDelivery,
+                  PointsEarned: pointsEarned,
+                }).catch(err => console.error('[mc] Post-purchase journey error:', err.message));
+              }
+
+              // 9. Return result
               const result = JSON.stringify({
                 success: true,
                 orderId,
@@ -1218,6 +1254,35 @@ const server = http.createServer((req, res) => {
 
               await sfFetch(token, 'PATCH', `/services/data/v60.0/sobjects/Order/${orderId}`, updateFields);
 
+              // Publish Platform Event for OMS-driven transactional messages (non-blocking)
+              if (newStatus === 'Shipped' || newStatus === 'Delivered') {
+                sfFetch(token, 'POST', '/services/data/v60.0/sobjects/Order_Status_Change__e', {
+                  Order_Id__c: orderId,
+                  New_Status__c: newStatus,
+                  Changed_At__c: new Date().toISOString(),
+                }).then(() => {
+                  console.log(`[platform-event] Published Order_Status_Change__e: ${orderId} → ${newStatus}`);
+                }).catch(err => {
+                  // Platform Event may not exist yet — log and continue
+                  console.warn('[platform-event] Publish failed (may not be configured):', err.message);
+                });
+
+                // Also fire MC Advanced ship confirmation journey
+                if (isMcConfigured(env)) {
+                  const orderQuery = await sfFetch(token, 'GET',
+                    `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT OrderNumber, Account.Name, Tracking_Number__c, Carrier__c, Estimated_Delivery__c FROM Order WHERE Id = '${orderId}' LIMIT 1`)}`);
+                  const orderData = orderQuery.data?.records?.[0];
+                  fireJourneyEntry(env, `APIEvent-ship-${newStatus.toLowerCase()}`, orderId, {
+                    OrderId: orderId,
+                    OrderNumber: orderData?.OrderNumber || '',
+                    NewStatus: newStatus,
+                    TrackingNumber: orderData?.Tracking_Number__c || '',
+                    Carrier: orderData?.Carrier__c || '',
+                    EstimatedDelivery: orderData?.Estimated_Delivery__c || '',
+                  }).catch(err => console.error('[mc] Ship confirmation journey error:', err.message));
+                }
+              }
+
               const result = JSON.stringify({ success: true, orderId, newStatus });
               res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(result) });
               res.end(result);
@@ -1229,6 +1294,80 @@ const server = http.createServer((req, res) => {
               }
             }
           })();
+        });
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Invalid request body' }));
+      }
+    });
+    return;
+  }
+
+  // --- MC Advanced Journey Trigger Endpoints ---
+
+  // POST /api/journey/abandoned-cart — Fire abandoned cart journey
+  if (req.url === '/api/journey/abandoned-cart' && req.method === 'POST') {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      try {
+        const { contactKey, email, cartItems, cartTotal } = JSON.parse(Buffer.concat(chunks).toString());
+        if (!isMcConfigured(env)) {
+          const json = JSON.stringify({ success: true, skipped: true, reason: 'MC not configured' });
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+          res.end(json);
+          return;
+        }
+        fireJourneyEntry(env, 'APIEvent-abandoned-cart', contactKey || email, {
+          EmailAddress: email,
+          CartItems: JSON.stringify(cartItems || []),
+          CartTotal: cartTotal || 0,
+          AbandonedAt: new Date().toISOString(),
+        }).then(() => {
+          const json = JSON.stringify({ success: true });
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+          res.end(json);
+        }).catch((err) => {
+          console.error('[mc] Abandoned cart journey error:', err.message);
+          const json = JSON.stringify({ success: false, error: err.message });
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+          res.end(json);
+        });
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Invalid request body' }));
+      }
+    });
+    return;
+  }
+
+  // POST /api/journey/abandoned-browse — Fire abandoned browse journey
+  if (req.url === '/api/journey/abandoned-browse' && req.method === 'POST') {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      try {
+        const { contactKey, email, productsViewed, categoriesBrowsed } = JSON.parse(Buffer.concat(chunks).toString());
+        if (!isMcConfigured(env)) {
+          const json = JSON.stringify({ success: true, skipped: true, reason: 'MC not configured' });
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+          res.end(json);
+          return;
+        }
+        fireJourneyEntry(env, 'APIEvent-abandoned-browse', contactKey || email, {
+          EmailAddress: email,
+          ProductsViewed: JSON.stringify(productsViewed || []),
+          CategoriesBrowsed: JSON.stringify(categoriesBrowsed || []),
+          AbandonedAt: new Date().toISOString(),
+        }).then(() => {
+          const json = JSON.stringify({ success: true });
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+          res.end(json);
+        }).catch((err) => {
+          console.error('[mc] Abandoned browse journey error:', err.message);
+          const json = JSON.stringify({ success: false, error: err.message });
+          res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Content-Length': Buffer.byteLength(json) });
+          res.end(json);
         });
       } catch (err) {
         res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

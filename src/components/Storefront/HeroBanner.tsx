@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { CustomerProfile } from '@/types/customer';
+import { isPersonalizationConfigured, getHeroCampaignDecision, type PersonalizationDecision } from '@/services/personalization';
 
 interface HeroBannerProps {
   onShopNow: () => void;
@@ -83,7 +84,19 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvisor, customer, isAuthenticated }) => {
-  const variant = useMemo(() => getHeroVariant(customer, isAuthenticated), [customer, isAuthenticated]);
+  const [sfpDecision, setSfpDecision] = useState<PersonalizationDecision | null>(null);
+
+  // Try SF Personalization campaign decision when customer changes
+  useEffect(() => {
+    if (!isPersonalizationConfigured()) return;
+    getHeroCampaignDecision().then(setSfpDecision);
+  }, [customer]);
+
+  // SF Personalization decision takes priority, fallback to local logic
+  const variant = useMemo(
+    () => sfpDecision || getHeroVariant(customer, isAuthenticated),
+    [sfpDecision, customer, isAuthenticated]
+  );
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-stone-100 via-rose-50 to-purple-50">

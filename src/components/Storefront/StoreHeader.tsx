@@ -24,12 +24,16 @@ interface StoreHeaderProps {
 }
 
 export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }) => {
-  const { navigateHome, navigateToCategory, navigateToCart, searchQuery, setSearchQuery } = useStore();
+  const { navigateHome, navigateToCategory, navigateToCart, navigateToAccount, searchQuery, setSearchQuery } = useStore();
   const { itemCount } = useCart();
-  const { isAuthenticated } = useCustomer();
+  const { isAuthenticated, customer } = useCustomer();
   const [showSearch, setShowSearch] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+
+  // Only show Register for truly anonymous visitors (not pseudonymous known/appended)
+  const isAnonymous = !customer || !customer.merkuryIdentity || customer.merkuryIdentity.identityTier === 'anonymous';
+  const showRegisterButton = !isAuthenticated && isAnonymous;
 
   return (
     <>
@@ -138,8 +142,21 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }
               )}
             </button>
 
-            {/* Register - visible when not authenticated */}
-            {!isAuthenticated && (
+            {/* My Account - visible when authenticated */}
+            {isAuthenticated && (
+              <button
+                onClick={navigateToAccount}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-stone-700 hover:text-stone-900 hover:bg-stone-100 rounded-full transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                My Account
+              </button>
+            )}
+
+            {/* Register - visible only for anonymous visitors */}
+            {showRegisterButton && (
               <button
                 onClick={() => setShowRegister(true)}
                 className="hidden sm:block px-3 py-1.5 text-sm font-medium border border-stone-300 text-stone-700 rounded-full hover:bg-stone-100 transition-colors"

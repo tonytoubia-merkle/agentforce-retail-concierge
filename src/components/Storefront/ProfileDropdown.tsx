@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { useStore } from '@/contexts/StoreContext';
 import { PERSONA_STUBS } from '@/mocks/customerPersonas';
 import { fetchDemoContacts } from '@/services/demo/contacts';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
@@ -16,6 +17,7 @@ export const ProfileDropdown: React.FC = () => {
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactsFetched, setContactsFetched] = useState(false);
   const { customer, selectedPersonaId, isAuthenticated, selectPersona, signIn, signOut, isResolving, isLoading } = useCustomer();
+  const { navigateToAccount } = useStore();
 
   const isKnown = customer?.merkuryIdentity?.identityTier === 'known';
   const isAppended = customer?.merkuryIdentity?.identityTier === 'appended';
@@ -220,13 +222,19 @@ export const ProfileDropdown: React.FC = () => {
                 {isAuthenticated && isKnown && (
                   <div className="px-4 py-3 border-b border-gray-100">
                     <div className="space-y-1">
-                      <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors">
+                      <button
+                        onClick={() => { navigateToAccount(); setIsOpen(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors"
+                      >
                         <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
                         Order History
                       </button>
-                      <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors">
+                      <button
+                        onClick={() => { navigateToAccount(); setIsOpen(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 rounded-lg transition-colors"
+                      >
                         <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
