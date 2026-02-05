@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Product, ProductCategory } from '@/types/product';
+import { isPersonalizationConfigured, notifyNavigation } from '@/services/personalization';
 
 export type StoreView = 'home' | 'category' | 'product' | 'cart' | 'checkout' | 'order-confirmation' | 'account';
 
@@ -100,6 +101,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
   }, [history]);
+
+  // SF Personalization: notify SDK of SPA navigation changes.
+  // This single hook replaces all the individual tracking useEffects that were
+  // previously scattered across StorefrontPage, CategoryPage, and ProductDetailPage.
+  useEffect(() => {
+    if (!isPersonalizationConfigured()) return;
+    notifyNavigation(view, {
+      categoryId: selectedCategory || undefined,
+      productId: selectedProduct?.id,
+      productName: selectedProduct?.name,
+      productCategory: selectedProduct?.category,
+    });
+  }, [view, selectedCategory, selectedProduct?.id]);
 
   return (
     <StoreContext.Provider

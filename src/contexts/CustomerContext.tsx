@@ -5,6 +5,7 @@ import { getPersonaById, PERSONAS } from '@/mocks/customerPersonas';
 import { getDataCloudService } from '@/services/datacloud';
 import { getMerkuryArchetypeByMerkuryId, getMerkuryArchetypeById } from '@/mocks/merkuryProfiles';
 import { createContact } from '@/services/demo/contacts';
+import { initPersonalization, isPersonalizationConfigured, syncIdentity } from '@/services/personalization';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
@@ -177,9 +178,20 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
+      // Initialize SF Personalization SDK on app startup
+      if (isPersonalizationConfigured()) {
+        initPersonalization();
+      }
       selectPersona('anonymous');
     }
   }, [selectPersona]);
+
+  // Sync identity with SF Personalization / Data Cloud when customer profile changes
+  useEffect(() => {
+    if (customer && isPersonalizationConfigured()) {
+      syncIdentity(customer.email || undefined, customer.id);
+    }
+  }, [customer?.id]);
 
   /** Identify an anonymous user by email — find existing profile or create a new one.
    *  Uses isRefreshRef so the conversation is NOT reset. */

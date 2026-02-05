@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
-    <deploymentStatus>Deployed</deploymentStatus>
-    <description>Published when an Order shipping status changes. Subscribers (e.g., SF Flows) use this to trigger MC Advanced transactional journeys (ship confirm, delivery notification).</description>
-    <eventType>HighVolume</eventType>
-    <label>Order Status Change</label>
-    <pluralLabel>Order Status Changes</pluralLabel>
-    <publishBehavior>PublishAfterCommit</publishBehavior>
-</CustomObject>

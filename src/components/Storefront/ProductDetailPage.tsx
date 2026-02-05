@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
+import { isPersonalizationConfigured, trackAddToCart } from '@/services/personalization';
 import type { Product } from '@/types/product';
 
 interface ProductDetailPageProps {
@@ -20,6 +21,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
 
   const handleAddToCart = () => {
     addItem(product, quantity);
+    // SF Personalization / Data Cloud: track add-to-cart event
+    if (isPersonalizationConfigured()) {
+      trackAddToCart(product.id, product.name, product.price);
+    }
   };
 
   return (

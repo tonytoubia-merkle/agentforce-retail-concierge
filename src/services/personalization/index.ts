@@ -1,12 +1,36 @@
 /**
- * Salesforce Personalization (Interaction Studio) Web SDK Wrapper
+ * Salesforce Personalization (Data Cloud) Web SDK — Sitemap Integration
  *
- * Provides an abstraction layer over the SalesforceInteractions SDK.
- * When configured (VITE_SFP_BEACON_URL + VITE_SFP_DATASET), it initializes
- * the SDK and provides methods for identity sync, page/product tracking,
- * and campaign decision fetching.
+ * Uses the recommended initSitemap() pattern to centralize all page-type
+ * definitions and interaction tracking in a single configuration.
  *
- * When not configured, all methods are no-ops and return nulls.
+ * For our React SPA (state-based navigation, no URL routing), we expose a
+ * notifyNavigation() function that StoreContext calls on every view change.
+ * This updates an internal nav-state object and triggers the SDK to
+ * re-evaluate the sitemap's isMatch() functions.
+ *
+ * Architecture:
+ *   initSitemap()       → defines page types, catalog objects, global hooks
+ *   notifyNavigation()  → called by StoreContext on view change
+ *   trackAddToCart()    → explicit sendEvent for cart actions (user-initiated)
+ *   syncIdentity()      → sendEvent for identity resolution (profile changes)
+ *   getHeroCampaignDecision() → fetch personalization decision (hero banner)
+ *
+ * All tracked events flow into Data Cloud for:
+ * - Real-time personalization decisions (hero banner, product recs)
+ * - Abandonment detection via Data Cloud Triggered Actions (no client timers)
+ * - Segment membership updates for MC Advanced journey entry (Flows on Core)
+ *
+ * MC Advanced journeys (welcome, post-purchase, ship confirm, abandoned cart)
+ * are all Record-Triggered Flows or Data Cloud Triggered Actions — they fire
+ * automatically when records change on Core. No REST API calls needed.
+ *
+ * Setup:
+ * 1. In Data Cloud Setup → Websites & Mobile Apps, create a web connector
+ * 2. Upload the recommended schema (salesforce/data-cloud/web-connector-schema.json)
+ * 3. Copy the beacon URL from the connector's Integration Guide
+ * 4. Set VITE_SFP_BEACON_URL and VITE_SFP_DATASET in .env.local
+ * 5. The SDK script is loaded dynamically by initPersonalization()
  */
 
 export interface PersonalizationDecision {
@@ -18,22 +42,176 @@ export interface PersonalizationDecision {
   experienceId?: string;
 }
 
-// Config from env
+/** Navigation state shared between StoreContext and the sitemap's isMatch fns. */
+interface NavState {
+  view: string;
+  categoryId?: string;
+  productId?: string;
+  productName?: string;
+  productCategory?: string;
+}
+
+// ── Config from env ──────────────────────────────────────────────────────────
 const SFP_BEACON_URL = import.meta.env.VITE_SFP_BEACON_URL || '';
 const SFP_DATASET = import.meta.env.VITE_SFP_DATASET || '';
 
 let initialized = false;
+let sdkReady: Promise<boolean> | null = null;
+let navState: NavState = { view: '' };
 
-/**
- * Check if SF Personalization is configured.
- */
+// ── Public helpers ───────────────────────────────────────────────────────────
+
+/** Check if SF Personalization is configured (env vars present). */
 export function isPersonalizationConfigured(): boolean {
   return !!(SFP_BEACON_URL && SFP_DATASET);
 }
 
+// ── SDK helpers ──────────────────────────────────────────────────────────────
+
+function getSdk(): any {
+  return (window as any).SalesforceInteractions || null;
+}
+
+/** Dynamically load the Salesforce Personalization Web SDK script. */
+function loadSdk(): Promise<boolean> {
+  if (getSdk()) return Promise.resolve(true);
+
+  return new Promise((resolve) => {
+    const scriptUrl = SFP_BEACON_URL.endsWith('.js')
+      ? SFP_BEACON_URL
+      : `${SFP_BEACON_URL.replace(/\/$/, '')}/${SFP_DATASET}/web-sdk.min.js`;
+
+    console.log('[sfp] Loading Personalization SDK from:', scriptUrl);
+
+    const script = document.createElement('script');
+    script.src = scriptUrl;
+    script.async = true;
+    script.onload = () => {
+      console.log('[sfp] SDK script loaded');
+      setTimeout(() => resolve(!!getSdk()), 100);
+    };
+    script.onerror = () => {
+      console.warn('[sfp] Failed to load SDK script from:', scriptUrl);
+      resolve(false);
+    };
+    document.head.appendChild(script);
+  });
+}
+
+/** Wait for SDK to be ready. Returns the SDK instance or null. */
+async function waitForSdk(): Promise<any> {
+  if (!sdkReady) return null;
+  const ready = await sdkReady;
+  return ready ? getSdk() : null;
+}
+
+// ── Sitemap configuration ────────────────────────────────────────────────────
+
 /**
- * Initialize the SF Personalization SDK.
- * Call once on app startup.
+ * Build the sitemap configuration for the SDK.
+ * Page types map to our SPA views; isMatch checks the internal navState
+ * which is updated by notifyNavigation() before the SDK re-evaluates.
+ */
+function buildSitemapConfig() {
+  return {
+    global: {
+      onActionEvent: (event: any) => {
+        // Enrich all events with source channel metadata
+        event.source = event.source || {};
+        event.source.channel = 'beaute-web';
+        return event;
+      },
+    },
+    pageTypeDefault: {
+      name: 'default',
+      interaction: { name: 'Default Page' },
+    },
+    pageTypes: [
+      {
+        name: 'home',
+        isMatch: () => navState.view === 'home',
+        interaction: { name: 'Home Page' },
+      },
+      {
+        name: 'category',
+        isMatch: () => navState.view === 'category',
+        interaction: {
+          name: 'View Category',
+          catalogObject: {
+            type: 'Category',
+            id: () => navState.categoryId || '',
+          },
+        },
+      },
+      {
+        name: 'product_detail',
+        isMatch: () => navState.view === 'product',
+        interaction: {
+          name: 'View Product',
+          catalogObject: {
+            type: 'Product',
+            id: () => navState.productId || '',
+            attributes: {
+              name: { raw: () => navState.productName || '' },
+              category: { raw: () => navState.productCategory || '' },
+            },
+          },
+        },
+      },
+      {
+        name: 'cart',
+        isMatch: () => navState.view === 'cart',
+        interaction: { name: 'View Cart' },
+      },
+      {
+        name: 'checkout',
+        isMatch: () => navState.view === 'checkout',
+        interaction: { name: 'Checkout' },
+      },
+      {
+        name: 'order_confirmation',
+        isMatch: () => navState.view === 'order-confirmation',
+        interaction: { name: 'Order Confirmation' },
+      },
+      {
+        name: 'account',
+        isMatch: () => navState.view === 'account',
+        interaction: { name: 'View Account' },
+      },
+    ],
+  };
+}
+
+/**
+ * Resolve dynamic functions in a sitemap interaction to concrete values.
+ * Used by the sendEvent fallback when reinit() isn't available.
+ */
+function resolveInteraction(interaction: any): any {
+  const resolved = { ...interaction };
+  if (resolved.catalogObject) {
+    const co = resolved.catalogObject;
+    resolved.catalogObject = {
+      type: co.type,
+      id: typeof co.id === 'function' ? co.id() : co.id,
+      ...(co.attributes && {
+        attributes: Object.fromEntries(
+          Object.entries(co.attributes).map(([k, v]: [string, any]) => [
+            k,
+            typeof v?.raw === 'function' ? v.raw() : v,
+          ])
+        ),
+      }),
+    };
+  }
+  return resolved;
+}
+
+// ── Initialization ───────────────────────────────────────────────────────────
+
+/**
+ * Initialize the SF Personalization SDK with sitemap.
+ * Loads the script dynamically, configures consent, and registers the sitemap.
+ * Call once on app startup (from CustomerContext).
  */
 export function initPersonalization(userId?: string): void {
   if (!isPersonalizationConfigured() || initialized) return;
@@ -41,38 +219,87 @@ export function initPersonalization(userId?: string): void {
 
   console.log('[sfp] Initializing SF Personalization', { dataset: SFP_DATASET });
 
-  // The SalesforceInteractions SDK is loaded via script tag in index.html
-  // and becomes available on window.SalesforceInteractions
-  const sfp = (window as any).SalesforceInteractions;
-  if (!sfp) {
-    console.warn('[sfp] SalesforceInteractions SDK not found on window. Add the script tag to index.html.');
-    return;
-  }
-
-  try {
-    sfp.init({
-      consents: [{ provider: 'BeauteDemo', purpose: 'Personalization', status: 'OptIn' }],
-    });
-
-    if (userId) {
-      sfp.sendEvent({
-        interaction: {
-          name: 'Identity',
-          eventType: 'identity',
-        },
-        user: {
-          identities: {
-            emailAddress: userId,
-          },
-        },
-      });
+  sdkReady = loadSdk().then((loaded) => {
+    if (!loaded) {
+      console.warn('[sfp] SDK not available after loading.');
+      return false;
     }
 
-    console.log('[sfp] SDK initialized');
+    const sfp = getSdk();
+    try {
+      // 1. Initialize SDK with consent
+      sfp.init({
+        consents: [{ provider: 'BeauteDemo', purpose: 'Personalization', status: 'OptIn' }],
+      });
+
+      // 2. Register sitemap for centralized page-type tracking
+      const config = buildSitemapConfig();
+      if (sfp.initSitemap) {
+        sfp.initSitemap(config);
+        console.log('[sfp] Sitemap registered with', config.pageTypes.length, 'page types');
+      } else {
+        console.warn('[sfp] initSitemap not available — using sendEvent fallback');
+      }
+
+      // 3. Send initial identity if available
+      if (userId) {
+        sfp.sendEvent({
+          interaction: { name: 'Identity', eventType: 'identity' },
+          user: { identities: { emailAddress: userId } },
+        });
+      }
+
+      console.log('[sfp] SDK initialized');
+      return true;
+    } catch (err) {
+      console.error('[sfp] Init error:', err);
+      return false;
+    }
+  });
+}
+
+// ── Navigation tracking (replaces manual trackPageView / trackProductView) ──
+
+/**
+ * Notify the SDK of a SPA navigation change.
+ * Updates internal state and triggers the SDK to re-evaluate the sitemap.
+ *
+ * Call from StoreContext whenever view, selectedProduct, or selectedCategory changes.
+ * This single hook replaces all the individual tracking useEffects that were
+ * previously scattered across StorefrontPage, CategoryPage, and ProductDetailPage.
+ */
+export function notifyNavigation(view: string, data?: {
+  categoryId?: string;
+  productId?: string;
+  productName?: string;
+  productCategory?: string;
+}): void {
+  if (!isPersonalizationConfigured() || !initialized) return;
+
+  navState = { view, ...data };
+
+  const sfp = getSdk();
+  if (!sfp) return;
+
+  try {
+    // Preferred: reinit() re-evaluates the sitemap for SPAs
+    if (sfp.reinit) {
+      sfp.reinit();
+      return;
+    }
+
+    // Fallback: manually match page type and send its interaction as an event
+    const config = buildSitemapConfig();
+    const match = config.pageTypes.find((pt: any) => pt.isMatch());
+    if (match?.interaction) {
+      sfp.sendEvent({ interaction: resolveInteraction(match.interaction) });
+    }
   } catch (err) {
-    console.error('[sfp] Init error:', err);
+    console.error('[sfp] Navigation notification error:', err);
   }
 }
+
+// ── Identity sync ────────────────────────────────────────────────────────────
 
 /**
  * Sync user identity with SF Personalization.
@@ -81,15 +308,12 @@ export function initPersonalization(userId?: string): void {
 export function syncIdentity(email?: string, customerId?: string): void {
   if (!isPersonalizationConfigured() || !initialized) return;
 
-  const sfp = (window as any).SalesforceInteractions;
+  const sfp = getSdk();
   if (!sfp) return;
 
   try {
     sfp.sendEvent({
-      interaction: {
-        name: 'IdentitySync',
-        eventType: 'identity',
-      },
+      interaction: { name: 'IdentitySync', eventType: 'identity' },
       user: {
         identities: {
           ...(email && { emailAddress: email }),
@@ -103,76 +327,23 @@ export function syncIdentity(email?: string, customerId?: string): void {
   }
 }
 
-/**
- * Track a page view.
- */
-export function trackPageView(pageName: string, category?: string): void {
-  if (!isPersonalizationConfigured() || !initialized) return;
-
-  const sfp = (window as any).SalesforceInteractions;
-  if (!sfp) return;
-
-  try {
-    sfp.sendEvent({
-      interaction: {
-        name: pageName,
-        eventType: 'pageView',
-        ...(category && {
-          catalogObject: {
-            type: 'Category',
-            id: category,
-          },
-        }),
-      },
-    });
-  } catch (err) {
-    console.error('[sfp] Page view tracking error:', err);
-  }
-}
-
-/**
- * Track a product view.
- */
-export function trackProductView(productId: string, productName: string, category: string): void {
-  if (!isPersonalizationConfigured() || !initialized) return;
-
-  const sfp = (window as any).SalesforceInteractions;
-  if (!sfp) return;
-
-  try {
-    sfp.sendEvent({
-      interaction: {
-        name: 'ViewProduct',
-        eventType: 'productView',
-        catalogObject: {
-          type: 'Product',
-          id: productId,
-          attributes: {
-            name: productName,
-            category,
-          },
-        },
-      },
-    });
-  } catch (err) {
-    console.error('[sfp] Product view tracking error:', err);
-  }
-}
+// ── Explicit user-action events ──────────────────────────────────────────────
 
 /**
  * Track an add-to-cart event.
+ * This is an explicit user action (not a page navigation), so it uses
+ * sendEvent directly rather than going through the sitemap.
  */
 export function trackAddToCart(productId: string, productName: string, price: number): void {
   if (!isPersonalizationConfigured() || !initialized) return;
 
-  const sfp = (window as any).SalesforceInteractions;
+  const sfp = getSdk();
   if (!sfp) return;
 
   try {
     sfp.sendEvent({
       interaction: {
-        name: 'AddToCart',
-        eventType: 'addToCart',
+        name: 'Add To Cart',
         lineItem: {
           catalogObjectType: 'Product',
           catalogObjectId: productId,
@@ -186,14 +357,17 @@ export function trackAddToCart(productId: string, productName: string, price: nu
   }
 }
 
+// ── Campaign decisions ───────────────────────────────────────────────────────
+
 /**
  * Fetch hero campaign decision from SF Personalization.
+ * Waits for SDK to be ready before fetching.
  * Returns null if not configured or if the campaign decision fails.
  */
 export async function getHeroCampaignDecision(): Promise<PersonalizationDecision | null> {
   if (!isPersonalizationConfigured() || !initialized) return null;
 
-  const sfp = (window as any).SalesforceInteractions;
+  const sfp = await waitForSdk();
   if (!sfp?.mcis?.getDecision) return null;
 
   try {
