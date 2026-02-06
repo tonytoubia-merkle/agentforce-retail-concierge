@@ -2,7 +2,12 @@ import type { AppendedProfile } from '@/types/customer';
 
 export interface MerkuryArchetype {
   id: string;
+  /** @deprecated Use merkuryPid instead */
   merkuryId: string;
+  /** Merkury Personal ID — individual-level identifier */
+  merkuryPid: string;
+  /** Merkury Household ID — shared across household members */
+  merkuryHid: string;
   label: string;
   archetype: string;
   appendedProfile: AppendedProfile;
@@ -15,10 +20,18 @@ export interface MerkuryArchetype {
   };
 }
 
+// Household IDs — some profiles share the same HID for demo purposes
+// HID-H001: Urban couple (Clean Beauty Urbanite + Male Grooming Minimalist)
+// HID-H002: Suburban family (Wellness Mom + Active Outdoors — partners)
+// HID-H003: Luxury household (Luxury Parent + Premium Retiree — mother/daughter)
+// Others: Individual households
+
 export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-urban-clean',
     merkuryId: 'MRK-UC-20001',
+    merkuryPid: 'PID-UC-20001',
+    merkuryHid: 'HID-H001',  // Shares household with Male Grooming Minimalist
     label: 'Clean Beauty Urbanite',
     archetype: 'F 28-35 · $80-120k · SF Bay Area',
     appendedProfile: {
@@ -42,6 +55,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-luxury-parent',
     merkuryId: 'MRK-LP-20002',
+    merkuryPid: 'PID-LP-20002',
+    merkuryHid: 'HID-H003',  // Shares household with Premium Retiree (mother/daughter)
     label: 'Luxury Suburban Parent',
     archetype: 'F 40-50 · $150-250k · Dallas Metro',
     appendedProfile: {
@@ -65,6 +80,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-kbeauty-pro',
     merkuryId: 'MRK-KB-20003',
+    merkuryPid: 'PID-KB-20003',
+    merkuryHid: 'HID-H004',  // Individual household
     label: 'K-Beauty Professional',
     archetype: 'F 22-28 · $60-80k · Los Angeles',
     appendedProfile: {
@@ -88,6 +105,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-premium-retiree',
     merkuryId: 'MRK-PR-20004',
+    merkuryPid: 'PID-PR-20004',
+    merkuryHid: 'HID-H003',  // Shares household with Luxury Parent (mother/daughter)
     label: 'Premium Retiree',
     archetype: 'F 55-65 · $200k+ · Palm Beach',
     appendedProfile: {
@@ -111,6 +130,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-budget-student',
     merkuryId: 'MRK-BS-20005',
+    merkuryPid: 'PID-BS-20005',
+    merkuryHid: 'HID-H005',  // Individual household (dorm/roommates)
     label: 'Budget-Conscious Student',
     archetype: 'F 18-22 · <$30k · College Town',
     appendedProfile: {
@@ -134,6 +155,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-male-minimal',
     merkuryId: 'MRK-MM-20006',
+    merkuryPid: 'PID-MM-20006',
+    merkuryHid: 'HID-H001',  // Shares household with Clean Beauty Urbanite (couple)
     label: 'Male Grooming Minimalist',
     archetype: 'M 30-40 · $100-150k · Chicago',
     appendedProfile: {
@@ -157,6 +180,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-wellness-mom',
     merkuryId: 'MRK-WM-20007',
+    merkuryPid: 'PID-WM-20007',
+    merkuryHid: 'HID-H002',  // Shares household with Active Outdoors (partners)
     label: 'Wellness Mom',
     archetype: 'F 35-45 · $120-180k · Suburban',
     appendedProfile: {
@@ -180,6 +205,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-genz-social',
     merkuryId: 'MRK-GZ-20008',
+    merkuryPid: 'PID-GZ-20008',
+    merkuryHid: 'HID-H006',  // Individual household
     label: 'Gen Z Social Beauty',
     archetype: 'NB 18-25 · $30-50k · NYC',
     appendedProfile: {
@@ -203,6 +230,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-antiaging-pro',
     merkuryId: 'MRK-AP-20009',
+    merkuryPid: 'PID-AP-20009',
+    merkuryHid: 'HID-H007',  // Individual household
     label: 'Anti-Aging Professional',
     archetype: 'F 45-55 · $150-200k · Boston',
     appendedProfile: {
@@ -226,6 +255,8 @@ export const MERKURY_ARCHETYPES: MerkuryArchetype[] = [
   {
     id: 'merkury-active-outdoor',
     merkuryId: 'MRK-AO-20010',
+    merkuryPid: 'PID-AO-20010',
+    merkuryHid: 'HID-H002',  // Shares household with Wellness Mom (partners)
     label: 'Active Outdoors SPF',
     archetype: 'M 25-35 · $70-100k · Denver',
     appendedProfile: {

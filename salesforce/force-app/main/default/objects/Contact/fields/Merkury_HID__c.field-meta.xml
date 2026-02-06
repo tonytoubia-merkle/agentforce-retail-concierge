@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Merkury_HID__c</fullName>
+    <label>Merkury Household ID</label>
+    <type>Text</type>
+    <length>50</length>
+    <unique>false</unique>
+    <externalId>true</externalId>
+    <required>false</required>
+    <description>Merkury Household ID for household-level identity resolution. Multiple contacts may share the same HID if they belong to the same household.</description>
+</CustomField>

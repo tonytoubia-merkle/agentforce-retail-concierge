@@ -187,9 +187,17 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [selectPersona]);
 
   // Sync identity with SF Personalization / Data Cloud when customer profile changes
+  // Include Merkury PID (Personal ID) and HID (Household ID) for identity resolution
   useEffect(() => {
     if (customer && isPersonalizationConfigured()) {
-      syncIdentity(customer.email || undefined, customer.id);
+      syncIdentity(
+        customer.email || undefined,
+        customer.id,
+        {
+          pid: customer.merkuryIdentity?.merkuryPid || customer.merkuryIdentity?.merkuryId,
+          hid: customer.merkuryIdentity?.merkuryHid,
+        }
+      );
     }
   }, [customer?.id]);
 

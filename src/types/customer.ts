@@ -29,7 +29,12 @@ export interface TaggedContextField {
 }
 
 export interface MerkuryIdentity {
+  /** @deprecated Use merkuryPid instead */
   merkuryId: string;
+  /** Merkury Personal ID — individual-level identifier */
+  merkuryPid: string;
+  /** Merkury Household ID — household-level identifier (shared across household members) */
+  merkuryHid?: string;
   identityTier: IdentityTier;
   confidence: number;
   resolvedAt: string;

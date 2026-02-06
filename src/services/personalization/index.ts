@@ -301,27 +301,94 @@ export function notifyNavigation(view: string, data?: {
 
 // ── Identity sync ────────────────────────────────────────────────────────────
 
+export interface MerkuryIdentifiers {
+  /** Merkury Personal ID — individual-level identifier */
+  pid?: string;
+  /** Merkury Household ID — household-level identifier (shared across household members) */
+  hid?: string;
+}
+
 /**
  * Sync user identity with SF Personalization.
  * Call when customer profile changes (login, persona switch).
+ *
+ * When Merkury identifiers are provided, they're sent as Party Identification events:
+ * - PID (Personal ID): Individual-level identity for cross-device matching
+ * - HID (Household ID): Household-level identity for household targeting/attribution
+ *
+ * This enables:
+ * - Cross-device identity matching (via PID)
+ * - Household-level targeting and attribution (via HID)
+ * - Enrichment workflows (query Merkury for demographics)
+ * - Paid media activation (export segments with Merkury IDs)
  */
-export function syncIdentity(email?: string, customerId?: string): void {
+export function syncIdentity(
+  email?: string,
+  customerId?: string,
+  merkury?: MerkuryIdentifiers | string  // string for backward compat (legacy merkuryId)
+): void {
   if (!isPersonalizationConfigured() || !initialized) return;
 
   const sfp = getSdk();
   if (!sfp) return;
 
+  // Normalize input: support legacy string (merkuryId) or new object (pid/hid)
+  const merkuryIds: MerkuryIdentifiers = typeof merkury === 'string'
+    ? { pid: merkury }
+    : merkury || {};
+
   try {
+    // Send primary identity event with all identifiers
     sfp.sendEvent({
       interaction: { name: 'IdentitySync', eventType: 'identity' },
       user: {
         identities: {
           ...(email && { emailAddress: email }),
           ...(customerId && { customerId }),
+          ...(merkuryIds.pid && { merkuryPid: merkuryIds.pid }),
+          ...(merkuryIds.hid && { merkuryHid: merkuryIds.hid }),
         },
       },
     });
-    console.log('[sfp] Identity synced:', email || customerId);
+
+    // Send Party Identification event for Merkury PID (Personal ID)
+    // This flows into the Party Identification DMO with IDType='MerkuryPID'
+    if (merkuryIds.pid) {
+      sfp.sendEvent({
+        interaction: {
+          name: 'PartyIdentification',
+          eventType: 'profile',
+        },
+        partyIdentification: {
+          IDName: merkuryIds.pid,
+          IDType: 'MerkuryPID',
+          userId: customerId || merkuryIds.pid,
+        },
+      });
+    }
+
+    // Send Party Identification event for Merkury HID (Household ID)
+    // This enables household-level identity resolution and targeting
+    if (merkuryIds.hid) {
+      sfp.sendEvent({
+        interaction: {
+          name: 'PartyIdentification',
+          eventType: 'profile',
+        },
+        partyIdentification: {
+          IDName: merkuryIds.hid,
+          IDType: 'MerkuryHID',
+          userId: customerId || merkuryIds.pid || merkuryIds.hid,
+        },
+      });
+    }
+
+    console.log('[sfp] Identity synced:', {
+      email,
+      customerId,
+      hasPid: !!merkuryIds.pid,
+      hasHid: !!merkuryIds.hid,
+    });
   } catch (err) {
     console.error('[sfp] Identity sync error:', err);
   }
