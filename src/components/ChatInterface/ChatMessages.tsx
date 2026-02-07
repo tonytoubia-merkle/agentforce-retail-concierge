@@ -45,8 +45,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
               className={cn(
                 'max-w-[80%] px-3 py-2 rounded-2xl text-[13px] leading-relaxed',
                 msg.role === 'user'
-                  ? 'ml-auto bg-white/20 text-white rounded-br-md'
-                  : 'mr-auto bg-white/10 text-white/90 rounded-bl-md'
+                  ? 'ml-auto bg-white/30 text-white rounded-br-md'
+                  : 'mr-auto bg-white/20 text-white/90 rounded-bl-md'
               )}
             >
               {msg.content}
