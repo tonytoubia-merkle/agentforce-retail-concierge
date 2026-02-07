@@ -43,11 +43,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               className={cn(
-                'max-w-[80%] px-3 py-2 rounded-2xl text-[13px] leading-relaxed',
+                'max-w-[80%] px-3 py-2 rounded-2xl text-[13px] leading-relaxed backdrop-blur-sm',
                 msg.role === 'user'
-                  ? 'ml-auto bg-white/30 text-white rounded-br-md'
-                  : 'mr-auto bg-white/20 text-white/90 rounded-bl-md'
+                  ? 'ml-auto bg-black/40 text-white rounded-br-md shadow-sm'
+                  : 'mr-auto bg-black/30 text-white/95 rounded-bl-md shadow-sm'
               )}
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
             >
               {msg.content}
             </motion.div>

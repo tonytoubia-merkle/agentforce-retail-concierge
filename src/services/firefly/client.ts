@@ -76,7 +76,19 @@ export class FireflyClient {
     }
 
     const data = await response.json();
-    return data.outputs[0].image.presignedUrl;
+    console.log('[firefly] Scene API response:', JSON.stringify(data).substring(0, 500));
+
+    const imageUrl = data.outputs?.[0]?.image?.presignedUrl
+      || data.outputs?.[0]?.image?.url
+      || data.images?.[0]?.url
+      || data.result?.images?.[0]?.url;
+
+    if (!imageUrl) {
+      console.error('[firefly] Could not find image URL in response:', data);
+      throw new Error('Firefly returned no image URL');
+    }
+
+    return imageUrl;
   }
 
   /** Generate from a raw prompt string (no setting mapping). */
@@ -104,7 +116,20 @@ export class FireflyClient {
     }
 
     const data = await response.json();
-    return data.outputs[0].image.presignedUrl;
+    console.log('[firefly] API response:', JSON.stringify(data).substring(0, 500));
+
+    // Handle different response structures from Firefly API
+    const imageUrl = data.outputs?.[0]?.image?.presignedUrl
+      || data.outputs?.[0]?.image?.url
+      || data.images?.[0]?.url
+      || data.result?.images?.[0]?.url;
+
+    if (!imageUrl) {
+      console.error('[firefly] Could not find image URL in response:', data);
+      throw new Error('Firefly returned no image URL');
+    }
+
+    return imageUrl;
   }
 }
 
