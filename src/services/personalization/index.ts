@@ -71,7 +71,9 @@ export function isPersonalizationConfigured(): boolean {
 // ── SDK helpers ──────────────────────────────────────────────────────────────
 
 function getSdk(): any {
-  return (window as any).SalesforceInteractions || null;
+  const w = window as any;
+  // Check for different SDK global names (varies by SDK version/configuration)
+  return w.SalesforceInteractions || w.Evergage || w.SalesforceCloudData || null;
 }
 
 /** Dynamically load the Salesforce Personalization Web SDK script. */
@@ -90,7 +92,29 @@ function loadSdk(): Promise<boolean> {
     script.async = true;
     script.onload = () => {
       console.log('[sfp] SDK script loaded');
-      setTimeout(() => resolve(!!getSdk()), 100);
+      // Wait for SDK to initialize with retry logic
+      let attempts = 0;
+      const maxAttempts = 10;
+      const checkSdk = () => {
+        attempts++;
+        const sdk = getSdk();
+        if (sdk) {
+          console.log('[sfp] SDK global found after', attempts, 'attempts');
+          resolve(true);
+        } else if (attempts < maxAttempts) {
+          setTimeout(checkSdk, 200);
+        } else {
+          // Log available globals for debugging
+          const w = window as any;
+          console.warn('[sfp] SDK not found. Available globals:', {
+            SalesforceInteractions: !!w.SalesforceInteractions,
+            Evergage: !!w.Evergage,
+            SalesforceCloudData: !!w.SalesforceCloudData,
+          });
+          resolve(false);
+        }
+      };
+      checkSdk();
     };
     script.onerror = () => {
       console.warn('[sfp] Failed to load SDK script from:', scriptUrl);

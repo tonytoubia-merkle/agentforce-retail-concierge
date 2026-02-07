@@ -1,0 +1,164 @@
+<template>
+    <article class="slds-card">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <lightning-icon icon-name="standard:campaign" size="small"></lightning-icon>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span class="slds-text-heading_small slds-truncate">{approval.contactName}</span>
+                    </h2>
+                    <p class="slds-text-body_small slds-text-color_weak">{approval.contactEmail}</p>
+                </div>
+            </header>
+            <div class="slds-no-flex">
+                <span class={approval.urgencyClass}>{approval.Urgency__c}</span>
+                <span class="slds-badge slds-m-left_x-small">{approval.daysDisplay}</span>
+            </div>
+        </div>
+
+        <div class="slds-card__body slds-card__body_inner">
+            <!-- Event Info -->
+            <div class="slds-box slds-theme_shade slds-m-bottom_small">
+                <p class="slds-text-title_caps slds-m-bottom_xx-small">Event</p>
+                <p class="slds-text-body_regular">{approval.Event_Type__c}</p>
+                <template if:true={approval.Event_Date__c}>
+                    <p class="slds-text-body_small slds-text-color_weak">
+                        Date: {formattedEventDate}
+                    </p>
+                </template>
+            </div>
+
+            <!-- Generated Image -->
+            <template if:true={approval.Generated_Image_URL__c}>
+                <div class="slds-m-bottom_small">
+                    <p class="slds-text-title_caps slds-m-bottom_xx-small">Generated Image</p>
+                    <div class="image-container">
+                        <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="generated-image"/>
+                    </div>
+                    <div class="slds-m-top_xx-small">
+                        <lightning-button
+                            variant="base"
+                            label="Regenerate"
+                            icon-name="utility:refresh"
+                            onclick={handleRegenerateClick}
+                            size="small">
+                        </lightning-button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Email Subject -->
+            <div class="slds-m-bottom_small">
+                <lightning-input
+                    label="Subject Line"
+                    value={editedSubject}
+                    onchange={handleSubjectChange}
+                    maxlength="255">
+                </lightning-input>
+            </div>
+
+            <!-- Email Body -->
+            <div class="slds-m-bottom_small">
+                <lightning-textarea
+                    label="Email Body"
+                    value={editedBody}
+                    onchange={handleBodyChange}
+                    max-length="32000">
+                </lightning-textarea>
+            </div>
+
+            <!-- Event Summary (Expandable) -->
+            <template if:true={approval.Event_Summary__c}>
+                <lightning-accordion allow-multiple-sections-open>
+                    <lightning-accordion-section name="context" label="Event Context">
+                        <pre class="event-summary">{approval.Event_Summary__c}</pre>
+                    </lightning-accordion-section>
+                </lightning-accordion>
+            </template>
+        </div>
+
+        <footer class="slds-card__footer">
+            <div class="slds-grid slds-grid_align-spread">
+                <div>
+                    <lightning-button
+                        variant="destructive"
+                        label="Decline"
+                        icon-name="utility:close"
+                        onclick={handleDecline}>
+                    </lightning-button>
+                </div>
+                <div>
+                    <lightning-button
+                        variant="brand"
+                        label="Approve"
+                        icon-name="utility:check"
+                        onclick={handleApprove}
+                        class="slds-m-right_small">
+                    </lightning-button>
+                    <lightning-button
+                        variant="success"
+                        label="Approve & Send"
+                        icon-name="utility:email"
+                        onclick={handleApproveAndSend}>
+                    </lightning-button>
+                </div>
+            </div>
+        </footer>
+    </article>
+
+    <!-- Decline Modal -->
+    <template if:true={showDeclineModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeDeclineModal}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">Decline Journey</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-textarea
+                        label="Reason for declining"
+                        value={declineReason}
+                        onchange={handleDeclineReasonChange}
+                        placeholder="Why is this journey not suitable for sending?">
+                    </lightning-textarea>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeDeclineModal}></lightning-button>
+                    <lightning-button variant="destructive" label="Decline" onclick={confirmDecline}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Regenerate Modal -->
+    <template if:true={showRegenerateModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeRegenerateModal}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">Regenerate Image</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-textarea
+                        label="Image Prompt"
+                        value={newPrompt}
+                        onchange={handlePromptChange}
+                        placeholder="Describe the image you want to generate...">
+                    </lightning-textarea>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeRegenerateModal}></lightning-button>
+                    <lightning-button variant="brand" label="Regenerate" onclick={confirmRegenerate}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

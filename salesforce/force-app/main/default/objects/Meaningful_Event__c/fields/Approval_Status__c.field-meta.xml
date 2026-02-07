@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Approval_Status__c</fullName>
+    <description>Status of journey approval processing</description>
+    <externalId>false</externalId>
+    <label>Approval Status</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Pending Review</fullName>
+                <default>true</default>
+                <label>Pending Review</label>
+            </value>
+            <value>
+                <fullName>Approval Created</fullName>
+                <default>false</default>
+                <label>Approval Created</label>
+            </value>
+            <value>
+                <fullName>Journey Sent</fullName>
+                <default>false</default>
+                <label>Journey Sent</label>
+            </value>
+            <value>
+                <fullName>Declined</fullName>
+                <default>false</default>
+                <label>Declined</label>
+            </value>
+            <value>
+                <fullName>Not Applicable</fullName>
+                <default>false</default>
+                <label>Not Applicable</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Queue of AI-generated personalized journey content pending marketer approval. Created nightly from Meaningful Events, reviewed via dashboard before sending.</description>
+    <label>Journey Approval</label>
+    <nameField>
+        <displayFormat>JA-{0000}</displayFormat>
+        <label>Approval Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Journey Approvals</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

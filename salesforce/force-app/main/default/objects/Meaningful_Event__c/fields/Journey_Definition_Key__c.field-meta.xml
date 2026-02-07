@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Journey_Definition_Key__c</fullName>
+    <description>Marketing Cloud journey definition key if a personalized journey was created</description>
+    <externalId>false</externalId>
+    <label>Journey Definition Key</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

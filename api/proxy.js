@@ -63,6 +63,37 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-goog-api-key, x-api-key',
 };
 
+// Static product catalog for WPM (Web Personalization Manager) catalog browser
+// These IDs match the Salesforce Product2 records created for Data Cloud integration
+const PRODUCTS_CATALOG = [
+  { id: 'moisturizer-sensitive', salesforceId: '01tKa0000098Y4wIAE', name: 'Hydra-Calm Sensitive Moisturizer', brand: 'SERENE', category: 'moisturizer', price: 58.00 },
+  { id: 'sunscreen-lightweight', salesforceId: '01tKa0000098Y4xIAE', name: 'Invisible Shield SPF 50', brand: 'SERENE', category: 'sunscreen', price: 42.00 },
+  { id: 'mist-refreshing', salesforceId: '01tKa0000098Y4yIAE', name: 'Cooling Facial Mist', brand: 'SERENE', category: 'toner', price: 28.00 },
+  { id: 'blotting-sheets', salesforceId: '01tKa0000098Y4zIAE', name: 'Oil Control Blotting Papers', brand: 'SERENE', category: 'travel-kit', price: 12.00 },
+  { id: 'cleanser-gentle', salesforceId: '01tKa0000098Y50IAE', name: 'Cloud Cream Cleanser', brand: 'SERENE', category: 'cleanser', price: 36.00 },
+  { id: 'mask-hydrating', salesforceId: '01tKa0000098Y51IAE', name: 'Deep Dew Hydrating Mask', brand: 'SERENE', category: 'mask', price: 45.00 },
+  { id: 'toner-aha', salesforceId: '01tKa0000098Y52IAE', name: 'Glow Tonic AHA Toner', brand: 'SERENE', category: 'toner', price: 34.00 },
+  { id: 'eye-cream', salesforceId: '01tKa0000098Y53IAE', name: 'Bright Eyes Caffeine Cream', brand: 'SERENE', category: 'eye-cream', price: 48.00 },
+  { id: 'moisturizer-oil-free', salesforceId: '01tKa0000098Y54IAE', name: 'Oil-Free Hydra Gel', brand: 'SERENE', category: 'moisturizer', price: 48.00 },
+  { id: 'moisturizer-rich', salesforceId: '01tKa0000098Y55IAE', name: 'Ultra Rich Barrier Cream', brand: 'SERENE', category: 'moisturizer', price: 64.00 },
+  { id: 'moisturizer-spf', salesforceId: '01tKa0000098Y56IAE', name: 'Daily Defense Moisturizer SPF 30', brand: 'SERENE', category: 'moisturizer', price: 52.00 },
+  { id: 'serum-vitamin-c', salesforceId: '01tKa0000098Y5PIAU', name: 'Glow Boost Vitamin C Serum', brand: 'LUMIERE', category: 'serum', price: 72.00 },
+  { id: 'serum-retinol', salesforceId: '01tKa0000098Y5QIAU', name: 'Midnight Renewal Retinol Serum', brand: 'LUMIERE', category: 'serum', price: 68.00 },
+  { id: 'serum-anti-aging', salesforceId: '01tKa0000098Y5RIAU', name: 'Peptide Lift Pro Serum', brand: 'LUMIERE', category: 'serum', price: 95.00 },
+  { id: 'foundation-dewy', salesforceId: '01tKa0000098Y5SIAU', name: 'Skin Glow Serum Foundation', brand: 'LUMIERE', category: 'foundation', price: 52.00 },
+  { id: 'lipstick-velvet', salesforceId: '01tKa0000098Y5TIAU', name: 'Velvet Matte Lip Color', brand: 'LUMIERE', category: 'lipstick', price: 34.00 },
+  { id: 'mascara-volume', salesforceId: '01tKa0000098Y5UIAU', name: 'Lash Drama Volume Mascara', brand: 'LUMIERE', category: 'mascara', price: 28.00 },
+  { id: 'blush-silk', salesforceId: '01tKa0000098Y5VIAU', name: 'Silk Petal Blush', brand: 'LUMIERE', category: 'blush', price: 38.00 },
+  { id: 'cleanser-acne', salesforceId: '01tKa0000098Y5zIAE', name: 'Clear Start Salicylic Cleanser', brand: 'DERMAFIX', category: 'cleanser', price: 32.00 },
+  { id: 'serum-niacinamide', salesforceId: '01tKa0000098Y60IAE', name: 'Pore Refine Niacinamide Serum', brand: 'DERMAFIX', category: 'serum', price: 38.00 },
+  { id: 'spot-treatment', salesforceId: '01tKa0000098Y61IAE', name: 'SOS Blemish Patch', brand: 'DERMAFIX', category: 'spot-treatment', price: 18.00 },
+  { id: 'sunscreen-mineral', salesforceId: '01tKa0000098Y62IAE', name: 'Barrier Shield Mineral SPF 40', brand: 'DERMAFIX', category: 'sunscreen', price: 36.00 },
+  { id: 'fragrance-floral', salesforceId: '01tKa0000098Y6GIAU', name: 'Jardin de Nuit Eau de Parfum', brand: 'MAISON', category: 'fragrance', price: 125.00 },
+  { id: 'fragrance-woody', salesforceId: '01tKa0000098Y6HIAU', name: 'Bois Sauvage Eau de Toilette', brand: 'MAISON', category: 'fragrance', price: 98.00 },
+  { id: 'shampoo-repair', salesforceId: '01tKa0000098Y6IIAU', name: 'Bond Repair Shampoo', brand: 'MAISON', category: 'shampoo', price: 32.00 },
+  { id: 'conditioner-hydrating', salesforceId: '01tKa0000098Y6JIAU', name: 'Silk Hydration Conditioner', brand: 'MAISON', category: 'conditioner', price: 34.00 },
+];
+
 export default async function handler(req, res) {
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -88,6 +119,36 @@ export default async function handler(req, res) {
   if (url === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
     return res.end(JSON.stringify({ status: 'ok' }));
+  }
+
+  // Products catalog endpoint for WPM (Web Personalization Manager)
+  if (url.startsWith('/api/products')) {
+    const urlObj = new URL(url, 'http://localhost');
+    const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '100', 10), 200);
+    const offset = Math.max(parseInt(urlObj.searchParams.get('offset') || '0', 10), 0);
+    const q = urlObj.searchParams.get('q') || '';
+
+    let filtered = PRODUCTS_CATALOG;
+    if (q) {
+      const search = q.toLowerCase();
+      filtered = PRODUCTS_CATALOG.filter(p =>
+        p.name.toLowerCase().includes(search) ||
+        p.brand.toLowerCase().includes(search) ||
+        p.category.toLowerCase().includes(search)
+      );
+    }
+
+    const paged = filtered.slice(offset, offset + limit);
+    const result = JSON.stringify({
+      products: paged,
+      total: filtered.length,
+      offset,
+      limit,
+      source: 'static-catalog'
+    });
+
+    res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+    return res.end(result);
   }
 
   try {

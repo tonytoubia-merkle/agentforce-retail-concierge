@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Urgency__c</fullName>
+    <description>Urgency level based on event date proximity</description>
+    <externalId>false</externalId>
+    <label>Urgency</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Immediate</fullName>
+                <default>false</default>
+                <label>Immediate (≤3 days)</label>
+            </value>
+            <value>
+                <fullName>This Week</fullName>
+                <default>false</default>
+                <label>This Week (4-7 days)</label>
+            </value>
+            <value>
+                <fullName>This Month</fullName>
+                <default>false</default>
+                <label>This Month (8-30 days)</label>
+            </value>
+            <value>
+                <fullName>Future</fullName>
+                <default>false</default>
+                <label>Future (30+ days)</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

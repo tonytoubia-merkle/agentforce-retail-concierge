@@ -1,0 +1,91 @@
+<template>
+    <lightning-card title="Personalized Journey Approvals" icon-name="standard:campaign">
+        <div slot="actions">
+            <lightning-button
+                label="Refresh"
+                icon-name="utility:refresh"
+                onclick={handleRefresh}>
+            </lightning-button>
+        </div>
+
+        <div class="slds-p-around_medium">
+            <!-- Stats Bar -->
+            <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="slds-box slds-theme_shade">
+                        <p class="slds-text-title_caps">Pending</p>
+                        <p class="slds-text-heading_large">{pendingCount}</p>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="slds-box slds-theme_shade">
+                        <p class="slds-text-title_caps">Immediate</p>
+                        <p class="slds-text-heading_large slds-text-color_error">{immediateCount}</p>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="slds-box slds-theme_shade">
+                        <p class="slds-text-title_caps">This Week</p>
+                        <p class="slds-text-heading_large slds-text-color_warning">{thisWeekCount}</p>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="slds-box slds-theme_shade">
+                        <p class="slds-text-title_caps">This Month</p>
+                        <p class="slds-text-heading_large">{thisMonthCount}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- No Approvals Message -->
+            <template if:false={isLoading}>
+                <template if:false={hasApprovals}>
+                    <div class="slds-illustration slds-illustration_small slds-align_absolute-center">
+                        <p class="slds-text-body_regular slds-text-color_weak">
+                            No pending journey approvals. Check back after the nightly batch runs.
+                        </p>
+                    </div>
+                </template>
+            </template>
+
+            <!-- Approval Cards -->
+            <template if:true={hasApprovals}>
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <template for:each={approvals} for:item="approval">
+                        <div key={approval.Id} class="slds-col slds-size_1-of-1 slds-large-size_1-of-2 slds-m-bottom_medium">
+                            <c-journey-approval-card
+                                approval={approval}
+                                onaction={handleCardAction}>
+                            </c-journey-approval-card>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Toast Container -->
+    <template if:true={showToast}>
+        <div class="slds-notify_container">
+            <div class={toastClass} role="status">
+                <span class="slds-assistive-text">{toastVariant}</span>
+                <span class="slds-icon_container slds-m-right_small">
+                    <lightning-icon icon-name={toastIcon} size="small" variant="inverse"></lightning-icon>
+                </span>
+                <div class="slds-notify__content">
+                    <h2 class="slds-text-heading_small">{toastMessage}</h2>
+                </div>
+                <button class="slds-button slds-button_icon slds-notify__close" title="Close" onclick={closeToast}>
+                    <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                </button>
+            </div>
+        </div>
+    </template>
+</template>

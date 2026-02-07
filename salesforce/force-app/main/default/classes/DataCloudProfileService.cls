@@ -273,6 +273,49 @@ global with sharing class DataCloudProfileService {
         insert record;
     }
 
+    /**
+     * Enhanced version that includes temporal context for journey orchestration.
+     * @param customerId       Contact or Customer ID
+     * @param sessionId        Chat session ID
+     * @param eventType        preference, milestone, life-event, concern, intent
+     * @param description      Human-readable event description
+     * @param agentNote        Agent's internal note
+     * @param metadataJson     Additional metadata as JSON
+     * @param relativeTimeText Original temporal phrase (e.g., "in two weeks")
+     * @param eventDate        Calculated actual event date
+     * @param urgency          Immediate, This Week, This Month, Future, No Date
+     * @return                 The created Meaningful_Event__c record Id
+     */
+    public static Id writeMeaningfulEventEnhanced(
+        String customerId, String sessionId,
+        String eventType, String description,
+        String agentNote, String metadataJson,
+        String relativeTimeText, Date eventDate,
+        String urgency
+    ) {
+        Meaningful_Event__c record = new Meaningful_Event__c();
+        record.Customer_Id__c = customerId;
+        record.Session_Id__c = sessionId;
+        record.Event_Type__c = eventType;
+        record.Description__c = description;
+        record.Captured_At__c = Datetime.now();
+        record.Agent_Note__c = agentNote;
+        record.Metadata_JSON__c = metadataJson;
+
+        // New temporal fields
+        record.Relative_Time_Text__c = relativeTimeText;
+        record.Event_Date__c = eventDate;
+        record.Urgency__c = urgency != null ? urgency : 'No Date';
+
+        // Set journey start date (default to today for immediate journeys)
+        if (eventDate != null) {
+            record.Journey_Start_Date__c = Date.today();
+        }
+
+        insert record;
+        return record.Id;
+    }
+
     public static void writeCapturedProfileField(String customerId, String sessionId,
                                                    String fieldName, String fieldValue,
                                                    String confidence, String dataType) {

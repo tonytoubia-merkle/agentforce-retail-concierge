@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reviewed_By__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The marketer who approved or declined this journey</description>
+    <externalId>false</externalId>
+    <label>Reviewed By</label>
+    <referenceTo>User</referenceTo>
+    <relationshipName>Journey_Approvals_Reviewed</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
