@@ -45,9 +45,11 @@ export class FireflyClient {
     products: Product[],
     options: GenerationOptions = {}
   ): Promise<string> {
+    // Firefly supported sizes: 2688x1536, 1344x768, 2048x2048, 1024x1024, etc.
+    // Use 2688x1536 for wide hero banners (closest to 2:1 aspect ratio)
     const {
-      width = 2048,
-      height = 1024,
+      width = 2688,
+      height = 1536,
     } = options;
 
     const token = await this.getAccessToken();
@@ -91,7 +93,7 @@ export class FireflyClient {
       body: JSON.stringify({
         prompt,
         contentClass: 'photo',
-        size: { width: 2048, height: 1024 },
+        size: { width: 2688, height: 1536 },
         numVariations: 1,
       }),
     });
