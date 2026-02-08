@@ -26,6 +26,9 @@ public with sharing class JourneyApprovalService {
 
         @InvocableVariable(required=false label='New Firefly Prompt')
         public String newFireflyPrompt;
+
+        @InvocableVariable(required=false label='Products JSON')
+        public String productsJson;
     }
 
     public class ApprovalActionResult {
@@ -59,7 +62,8 @@ public with sharing class JourneyApprovalService {
                            Suggested_Subject__c, Suggested_Body__c,
                            Approved_Subject__c, Approved_Body__c,
                            Generated_Image_URL__c, Image_Content_Version_Id__c,
-                           Firefly_Prompt__c, Event_Summary__c,
+                           Firefly_Prompt__c, Event_Summary__c, Event_Type__c,
+                           Recommended_Products__c,
                            Reviewed_By__c, Reviewed_At__c
                     FROM Journey_Approval__c
                     WHERE Id = :req.approvalId
@@ -75,6 +79,9 @@ public with sharing class JourneyApprovalService {
                     }
                     when 'regenerate_image' {
                         result = regenerateImage(approval, req);
+                    }
+                    when 'update_products' {
+                        result = updateProducts(approval, req);
                     }
                     when 'send' {
                         result = sendJourney(approval);
@@ -184,6 +191,43 @@ public with sharing class JourneyApprovalService {
     }
 
     /**
+     * Update products and regenerate the Firefly prompt.
+     * Called when marketer changes product selection.
+     */
+    private static ApprovalActionResult updateProducts(Journey_Approval__c approval, ApprovalActionRequest req) {
+        ApprovalActionResult result = new ApprovalActionResult();
+
+        try {
+            // Update products JSON
+            approval.Recommended_Products__c = req.productsJson;
+
+            // Rebuild prompt with new products
+            JourneyPromptBuilder.PromptResult promptResult = JourneyPromptBuilder.rebuildPromptWithProducts(
+                req.productsJson,
+                approval.Event_Summary__c,
+                approval.Event_Type__c
+            );
+
+            approval.Firefly_Prompt__c = promptResult.prompt;
+
+            // Clear existing generated image since products changed
+            approval.Generated_Image_URL__c = null;
+            approval.Image_Content_Version_Id__c = null;
+
+            update approval;
+
+            result.success = true;
+            result.message = 'Products updated and prompt regenerated';
+
+        } catch (Exception e) {
+            result.success = false;
+            result.errorMessage = 'Failed to update products: ' + e.getMessage();
+        }
+
+        return result;
+    }
+
+    /**
      * Send the approved journey to Marketing Cloud.
      */
     private static ApprovalActionResult sendJourney(Journey_Approval__c approval) {
@@ -233,96 +277,44 @@ public with sharing class JourneyApprovalService {
         return result;
     }
 
-    // ─── Marketing Cloud Integration ──────────────────────────────────
+    // ─── MC Advanced Integration via Platform Events ──────────────────
 
     /**
-     * Fire a journey entry event to Marketing Cloud.
-     * Uses the MC Advanced REST API.
+     * Publish a Platform Event to trigger MC Advanced Marketing Flow.
+     * MC Advanced flows subscribe to Journey_Send_Request__e events
+     * and handle the email send with personalized content.
+     *
+     * To configure in MC Advanced:
+     * 1. Create a Marketing Flow triggered by Journey_Send_Request__e
+     * 2. Use event fields for email personalization (Subject__c, Body__c, etc.)
+     * 3. Configure email send action with dynamic content from event fields
      */
     private static String fireMarketingCloudJourney(Journey_Approval__c approval, Contact contact) {
-        Marketing_Agent_Settings__c settings = Marketing_Agent_Settings__c.getOrgDefaults();
-        String subdomain = settings?.MC_Subdomain__c;
+        // Create Platform Event for MC Advanced
+        Journey_Send_Request__e sendEvent = new Journey_Send_Request__e(
+            Contact_Id__c = String.valueOf(contact.Id),
+            Email__c = contact.Email,
+            First_Name__c = contact.FirstName,
+            Subject__c = approval.Approved_Subject__c,
+            Body__c = approval.Approved_Body__c,
+            Image_URL__c = approval.Generated_Image_URL__c,
+            Approval_Id__c = String.valueOf(approval.Id),
+            Event_Type__c = approval.Event_Type__c
+        );
 
-        if (String.isBlank(subdomain)) {
-            throw new JourneyApprovalException('Marketing Cloud subdomain not configured');
-        }
+        // Publish the event
+        Database.SaveResult result = EventBus.publish(sendEvent);
 
-        // Get MC access token
-        String token = getMcAccessToken(subdomain);
-
-        // Fire journey entry
-        String eventKey = 'personalized-journey-entry';
-        String journeyKey = 'personal-journey-' + approval.Id;
-
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint('https://' + subdomain + '.rest.marketingcloudapis.com/interaction/v1/events');
-        req.setMethod('POST');
-        req.setHeader('Content-Type', 'application/json');
-        req.setHeader('Authorization', 'Bearer ' + token);
-
-        Map<String, Object> payload = new Map<String, Object>{
-            'ContactKey' => contact.Email,
-            'EventDefinitionKey' => eventKey,
-            'Data' => new Map<String, Object>{
-                'ContactKey' => contact.Email,
-                'FirstName' => contact.FirstName,
-                'Subject' => approval.Approved_Subject__c,
-                'Body' => approval.Approved_Body__c,
-                'ImageUrl' => approval.Generated_Image_URL__c,
-                'JourneyApprovalId' => approval.Id
+        if (!result.isSuccess()) {
+            String errorMsg = '';
+            for (Database.Error err : result.getErrors()) {
+                errorMsg += err.getMessage() + '; ';
             }
-        };
-
-        req.setBody(JSON.serialize(payload));
-        req.setTimeout(30000);
-
-        Http http = new Http();
-        HttpResponse res = http.send(req);
-
-        if (res.getStatusCode() != 200 && res.getStatusCode() != 201) {
-            throw new JourneyApprovalException('MC API error: ' + res.getStatusCode() + ' - ' + res.getBody());
+            throw new JourneyApprovalException('Failed to publish journey event: ' + errorMsg);
         }
 
-        return journeyKey;
-    }
-
-    /**
-     * Get Marketing Cloud access token.
-     */
-    private static String getMcAccessToken(String subdomain) {
-        // In production, use Named Credentials or cache tokens
-        // This is a simplified implementation
-
-        Marketing_Agent_Settings__c settings = Marketing_Agent_Settings__c.getOrgDefaults();
-        String clientId = settings != null ? settings.MC_Client_Id__c : null;
-        String clientSecret = settings != null ? settings.MC_Client_Secret__c : null;
-
-        if (String.isBlank(clientId) || String.isBlank(clientSecret)) {
-            throw new JourneyApprovalException('Marketing Cloud credentials not configured');
-        }
-
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint('https://' + subdomain + '.auth.marketingcloudapis.com/v2/token');
-        req.setMethod('POST');
-        req.setHeader('Content-Type', 'application/json');
-
-        Map<String, Object> body = new Map<String, Object>{
-            'grant_type' => 'client_credentials',
-            'client_id' => clientId,
-            'client_secret' => clientSecret
-        };
-        req.setBody(JSON.serialize(body));
-        req.setTimeout(30000);
-
-        Http http = new Http();
-        HttpResponse res = http.send(req);
-
-        if (res.getStatusCode() != 200) {
-            throw new JourneyApprovalException('MC OAuth failed: ' + res.getStatusCode());
-        }
-
-        Map<String, Object> tokenData = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-        return (String) tokenData.get('access_token');
+        // Return event ID as journey key
+        return 'pe-' + result.getId();
     }
 
     // ─── Utility Methods ──────────────────────────────────────────────
@@ -355,6 +347,7 @@ public with sharing class JourneyApprovalService {
                    Suggested_Subject__c, Suggested_Body__c,
                    Approved_Subject__c, Approved_Body__c,
                    Generated_Image_URL__c, Firefly_Prompt__c,
+                   Recommended_Products__c,
                    Contact__c, Contact__r.Name, Contact__r.Email,
                    Meaningful_Event__c, CreatedDate
             FROM Journey_Approval__c
@@ -403,6 +396,17 @@ public with sharing class JourneyApprovalService {
         ApprovalActionRequest req = new ApprovalActionRequest();
         req.approvalId = approvalId;
         req.action = 'send';
+
+        List<ApprovalActionResult> results = processActions(new List<ApprovalActionRequest>{req});
+        return results[0];
+    }
+
+    @AuraEnabled
+    public static ApprovalActionResult updateProductsFromLWC(Id approvalId, String productsJson) {
+        ApprovalActionRequest req = new ApprovalActionRequest();
+        req.approvalId = approvalId;
+        req.action = 'update_products';
+        req.productsJson = productsJson;
 
         List<ApprovalActionResult> results = processActions(new List<ApprovalActionRequest>{req});
         return results[0];

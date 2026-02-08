@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Tracks product browsing history and purchase affinity for contacts. Used to generate personalized recommendations for journey content.</description>
+    <label>Contact Product Affinity</label>
+    <nameField>
+        <displayFormat>CPA-{0000}</displayFormat>
+        <label>Affinity ID</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Contact Product Affinities</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

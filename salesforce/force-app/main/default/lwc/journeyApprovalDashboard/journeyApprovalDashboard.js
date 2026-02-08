@@ -4,6 +4,7 @@ import approveJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.appro
 import declineJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.declineJourneyFromLWC';
 import regenerateImageFromLWC from '@salesforce/apex/JourneyApprovalService.regenerateImageFromLWC';
 import sendJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.sendJourneyFromLWC';
+import updateProductsFromLWC from '@salesforce/apex/JourneyApprovalService.updateProductsFromLWC';
 import { refreshApex } from '@salesforce/apex';
 
 export default class JourneyApprovalDashboard extends LightningElement {
@@ -127,6 +128,13 @@ export default class JourneyApprovalDashboard extends LightningElement {
                 case 'send':
                     result = await sendJourneyFromLWC({
                         approvalId: approvalId
+                    });
+                    break;
+
+                case 'updateProducts':
+                    result = await updateProductsFromLWC({
+                        approvalId: approvalId,
+                        productsJson: data.products
                     });
                     break;
 

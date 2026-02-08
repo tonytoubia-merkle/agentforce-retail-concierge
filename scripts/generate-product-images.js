@@ -67,6 +67,34 @@ const NO_REMOVE_BG = process.argv.includes('--no-remove-bg');
 const ONLY_IDX = process.argv.indexOf('--only');
 const ONLY_FILE = ONLY_IDX !== -1 ? process.argv[ONLY_IDX + 1] : null;
 
+// ─── Brand styling ──────────────────────────────────────────────
+const brandStyles = {
+  SERENE: {
+    aesthetic: 'calm, spa-like, zen',
+    colors: 'soft sage green, cream white, muted earth tones',
+    materials: 'frosted glass, matte ceramic, natural textures',
+    vibe: 'clean Korean skincare aesthetic, minimalist, soothing'
+  },
+  LUMIERE: {
+    aesthetic: 'luxurious, radiant, sophisticated',
+    colors: 'rose gold, champagne, soft pink, pearl white',
+    materials: 'glossy glass, metallic gold accents, reflective surfaces',
+    vibe: 'high-end French beauty, elegant, luminous glow'
+  },
+  DERMAFIX: {
+    aesthetic: 'clinical, professional, scientific',
+    colors: 'clean white, medical blue, sterile silver',
+    materials: 'pharmaceutical-grade packaging, medical tubes, clinical bottles',
+    vibe: 'dermatologist-recommended, science-backed, no-frills efficacy'
+  },
+  MAISON: {
+    aesthetic: 'artisanal, boutique, refined',
+    colors: 'deep amber, rich burgundy, warm gold, cream',
+    materials: 'heavy glass, wooden accents, artisan crafted',
+    vibe: 'niche perfumery, handcrafted luxury, European heritage'
+  }
+};
+
 // ─── Prompt builder ─────────────────────────────────────────────
 function buildPrompt(product) {
   const { Name, Category__c, Description__c, Brand__c } = product;
@@ -94,15 +122,24 @@ function buildPrompt(product) {
   const productType = categoryHints[Category__c] || 'a premium beauty product';
   const descSnippet = (Description__c || '').slice(0, 100);
 
+  // Get brand-specific styling
+  const brand = brandStyles[Brand__c] || {
+    aesthetic: 'premium, modern',
+    colors: 'neutral tones, white, silver',
+    materials: 'high-quality packaging',
+    vibe: 'luxury beauty brand'
+  };
+
   return [
     `Product-only cutout photograph of ${productType}.`,
     `Product: "${Name}" by ${Brand__c || 'a luxury brand'}.`,
     descSnippet ? `${descSnippet}.` : '',
-    `Isolated on a perfectly flat, uniform, pure white (#FFFFFF) background.`,
-    `Absolutely no shadows, no reflections, no gradients, no floor plane, no surface.`,
-    `The product floats in pure white emptiness with even, flat, diffused lighting.`,
-    `Clean centered composition. Single product only.`,
-    `No text, no labels, no watermarks, no decorations.`,
+    `Brand aesthetic: ${brand.aesthetic}. Colors: ${brand.colors}. Materials: ${brand.materials}. Style: ${brand.vibe}.`,
+    `The product packaging has a visible label with the product name "${Name}" and brand "${Brand__c || 'luxury brand'}" printed on it.`,
+    `CRITICAL: Completely isolated on pure white (#FFFFFF) background with ZERO shadows, ZERO drop shadows, ZERO cast shadows, ZERO ambient occlusion.`,
+    `No reflections, no gradients, no floor, no surface, no ground plane.`,
+    `The product appears to float in infinite white void. Even, flat, shadowless studio lighting from all directions.`,
+    `Clean centered composition. Single product only. No props, no decorations, no watermarks.`,
   ].filter(Boolean).join(' ');
 }
 

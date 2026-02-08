@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Affinity_Type__c</fullName>
+    <externalId>false</externalId>
+    <label>Affinity Type</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Viewed</fullName>
+                <default>true</default>
+                <label>Viewed</label>
+            </value>
+            <value>
+                <fullName>Added to Cart</fullName>
+                <default>false</default>
+                <label>Added to Cart</label>
+            </value>
+            <value>
+                <fullName>Purchased</fullName>
+                <default>false</default>
+                <label>Purchased</label>
+            </value>
+            <value>
+                <fullName>Wishlist</fullName>
+                <default>false</default>
+                <label>Wishlist</label>
+            </value>
+            <value>
+                <fullName>Recommended</fullName>
+                <default>false</default>
+                <label>Recommended</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
