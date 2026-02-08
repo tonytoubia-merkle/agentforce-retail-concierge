@@ -1,0 +1,306 @@
+/* Email Preview Container */
+.preview-container {
+    border: 1px solid #d8dde6;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f3f2f2;
+}
+
+.channel-badge-container {
+    padding: 8px 12px;
+    background: #fff;
+    border-bottom: 1px solid #d8dde6;
+}
+
+/* Email Preview Styles */
+.email-preview {
+    background: #ffffff;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.email-header {
+    padding: 16px;
+    border-bottom: 1px solid #e5e5e5;
+    background: #fafafa;
+}
+
+.email-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.email-from {
+    font-weight: 600;
+    color: #333;
+}
+
+.email-date {
+    font-size: 12px;
+    color: #666;
+}
+
+.email-to {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.email-subject {
+    font-size: 16px;
+    color: #1a1a1a;
+}
+
+.email-body {
+    padding: 0;
+}
+
+.hero-image-container {
+    width: 100%;
+    overflow: hidden;
+}
+
+.hero-image {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.email-content {
+    padding: 24px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.email-content p {
+    margin-bottom: 16px;
+}
+
+.email-content ul, .email-content ol {
+    margin: 16px 0;
+    padding-left: 24px;
+}
+
+.email-content li {
+    margin-bottom: 8px;
+}
+
+/* Product Section */
+.product-section {
+    padding: 24px;
+    background: #f9f9f9;
+    border-top: 1px solid #e5e5e5;
+}
+
+.product-section-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+}
+
+.product-grid {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.product-card {
+    width: 120px;
+    text-align: center;
+}
+
+.product-card-image {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    background: #fff;
+    margin-bottom: 8px;
+}
+
+.product-card-name {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.3;
+}
+
+/* Email Footer */
+.email-footer {
+    padding: 32px 24px;
+    text-align: center;
+    background: #2d2d2d;
+    color: #999;
+    font-size: 12px;
+}
+
+.footer-logo {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 24px;
+    color: #c5a572;
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+}
+
+.footer-tagline {
+    font-style: italic;
+    margin-bottom: 16px;
+    color: #ccc;
+}
+
+.footer-links a {
+    color: #999;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    color: #c5a572;
+}
+
+.footer-address {
+    margin-top: 16px;
+    font-size: 11px;
+}
+
+/* SMS Preview Styles */
+.sms-preview {
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.sms-phone-frame {
+    width: 320px;
+    background: #fff;
+    border-radius: 24px;
+    border: 3px solid #1a1a1a;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.sms-phone-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f7f7f7;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 13px;
+}
+
+.sms-carrier {
+    font-weight: 600;
+    color: #333;
+}
+
+.sms-time {
+    color: #666;
+}
+
+.sms-messages {
+    padding: 16px;
+    min-height: 150px;
+    background: #fff;
+}
+
+.sms-bubble {
+    background: #007aff;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 18px;
+    border-bottom-right-radius: 4px;
+    max-width: 85%;
+    margin-left: auto;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.sms-text {
+    margin: 0;
+}
+
+.sms-char-count {
+    padding: 8px 16px;
+    text-align: center;
+    font-size: 11px;
+    color: #999;
+    background: #f7f7f7;
+    border-top: 1px solid #e5e5e5;
+}
+
+/* Push Notification Preview */
+.push-preview {
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.push-notification {
+    width: 360px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fff;
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.push-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #c5a572 0%, #8b6914 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.push-icon-text {
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    font-family: 'Playfair Display', Georgia, serif;
+}
+
+.push-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.push-app-name {
+    font-size: 11px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.push-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.push-body {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.3;
+}
+
+.push-time {
+    font-size: 12px;
+    color: #999;
+    flex-shrink: 0;
+}

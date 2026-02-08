@@ -1,5 +1,6 @@
 <template>
     <article class="slds-card">
+        <!-- Card Header -->
         <div class="slds-card__header slds-grid">
             <header class="slds-media slds-media_center slds-has-flexi-truncate">
                 <div class="slds-media__figure">
@@ -12,11 +13,51 @@
                     <p class="slds-text-body_small slds-text-color_weak">{approval.contactEmail}</p>
                 </div>
             </header>
-            <div class="slds-no-flex">
+            <div class="slds-no-flex slds-grid slds-grid_vertical-align-center">
+                <!-- Channel Badge -->
+                <span class={channelBadgeClass}>
+                    <lightning-icon icon-name={channelIcon} size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                    {channel}
+                </span>
                 <span class={approval.urgencyClass}>{approval.Urgency__c}</span>
                 <span class="slds-badge slds-m-left_x-small">{approval.daysDisplay}</span>
             </div>
         </div>
+
+        <!-- Multi-Step Journey Header (if applicable) -->
+        <template if:true={isMultiStepJourney}>
+            <div class="step-navigation slds-p-horizontal_medium slds-p-vertical_small">
+                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-button-icon
+                            icon-name="utility:chevronleft"
+                            alternative-text="Previous step"
+                            onclick={handlePreviousStep}
+                            disabled={hasPreviousStep}
+                            class="slds-m-right_x-small"
+                            if:true={hasPreviousStep}>
+                        </lightning-button-icon>
+                        <span class="step-label">{stepLabel}</span>
+                        <lightning-button-icon
+                            icon-name="utility:chevronright"
+                            alternative-text="Next step"
+                            onclick={handleNextStep}
+                            disabled={hasNextStep}
+                            class="slds-m-left_x-small"
+                            if:true={hasNextStep}>
+                        </lightning-button-icon>
+                    </div>
+                    <span class="send-timing">
+                        <lightning-icon icon-name="utility:clock" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                        {sendTimingLabel}
+                    </span>
+                </div>
+                <!-- Progress Bar -->
+                <div class="step-progress-container slds-m-top_x-small">
+                    <div class="step-progress-bar" style={stepProgressStyle}></div>
+                </div>
+            </div>
+        </template>
 
         <div class="slds-card__body slds-card__body_inner">
             <!-- Event Info -->
@@ -30,224 +71,282 @@
                 </template>
             </div>
 
-            <!-- Generated Image -->
-            <template if:true={approval.Generated_Image_URL__c}>
-                <div class="slds-m-bottom_small">
-                    <p class="slds-text-title_caps slds-m-bottom_xx-small">Generated Image</p>
-                    <div class="image-container">
-                        <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="generated-image"/>
-                    </div>
-                    <div class="slds-m-top_xx-small">
-                        <lightning-button
-                            variant="base"
-                            label="Regenerate"
-                            icon-name="utility:refresh"
-                            onclick={handleRegenerateClick}
-                            size="small">
-                        </lightning-button>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Recommended Products -->
-            <div class="slds-m-bottom_small">
-                <div class="slds-grid slds-grid_align-spread slds-m-bottom_xx-small">
-                    <p class="slds-text-title_caps">Featured Products</p>
-                    <template if:false={showProductPicker}>
-                        <lightning-button
-                            variant="base"
-                            label={addProductsLabel}
-                            icon-name="utility:add"
-                            onclick={handleAddProducts}
-                            size="small">
-                        </lightning-button>
-                    </template>
-                </div>
-
-                <!-- Current Products Display -->
-                <template if:false={showProductPicker}>
-                    <template if:true={hasRecommendedProducts}>
-                        <div class="slds-grid slds-wrap slds-gutters_x-small">
-                            <template for:each={displayProducts} for:item="product">
-                                <div key={product.productCode} class="slds-col slds-size_1-of-3 slds-p-around_xx-small">
-                                    <div class="product-thumbnail">
-                                        <button
-                                            class="product-remove-btn"
-                                            data-code={product.productCode}
-                                            onclick={handleRemoveProduct}
-                                            title="Remove product">
-                                            <lightning-icon icon-name="utility:close" size="xx-small"></lightning-icon>
-                                        </button>
-                                        <template if:true={product.imageUrl}>
-                                            <img src={product.imageUrl} alt={product.name} class="product-image"/>
-                                        </template>
-                                        <p class="slds-text-body_small slds-truncate slds-m-top_xx-small" title={product.name}>
-                                            {product.name}
-                                        </p>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-                    <template if:false={hasRecommendedProducts}>
-                        <div class="slds-box slds-theme_default slds-text-align_center" style="border: 1px dashed #d8dde6; padding: 1rem;">
-                            <p class="slds-text-body_small slds-text-color_weak">No products selected</p>
-                        </div>
-                    </template>
-                </template>
-
-                <!-- Inline Product Picker (expanded) -->
-                <template if:true={showProductPicker}>
-                    <div class="product-picker-inline slds-box slds-theme_shade">
-                        <!-- Search and Filters -->
-                        <div class="slds-grid slds-gutters slds-m-bottom_small">
-                            <div class="slds-col slds-size_1-of-2">
-                                <lightning-input
-                                    type="search"
-                                    label="Search products"
-                                    placeholder="Search by name, brand..."
-                                    value={pickerSearchTerm}
-                                    onchange={handlePickerSearchChange}
-                                    variant="label-hidden">
-                                </lightning-input>
-                            </div>
-                            <div class="slds-col slds-size_1-of-2">
-                                <lightning-combobox
-                                    label="Category"
-                                    value={pickerActiveCategory}
-                                    options={pickerCategoryOptions}
-                                    onchange={handlePickerCategoryChange}
-                                    variant="label-hidden">
-                                </lightning-combobox>
-                            </div>
-                        </div>
-
-                        <!-- Selection Summary -->
-                        <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">{pickerSelectionSummary}</p>
-
-                        <!-- Loading -->
-                        <template if:true={pickerLoading}>
-                            <div class="slds-align_absolute-center slds-p-around_medium">
-                                <lightning-spinner alternative-text="Loading products" size="small"></lightning-spinner>
-                            </div>
-                        </template>
-
-                        <!-- Product Grid -->
-                        <template if:false={pickerLoading}>
-                            <div class="picker-product-grid">
-                                <template for:each={pickerProductsWithSelection} for:item="product">
-                                    <div
-                                        key={product.productCode}
-                                        class={product.selectClass}
-                                        data-code={product.productCode}
-                                        onclick={handlePickerProductClick}>
-                                        <!-- Selection indicator -->
-                                        <template if:true={product.isSelected}>
-                                            <div class="picker-selected-indicator">
-                                                <lightning-icon icon-name="utility:check" size="xx-small" variant="inverse"></lightning-icon>
-                                            </div>
-                                        </template>
-                                        <!-- Product Image -->
-                                        <div class="picker-product-image-container">
-                                            <img src={product.imageUrl} alt={product.name} class="picker-product-image"/>
-                                        </div>
-                                        <!-- Product Info -->
-                                        <div class="picker-product-info">
-                                            <p class="picker-product-brand">{product.brand}</p>
-                                            <p class="picker-product-name" title={product.name}>{product.name}</p>
-                                            <p class="picker-product-price">${product.price}</p>
-                                        </div>
+            <!-- Journey Guardrails (if present) -->
+            <template if:true={hasGuardrails}>
+                <div class="guardrails-section slds-m-bottom_small">
+                    <lightning-accordion allow-multiple-sections-open>
+                        <lightning-accordion-section name="guardrails" label="Journey Guardrails">
+                            <div class="guardrails-list">
+                                <template for:each={guardrailsList} for:item="rule">
+                                    <div key={rule.text} class="guardrail-item">
+                                        <lightning-icon icon-name={rule.icon} size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                                        <span>{rule.text}</span>
                                     </div>
                                 </template>
                             </div>
+                        </lightning-accordion-section>
+                    </lightning-accordion>
+                </div>
+            </template>
 
-                            <!-- No results -->
-                            <template if:false={hasPickerProducts}>
-                                <div class="slds-align_absolute-center slds-p-around_medium">
-                                    <p class="slds-text-color_weak">No products match your search</p>
+            <!-- Preview/Edit Toggle -->
+            <div class="slds-m-bottom_small">
+                <lightning-button
+                    variant="neutral"
+                    label={previewButtonLabel}
+                    icon-name={previewButtonIcon}
+                    onclick={handleTogglePreview}>
+                </lightning-button>
+            </div>
+
+            <!-- Preview Mode: Show Email/SMS/Push Preview -->
+            <template if:true={showPreview}>
+                <div class="preview-section slds-m-bottom_medium">
+                    <c-journey-email-preview
+                        subject={editedSubject}
+                        body={bodyContent}
+                        hero-image-url={approval.Generated_Image_URL__c}
+                        contact-name={approval.contactName}
+                        contact-email={approval.contactEmail}
+                        products={displayProducts}
+                        channel={channel}>
+                    </c-journey-email-preview>
+                </div>
+            </template>
+
+            <!-- Edit Mode: Show Form Fields -->
+            <template if:false={showPreview}>
+                <!-- Generated Image (Email only) -->
+                <template if:true={isEmailChannel}>
+                    <template if:true={approval.Generated_Image_URL__c}>
+                        <div class="slds-m-bottom_small">
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Generated Image</p>
+                            <div class="image-container">
+                                <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="generated-image"/>
+                            </div>
+                            <div class="slds-m-top_xx-small">
+                                <lightning-button
+                                    variant="base"
+                                    label="Regenerate"
+                                    icon-name="utility:refresh"
+                                    onclick={handleRegenerateClick}
+                                    size="small">
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Generate Image Section (when no image yet) -->
+                    <template if:false={approval.Generated_Image_URL__c}>
+                        <div class="slds-m-bottom_small">
+                            <template if:true={approval.Firefly_Prompt__c}>
+                                <div class="slds-box slds-theme_shade slds-m-bottom_small">
+                                    <div class="slds-grid slds-grid_align-spread slds-m-bottom_x-small">
+                                        <p class="slds-text-title_caps">AI-Generated Prompt</p>
+                                        <lightning-button-icon
+                                            icon-name="utility:edit"
+                                            alternative-text="Edit prompt"
+                                            onclick={handleEditPrompt}
+                                            size="small">
+                                        </lightning-button-icon>
+                                    </div>
+                                    <p class="slds-text-body_small">{approval.Firefly_Prompt__c}</p>
+                                </div>
+                            </template>
+
+                            <div class="slds-box slds-theme_default slds-text-align_center" style="border: 2px dashed #d8dde6; padding: 1.5rem;">
+                                <lightning-icon icon-name="utility:image" size="medium" class="slds-m-bottom_small"></lightning-icon>
+                                <p class="slds-text-body_regular slds-m-bottom_small">Ready to generate personalized image</p>
+                                <lightning-button
+                                    variant="brand"
+                                    label="Generate Image"
+                                    icon-name="utility:sparkles"
+                                    onclick={handleRegenerateClick}>
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+
+                <!-- Recommended Products (Email only) -->
+                <template if:true={isEmailChannel}>
+                    <div class="slds-m-bottom_small">
+                        <div class="slds-grid slds-grid_align-spread slds-m-bottom_xx-small">
+                            <p class="slds-text-title_caps">Featured Products</p>
+                            <template if:false={showProductPicker}>
+                                <lightning-button
+                                    variant="base"
+                                    label={addProductsLabel}
+                                    icon-name="utility:add"
+                                    onclick={handleAddProducts}
+                                    size="small">
+                                </lightning-button>
+                            </template>
+                        </div>
+
+                        <!-- Current Products Display -->
+                        <template if:false={showProductPicker}>
+                            <template if:true={hasRecommendedProducts}>
+                                <div class="slds-grid slds-wrap slds-gutters_x-small">
+                                    <template for:each={displayProducts} for:item="product">
+                                        <div key={product.productCode} class="slds-col slds-size_1-of-3 slds-p-around_xx-small">
+                                            <div class="product-thumbnail">
+                                                <button
+                                                    class="product-remove-btn"
+                                                    data-code={product.productCode}
+                                                    onclick={handleRemoveProduct}
+                                                    title="Remove product">
+                                                    <lightning-icon icon-name="utility:close" size="xx-small"></lightning-icon>
+                                                </button>
+                                                <template if:true={product.imageUrl}>
+                                                    <img src={product.imageUrl} alt={product.name} class="product-image"/>
+                                                </template>
+                                                <p class="slds-text-body_small slds-truncate slds-m-top_xx-small" title={product.name}>
+                                                    {product.name}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                            <template if:false={hasRecommendedProducts}>
+                                <div class="slds-box slds-theme_default slds-text-align_center" style="border: 1px dashed #d8dde6; padding: 1rem;">
+                                    <p class="slds-text-body_small slds-text-color_weak">No products selected</p>
                                 </div>
                             </template>
                         </template>
 
-                        <!-- Footer Actions -->
-                        <div class="slds-grid slds-grid_align-spread slds-m-top_small slds-p-top_small" style="border-top: 1px solid #d8dde6;">
-                            <lightning-button
-                                label="Clear All"
-                                onclick={handlePickerClearAll}
-                                disabled={isPickerClearDisabled}>
-                            </lightning-button>
-                            <div>
-                                <lightning-button label="Cancel" onclick={handlePickerCancel} class="slds-m-right_x-small"></lightning-button>
-                                <lightning-button variant="brand" label="Update Selection" onclick={handlePickerConfirm}></lightning-button>
+                        <!-- Inline Product Picker (expanded) -->
+                        <template if:true={showProductPicker}>
+                            <div class="product-picker-inline slds-box slds-theme_shade">
+                                <div class="slds-grid slds-gutters slds-m-bottom_small">
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input
+                                            type="search"
+                                            label="Search products"
+                                            placeholder="Search by name, brand..."
+                                            value={pickerSearchTerm}
+                                            onchange={handlePickerSearchChange}
+                                            variant="label-hidden">
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-combobox
+                                            label="Category"
+                                            value={pickerActiveCategory}
+                                            options={pickerCategoryOptions}
+                                            onchange={handlePickerCategoryChange}
+                                            variant="label-hidden">
+                                        </lightning-combobox>
+                                    </div>
+                                </div>
+
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">{pickerSelectionSummary}</p>
+
+                                <template if:true={pickerLoading}>
+                                    <div class="slds-align_absolute-center slds-p-around_medium">
+                                        <lightning-spinner alternative-text="Loading products" size="small"></lightning-spinner>
+                                    </div>
+                                </template>
+
+                                <template if:false={pickerLoading}>
+                                    <div class="picker-product-grid">
+                                        <template for:each={pickerProductsWithSelection} for:item="product">
+                                            <div
+                                                key={product.productCode}
+                                                class={product.selectClass}
+                                                data-code={product.productCode}
+                                                onclick={handlePickerProductClick}>
+                                                <template if:true={product.isSelected}>
+                                                    <div class="picker-selected-indicator">
+                                                        <lightning-icon icon-name="utility:check" size="xx-small" variant="inverse"></lightning-icon>
+                                                    </div>
+                                                </template>
+                                                <div class="picker-product-image-container">
+                                                    <img src={product.imageUrl} alt={product.name} class="picker-product-image"/>
+                                                </div>
+                                                <div class="picker-product-info">
+                                                    <p class="picker-product-brand">{product.brand}</p>
+                                                    <p class="picker-product-name" title={product.name}>{product.name}</p>
+                                                    <p class="picker-product-price">${product.price}</p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <template if:false={hasPickerProducts}>
+                                        <div class="slds-align_absolute-center slds-p-around_medium">
+                                            <p class="slds-text-color_weak">No products match your search</p>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <div class="slds-grid slds-grid_align-spread slds-m-top_small slds-p-top_small" style="border-top: 1px solid #d8dde6;">
+                                    <lightning-button
+                                        label="Clear All"
+                                        onclick={handlePickerClearAll}
+                                        disabled={isPickerClearDisabled}>
+                                    </lightning-button>
+                                    <div>
+                                        <lightning-button label="Cancel" onclick={handlePickerCancel} class="slds-m-right_x-small"></lightning-button>
+                                        <lightning-button variant="brand" label="Update Selection" onclick={handlePickerConfirm}></lightning-button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        </template>
                     </div>
                 </template>
-            </div>
 
-            <!-- Generate Image Section (when no image yet) -->
-            <template if:false={approval.Generated_Image_URL__c}>
-                <div class="slds-m-bottom_small">
-                    <!-- Prompt Preview Card -->
-                    <template if:true={approval.Firefly_Prompt__c}>
-                        <div class="slds-box slds-theme_shade slds-m-bottom_small">
-                            <div class="slds-grid slds-grid_align-spread slds-m-bottom_x-small">
-                                <p class="slds-text-title_caps">AI-Generated Prompt</p>
-                                <lightning-button-icon
-                                    icon-name="utility:edit"
-                                    alternative-text="Edit prompt"
-                                    onclick={handleEditPrompt}
-                                    size="small">
-                                </lightning-button-icon>
-                            </div>
-                            <p class="slds-text-body_small">{approval.Firefly_Prompt__c}</p>
-                        </div>
-                    </template>
-
-                    <!-- Generate Button -->
-                    <div class="slds-box slds-theme_default slds-text-align_center" style="border: 2px dashed #d8dde6; padding: 1.5rem;">
-                        <lightning-icon icon-name="utility:image" size="medium" class="slds-m-bottom_small"></lightning-icon>
-                        <p class="slds-text-body_regular slds-m-bottom_small">Ready to generate personalized image</p>
-                        <lightning-button
-                            variant="brand"
-                            label="Generate Image"
-                            icon-name="utility:sparkles"
-                            onclick={handleRegenerateClick}>
-                        </lightning-button>
+                <!-- Subject Line (Email and Push) -->
+                <template if:true={isEmailChannel}>
+                    <div class="slds-m-bottom_small">
+                        <lightning-input
+                            label="Subject Line"
+                            value={editedSubject}
+                            onchange={handleSubjectChange}
+                            maxlength="255">
+                        </lightning-input>
                     </div>
+                </template>
+
+                <template if:true={isPushChannel}>
+                    <div class="slds-m-bottom_small">
+                        <lightning-input
+                            label="Push Title"
+                            value={editedSubject}
+                            onchange={handleSubjectChange}
+                            maxlength="100">
+                        </lightning-input>
+                    </div>
+                </template>
+
+                <!-- Body (all channels) -->
+                <div class="slds-m-bottom_small">
+                    <lightning-textarea
+                        label={bodyLabel}
+                        value={bodyContent}
+                        onchange={handleBodyChange}
+                        max-length={bodyMaxLength}>
+                    </lightning-textarea>
+                    <template if:true={isSmsChannel}>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                            {bodyContent.length} / 320 characters (standard SMS: 160 chars)
+                        </p>
+                    </template>
                 </div>
-            </template>
 
-            <!-- Email Subject -->
-            <div class="slds-m-bottom_small">
-                <lightning-input
-                    label="Subject Line"
-                    value={editedSubject}
-                    onchange={handleSubjectChange}
-                    maxlength="255">
-                </lightning-input>
-            </div>
-
-            <!-- Email Body -->
-            <div class="slds-m-bottom_small">
-                <lightning-textarea
-                    label="Email Body"
-                    value={editedBody}
-                    onchange={handleBodyChange}
-                    max-length="32000">
-                </lightning-textarea>
-            </div>
-
-            <!-- Event Summary (Expandable) -->
-            <template if:true={approval.Event_Summary__c}>
-                <lightning-accordion allow-multiple-sections-open>
-                    <lightning-accordion-section name="context" label="Event Context">
-                        <pre class="event-summary">{approval.Event_Summary__c}</pre>
-                    </lightning-accordion-section>
-                </lightning-accordion>
+                <!-- Event Summary (Expandable) -->
+                <template if:true={approval.Event_Summary__c}>
+                    <lightning-accordion allow-multiple-sections-open>
+                        <lightning-accordion-section name="context" label="Event Context">
+                            <pre class="event-summary">{approval.Event_Summary__c}</pre>
+                        </lightning-accordion-section>
+                    </lightning-accordion>
+                </template>
             </template>
         </div>
 
+        <!-- Card Footer -->
         <footer class="slds-card__footer">
             <div class="slds-grid slds-grid_align-spread">
                 <div>
@@ -259,6 +358,16 @@
                     </lightning-button>
                 </div>
                 <div>
+                    <!-- Approve All Steps button for multi-step journeys -->
+                    <template if:true={isMultiStepJourney}>
+                        <lightning-button
+                            variant="neutral"
+                            label="Approve All Steps"
+                            icon-name="utility:check"
+                            onclick={handleApproveAllSteps}
+                            class="slds-m-right_small">
+                        </lightning-button>
+                    </template>
                     <lightning-button
                         variant="brand"
                         label="Approve"
@@ -269,7 +378,7 @@
                     <lightning-button
                         variant="success"
                         label="Approve & Send"
-                        icon-name="utility:email"
+                        icon-name={channelIcon}
                         onclick={handleApproveAndSend}>
                     </lightning-button>
                 </div>

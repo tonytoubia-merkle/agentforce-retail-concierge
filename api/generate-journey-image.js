@@ -16,15 +16,11 @@
 import https from 'node:https';
 import sharp from 'sharp';
 
-// Firefly API endpoints
-const TOKEN_URL = 'https://ims-na1.adobelogin.com/ims/token/v3';
-const UPLOAD_URL = 'https://firefly-api.adobe.io/v2/storage/image';
-const EXPAND_URL = 'https://firefly-api.adobe.io/v3/images/expand';
-
 // Canvas dimensions
-const COMPOSITE_SIZE = 400;  // Size of the product composite canvas
-const OUTPUT_WIDTH = 1792;   // Final expanded image width (email banner ratio)
-const OUTPUT_HEIGHT = 1024;  // Final expanded image height
+const COMPOSITE_WIDTH = 600;   // Width of the product composite canvas
+const COMPOSITE_HEIGHT = 400;  // Height of the product composite canvas (shorter to leave room for text)
+const OUTPUT_WIDTH = 1792;     // Final expanded image width (email banner ratio)
+const OUTPUT_HEIGHT = 1024;    // Final expanded image height
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -89,14 +85,15 @@ async function downloadImage(url) {
 
 /**
  * Composite multiple product images onto a transparent canvas.
- * Products are arranged in an attractive pattern.
+ * Products are arranged in the lower portion to leave space for text overlay.
+ * Edges are softened for better blending with generated backgrounds.
  */
 async function compositeProducts(products) {
-  // Create transparent canvas
+  // Create transparent canvas (wider than tall to position products in lower center)
   const canvas = sharp({
     create: {
-      width: COMPOSITE_SIZE,
-      height: COMPOSITE_SIZE,
+      width: COMPOSITE_WIDTH,
+      height: COMPOSITE_HEIGHT,
       channels: 4,
       background: { r: 0, g: 0, b: 0, alpha: 0 }
     }
@@ -105,21 +102,28 @@ async function compositeProducts(products) {
   // Define positions based on product count
   const positions = getProductPositions(products.length);
 
-  // Download and prepare product images
+  // Download and prepare product images with softened edges
   const composites = [];
   for (let i = 0; i < products.length && i < positions.length; i++) {
     try {
       const imageBuffer = await downloadImage(products[i].imageUrl);
       const pos = positions[i];
 
-      // Resize product image
+      // Resize product image with soft edges
+      // Apply a subtle shadow/glow effect to help blend edges
       const resizedImage = await sharp(imageBuffer)
-        .resize(pos.size, pos.size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .resize(pos.size, pos.size, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
         .png()
         .toBuffer();
 
+      // Create a slightly blurred version for edge softening
+      const edgeSoftened = await softProductEdges(resizedImage, pos.size);
+
       composites.push({
-        input: resizedImage,
+        input: edgeSoftened,
         left: pos.x,
         top: pos.y,
       });
@@ -142,41 +146,135 @@ async function compositeProducts(products) {
 }
 
 /**
+ * Soften the edges of a product image using alpha channel manipulation.
+ * Creates a more natural blend when composited onto generated backgrounds.
+ * @param {Buffer} imageBuffer - The product image buffer
+ * @param {number} _size - The target size (reserved for future edge scaling)
+ */
+async function softProductEdges(imageBuffer, _size) {
+  // Get the image and its alpha channel
+  const image = sharp(imageBuffer);
+
+  // Extract raw pixel data
+  const { data, info } = await image
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  // Create a copy of the data to modify
+  const pixels = Buffer.from(data);
+  const width = info.width;
+  const height = info.height;
+  const channels = info.channels;
+
+  // Apply edge detection and softening to alpha channel
+  // For each pixel near an edge (where alpha transitions), soften the transition
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * channels;
+      const alpha = pixels[idx + 3];
+
+      // Skip fully transparent or pixels far from edges
+      if (alpha === 0) continue;
+      if (alpha === 255) {
+        // Check if this is an edge pixel (has transparent neighbor)
+        let isEdge = false;
+        for (let dy = -1; dy <= 1 && !isEdge; dy++) {
+          for (let dx = -1; dx <= 1 && !isEdge; dx++) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+              const nidx = (ny * width + nx) * channels;
+              if (pixels[nidx + 3] < 200) {
+                isEdge = true;
+              }
+            }
+          }
+        }
+        // Slightly soften edge pixels
+        if (isEdge) {
+          pixels[idx + 3] = 230; // Reduce alpha slightly at edges
+        }
+      } else if (alpha > 0 && alpha < 255) {
+        // Semi-transparent pixels - make transition smoother
+        // Apply a slight reduction to create softer falloff
+        const softened = Math.floor(alpha * 0.85);
+        pixels[idx + 3] = softened;
+      }
+    }
+  }
+
+  // Reconstruct the image with modified alpha
+  return sharp(pixels, {
+    raw: {
+      width: info.width,
+      height: info.height,
+      channels: info.channels
+    }
+  })
+    .png()
+    .toBuffer();
+}
+
+/**
  * Get positions for products based on count.
+ * Products are arranged in the center of the canvas for optimal Firefly expansion.
  * Returns array of { x, y, size } for each product.
  */
 function getProductPositions(count) {
   const positions = [];
-  const cs = COMPOSITE_SIZE;
+  const cw = COMPOSITE_WIDTH;
+  const ch = COMPOSITE_HEIGHT;
+
+  // Products are sized relative to the smaller dimension
+  const baseSize = Math.min(cw, ch);
 
   if (count === 1) {
-    // Center, large
-    positions.push({ x: cs/4, y: cs/4, size: cs/2 });
+    // Single product centered
+    const size = Math.floor(baseSize * 0.5);
+    positions.push({ x: Math.floor((cw - size) / 2), y: Math.floor((ch - size) / 2), size });
   } else if (count === 2) {
-    // Side by side
-    positions.push({ x: 20, y: cs/4, size: cs/3 });
-    positions.push({ x: cs - cs/3 - 20, y: cs/4, size: cs/3 });
+    // Side by side, centered vertically
+    const size = Math.floor(baseSize * 0.4);
+    const spacing = Math.floor(cw * 0.1);
+    const totalWidth = size * 2 + spacing;
+    const startX = Math.floor((cw - totalWidth) / 2);
+    const yPos = Math.floor((ch - size) / 2);
+    positions.push({ x: startX, y: yPos, size });
+    positions.push({ x: startX + size + spacing, y: yPos, size });
   } else if (count === 3) {
-    // Triangle pattern
-    positions.push({ x: cs/3, y: 20, size: cs/3 });           // Top center
-    positions.push({ x: 20, y: cs/2, size: cs/3 });           // Bottom left
-    positions.push({ x: cs - cs/3 - 20, y: cs/2, size: cs/3 }); // Bottom right
+    // Horizontal row, evenly spaced
+    const size = Math.floor(baseSize * 0.35);
+    const spacing = Math.floor((cw - size * 3) / 4);
+    const yPos = Math.floor((ch - size) / 2);
+    positions.push({ x: spacing, y: yPos, size });
+    positions.push({ x: spacing * 2 + size, y: yPos, size });
+    positions.push({ x: spacing * 3 + size * 2, y: yPos, size });
   } else if (count === 4) {
-    // 2x2 grid
-    const size = cs/3;
-    const margin = (cs - 2*size) / 3;
-    positions.push({ x: margin, y: margin, size });
-    positions.push({ x: margin*2 + size, y: margin, size });
-    positions.push({ x: margin, y: margin*2 + size, size });
-    positions.push({ x: margin*2 + size, y: margin*2 + size, size });
+    // 2x2 grid centered
+    const size = Math.floor(baseSize * 0.3);
+    const hSpacing = Math.floor((cw - size * 2) / 3);
+    const vSpacing = Math.floor((ch - size * 2) / 3);
+    positions.push({ x: hSpacing, y: vSpacing, size });
+    positions.push({ x: hSpacing * 2 + size, y: vSpacing, size });
+    positions.push({ x: hSpacing, y: vSpacing * 2 + size, size });
+    positions.push({ x: hSpacing * 2 + size, y: vSpacing * 2 + size, size });
   } else {
-    // 5+ products: pentagon-ish pattern with center
-    const size = cs/4;
-    positions.push({ x: cs/2 - size/2, y: cs/2 - size/2, size: size*1.2 }); // Center (larger)
-    positions.push({ x: 20, y: 20, size });                    // Top left
-    positions.push({ x: cs - size - 20, y: 20, size });        // Top right
-    positions.push({ x: 20, y: cs - size - 20, size });        // Bottom left
-    positions.push({ x: cs - size - 20, y: cs - size - 20, size }); // Bottom right
+    // 5+ products: center larger, corners smaller
+    const centerSize = Math.floor(baseSize * 0.35);
+    const cornerSize = Math.floor(baseSize * 0.22);
+    const margin = 15;
+    // Center product
+    positions.push({
+      x: Math.floor((cw - centerSize) / 2),
+      y: Math.floor((ch - centerSize) / 2),
+      size: centerSize
+    });
+    // Corner products
+    positions.push({ x: margin, y: margin, size: cornerSize });
+    positions.push({ x: cw - cornerSize - margin, y: margin, size: cornerSize });
+    positions.push({ x: margin, y: ch - cornerSize - margin, size: cornerSize });
+    positions.push({ x: cw - cornerSize - margin, y: ch - cornerSize - margin, size: cornerSize });
   }
 
   return positions.map(p => ({
@@ -241,6 +339,7 @@ async function uploadToFirefly(imageBuffer, token, clientId) {
 /**
  * Call Firefly Expand Image API.
  * Expands the composite image with AI-generated scene content.
+ * Products are placed in the lower center to leave the top clear for text overlay.
  */
 async function expandImage(uploadId, prompt, token, clientId) {
   const requestBody = JSON.stringify({
@@ -256,9 +355,14 @@ async function expandImage(uploadId, prompt, token, clientId) {
     },
     prompt: prompt,
     placement: {
+      // Position products in lower-center area, leaving top for text overlay
       alignment: {
         horizontal: 'center',
-        vertical: 'center',
+        vertical: 'bottom',
+      },
+      // Inset from bottom edge to avoid products being cut off
+      inset: {
+        bottom: 80,
       },
     },
   });
@@ -297,6 +401,7 @@ async function expandImage(uploadId, prompt, token, clientId) {
 
 /**
  * Build an enhanced prompt with brand guidelines.
+ * Includes composition guidance for text overlay area in the top portion.
  */
 function buildEnhancedPrompt(basePrompt, eventType) {
   const brandContext = 'Luxury beauty brand aesthetic. Soft, elegant, aspirational mood. ' +
@@ -304,16 +409,22 @@ function buildEnhancedPrompt(basePrompt, eventType) {
     'Lighting: soft diffused natural light, gentle highlights, no harsh shadows. ' +
     'Style: high-end editorial photography, magazine-quality, sophisticated.';
 
+  // Composition guidance that ensures clear space for text overlay
   const compositionGuidance = 'Professional product photography, photorealistic, ' +
-    'elegant lifestyle scene surrounding the beauty products.';
+    'elegant lifestyle scene surrounding the beauty products. ' +
+    'IMPORTANT COMPOSITION: The upper third of the image should have a soft, ' +
+    'clean, uncluttered background with gentle gradients or subtle bokeh - ' +
+    'suitable for white or dark text overlay. Avoid busy patterns, sharp details, ' +
+    'or high-contrast elements in the top portion. Products and detailed scene ' +
+    'elements should be concentrated in the lower two-thirds of the image.';
 
   let eventContext = '';
   if (eventType === 'travel') {
-    eventContext = 'Travel-inspired scene with luggage, maps, or destination elements. ';
+    eventContext = 'Travel-inspired scene with luggage, maps, or destination elements in the lower area. Soft sky or blurred background in upper portion. ';
   } else if (eventType === 'birthday') {
-    eventContext = 'Celebratory atmosphere with subtle gift elements, flowers, or festive touches. ';
+    eventContext = 'Celebratory atmosphere with subtle gift elements, flowers, or festive touches. Soft gradient or bokeh in upper area for text. ';
   } else if (eventType === 'wedding') {
-    eventContext = 'Romantic bridal atmosphere with white florals, soft fabrics, champagne tones. ';
+    eventContext = 'Romantic bridal atmosphere with white florals, soft fabrics, champagne tones. Dreamy soft-focus upper area ideal for elegant text. ';
   }
 
   return `${basePrompt}. ${eventContext}${brandContext} ${compositionGuidance}`;

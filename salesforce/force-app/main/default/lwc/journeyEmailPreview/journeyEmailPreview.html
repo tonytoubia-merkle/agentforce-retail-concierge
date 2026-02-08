@@ -1,0 +1,100 @@
+<template>
+    <div class="preview-container">
+        <!-- Channel Toggle Display -->
+        <div class="channel-badge-container">
+            <span class={channelBadgeClass}>{channel}</span>
+        </div>
+
+        <!-- Email Preview -->
+        <template if:true={isEmailChannel}>
+            <div class="email-preview">
+                <!-- Email Header (mock inbox) -->
+                <div class="email-header">
+                    <div class="email-header-row">
+                        <span class="email-from">LUMIÈRE Beauty</span>
+                        <span class="email-date">{previewDate}</span>
+                    </div>
+                    <div class="email-to">
+                        To: {contactName} &lt;{contactEmail}&gt;
+                    </div>
+                    <div class="email-subject">
+                        <strong>{subject}</strong>
+                    </div>
+                </div>
+
+                <!-- Email Body -->
+                <div class="email-body">
+                    <!-- Hero Image -->
+                    <template if:true={hasHeroImage}>
+                        <div class="hero-image-container">
+                            <img src={heroImageUrl} alt="Journey hero image" class="hero-image" />
+                        </div>
+                    </template>
+
+                    <!-- Body Content -->
+                    <div class="email-content" lwc:dom="manual"></div>
+
+                    <!-- Product Grid (if products exist) -->
+                    <template if:true={hasProducts}>
+                        <div class="product-section">
+                            <h3 class="product-section-title">Recommended For You</h3>
+                            <div class="product-grid">
+                                <template for:each={displayProducts} for:item="product">
+                                    <div key={product.productCode} class="product-card">
+                                        <img src={product.imageUrl} alt={product.name} class="product-card-image" />
+                                        <p class="product-card-name">{product.name}</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Footer -->
+                    <div class="email-footer">
+                        <p class="footer-logo">LUMIÈRE</p>
+                        <p class="footer-tagline">Radiance in Every Drop</p>
+                        <p class="footer-links">
+                            <a href="#">Unsubscribe</a> | <a href="#">View in Browser</a> | <a href="#">Privacy Policy</a>
+                        </p>
+                        <p class="footer-address">123 Beauty Lane, Paris, France 75001</p>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- SMS Preview -->
+        <template if:true={isSmsChannel}>
+            <div class="sms-preview">
+                <div class="sms-phone-frame">
+                    <div class="sms-phone-header">
+                        <span class="sms-carrier">LUMIÈRE</span>
+                        <span class="sms-time">{previewDate}</span>
+                    </div>
+                    <div class="sms-messages">
+                        <div class="sms-bubble">
+                            <p class="sms-text">{smsPreviewBody}</p>
+                        </div>
+                    </div>
+                    <div class="sms-char-count">{smsCharCount}</div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Push Notification Preview -->
+        <template if:true={isPushChannel}>
+            <div class="push-preview">
+                <div class="push-notification">
+                    <div class="push-icon">
+                        <span class="push-icon-text">L</span>
+                    </div>
+                    <div class="push-content">
+                        <div class="push-app-name">LUMIÈRE Beauty</div>
+                        <div class="push-title">{pushTitle}</div>
+                        <div class="push-body">{pushBody}</div>
+                    </div>
+                    <div class="push-time">now</div>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>

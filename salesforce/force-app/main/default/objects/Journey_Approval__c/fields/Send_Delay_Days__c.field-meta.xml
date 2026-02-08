@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Send_Delay_Days__c</fullName>
+    <defaultValue>0</defaultValue>
+    <description>Days after journey start (or previous step) to send this step. 0 = send immediately.</description>
+    <externalId>false</externalId>
+    <label>Send Delay (Days)</label>
+    <precision>3</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

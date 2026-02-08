@@ -3,16 +3,20 @@ import getProductsByCategory from '@salesforce/apex/ProductPickerService.getProd
 
 export default class JourneyApprovalCard extends LightningElement {
     @api approval;
+    @api journeySteps = []; // All steps in this journey (passed from parent)
 
     @track editedSubject;
     @track editedBody;
+    @track editedSmsBody;
     @track showDeclineModal = false;
     @track showRegenerateModal = false;
     @track showProductPicker = false;
+    @track showPreview = false; // Toggle between edit and preview mode
     @track declineReason = '';
     @track newPrompt = '';
     @track localProducts = [];
     @track productsModified = false;
+    @track currentStepIndex = 0; // For multi-step navigation
 
     // ─── Inline Picker State ──────────────────────────────────────────
     @track pickerCategories = [];
@@ -27,9 +31,14 @@ export default class JourneyApprovalCard extends LightningElement {
         // Initialize editable fields with suggested content
         this.editedSubject = this.approval?.Suggested_Subject__c || '';
         this.editedBody = this.approval?.Suggested_Body__c || '';
+        this.editedSmsBody = this.approval?.SMS_Body__c || '';
         this.newPrompt = this.approval?.Firefly_Prompt__c || '';
         // Initialize local products from approval
         this.localProducts = this.recommendedProducts;
+        // Set initial step index based on step number
+        if (this.approval?.Step_Number__c) {
+            this.currentStepIndex = this.approval.Step_Number__c - 1;
+        }
     }
 
     @wire(getProductsByCategory)
@@ -50,6 +59,183 @@ export default class JourneyApprovalCard extends LightningElement {
         }
     }
 
+    // ─── Multi-Step Journey Getters ────────────────────────────────────
+
+    get isMultiStepJourney() {
+        return (this.approval?.Total_Steps__c || 1) > 1;
+    }
+
+    get stepNumber() {
+        return this.approval?.Step_Number__c || 1;
+    }
+
+    get totalSteps() {
+        return this.approval?.Total_Steps__c || 1;
+    }
+
+    get stepLabel() {
+        return `Step ${this.stepNumber} of ${this.totalSteps}`;
+    }
+
+    get hasPreviousStep() {
+        return this.stepNumber > 1;
+    }
+
+    get hasNextStep() {
+        return this.stepNumber < this.totalSteps;
+    }
+
+    get stepProgressPercent() {
+        return Math.round((this.stepNumber / this.totalSteps) * 100);
+    }
+
+    get stepProgressStyle() {
+        return `width: ${this.stepProgressPercent}%`;
+    }
+
+    // ─── Channel Getters ───────────────────────────────────────────────
+
+    get channel() {
+        return this.approval?.Channel__c || 'Email';
+    }
+
+    get isEmailChannel() {
+        return this.channel === 'Email';
+    }
+
+    get isSmsChannel() {
+        return this.channel === 'SMS';
+    }
+
+    get isPushChannel() {
+        return this.channel === 'Push';
+    }
+
+    get channelIcon() {
+        switch (this.channel) {
+            case 'Email': return 'utility:email';
+            case 'SMS': return 'utility:chat';
+            case 'Push': return 'utility:notification';
+            default: return 'utility:email';
+        }
+    }
+
+    get channelBadgeClass() {
+        const base = 'slds-badge channel-badge';
+        switch (this.channel) {
+            case 'Email': return `${base} channel-email`;
+            case 'SMS': return `${base} channel-sms`;
+            case 'Push': return `${base} channel-push`;
+            default: return base;
+        }
+    }
+
+    // ─── Timing/Scheduling Getters ─────────────────────────────────────
+
+    get sendDelayDays() {
+        return this.approval?.Send_Delay_Days__c || 0;
+    }
+
+    get scheduledSendDate() {
+        if (!this.approval?.Scheduled_Send_Date__c) return null;
+        const date = new Date(this.approval.Scheduled_Send_Date__c);
+        return date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    get sendTimingLabel() {
+        if (this.stepNumber === 1) {
+            return 'Sends immediately after approval';
+        }
+        if (this.sendDelayDays === 1) {
+            return `Sends 1 day after Step ${this.stepNumber - 1}`;
+        }
+        return `Sends ${this.sendDelayDays} days after Step ${this.stepNumber - 1}`;
+    }
+
+    // ─── Guardrails Getters ────────────────────────────────────────────
+
+    get hasGuardrails() {
+        return !!this.approval?.Journey_Guardrails__c;
+    }
+
+    get guardrails() {
+        if (!this.approval?.Journey_Guardrails__c) return null;
+        try {
+            return JSON.parse(this.approval.Journey_Guardrails__c);
+        } catch (e) {
+            console.error('Failed to parse guardrails:', e);
+            return null;
+        }
+    }
+
+    get guardrailsList() {
+        const g = this.guardrails;
+        if (!g) return [];
+        const rules = [];
+        if (g.maxEmailsPerWeek) {
+            rules.push({ icon: 'utility:ban', text: `Max ${g.maxEmailsPerWeek} email(s) per week` });
+        }
+        if (g.exitOnPurchase) {
+            rules.push({ icon: 'utility:logout', text: 'Exit journey on purchase' });
+        }
+        if (g.exitOnUnsubscribe) {
+            rules.push({ icon: 'utility:logout', text: 'Exit on unsubscribe' });
+        }
+        if (g.minDaysBetweenMessages) {
+            rules.push({ icon: 'utility:clock', text: `Min ${g.minDaysBetweenMessages} day(s) between messages` });
+        }
+        if (g.suppressIfOpened) {
+            rules.push({ icon: 'utility:check', text: 'Suppress if previous email opened' });
+        }
+        if (g.suppressIfClicked) {
+            rules.push({ icon: 'utility:check', text: 'Suppress if previous email clicked' });
+        }
+        return rules;
+    }
+
+    // ─── Preview Mode Toggle ───────────────────────────────────────────
+
+    get previewButtonLabel() {
+        return this.showPreview ? 'Edit Content' : 'Preview';
+    }
+
+    get previewButtonIcon() {
+        return this.showPreview ? 'utility:edit' : 'utility:preview';
+    }
+
+    handleTogglePreview() {
+        this.showPreview = !this.showPreview;
+    }
+
+    // ─── Body Content (channel-aware) ──────────────────────────────────
+
+    get bodyContent() {
+        if (this.isSmsChannel || this.isPushChannel) {
+            return this.editedSmsBody;
+        }
+        return this.editedBody;
+    }
+
+    get bodyLabel() {
+        if (this.isSmsChannel) return 'SMS Message';
+        if (this.isPushChannel) return 'Push Notification Text';
+        return 'Email Body';
+    }
+
+    get bodyMaxLength() {
+        if (this.isSmsChannel) return 320;
+        if (this.isPushChannel) return 200;
+        return 32000;
+    }
+
+    // ─── Existing Getters ──────────────────────────────────────────────
+
     get formattedEventDate() {
         if (!this.approval?.Event_Date__c) return '';
         const date = new Date(this.approval.Event_Date__c);
@@ -61,9 +247,6 @@ export default class JourneyApprovalCard extends LightningElement {
         });
     }
 
-    /**
-     * Parse and return recommended products from JSON field
-     */
     get recommendedProducts() {
         if (!this.approval?.Recommended_Products__c) return [];
         try {
@@ -79,7 +262,6 @@ export default class JourneyApprovalCard extends LightningElement {
     }
 
     get displayProducts() {
-        // Use local products if modified, otherwise use from approval
         return this.productsModified ? this.localProducts : this.recommendedProducts;
     }
 
@@ -91,6 +273,28 @@ export default class JourneyApprovalCard extends LightningElement {
         return this.hasRecommendedProducts ? '+ Add/Edit' : '+ Add Products';
     }
 
+    // ─── Step Navigation ───────────────────────────────────────────────
+
+    handlePreviousStep() {
+        this.dispatchEvent(new CustomEvent('action', {
+            detail: {
+                action: 'navigateStep',
+                approvalId: this.approval.Id,
+                data: { direction: 'previous' }
+            }
+        }));
+    }
+
+    handleNextStep() {
+        this.dispatchEvent(new CustomEvent('action', {
+            detail: {
+                action: 'navigateStep',
+                approvalId: this.approval.Id,
+                data: { direction: 'next' }
+            }
+        }));
+    }
+
     // ─── Product Management ────────────────────────────────────────────
 
     handleRemoveProduct(event) {
@@ -98,12 +302,10 @@ export default class JourneyApprovalCard extends LightningElement {
         const productCode = event.currentTarget.dataset.code;
         this.localProducts = this.localProducts.filter(p => p.productCode !== productCode);
         this.productsModified = true;
-        // Dispatch event to update products on approval record
         this.dispatchProductUpdate();
     }
 
     handleAddProducts() {
-        // Initialize picker selection with current products
         this.pickerSelectedProducts = [...this.displayProducts];
         this.showProductPicker = true;
     }
@@ -184,10 +386,8 @@ export default class JourneyApprovalCard extends LightningElement {
         const isCurrentlySelected = this.pickerSelectedProducts.some(p => p.productCode === productCode);
 
         if (isCurrentlySelected) {
-            // Remove from selection
             this.pickerSelectedProducts = this.pickerSelectedProducts.filter(p => p.productCode !== productCode);
         } else if (this.pickerCanAddMore) {
-            // Add to selection
             this.pickerSelectedProducts = [...this.pickerSelectedProducts, product];
         }
     }
@@ -198,7 +398,6 @@ export default class JourneyApprovalCard extends LightningElement {
 
     handlePickerCancel() {
         this.showProductPicker = false;
-        // Reset picker state
         this.pickerSearchTerm = '';
         this.pickerActiveCategory = 'all';
         this.applyPickerFilters();
@@ -208,9 +407,7 @@ export default class JourneyApprovalCard extends LightningElement {
         this.localProducts = [...this.pickerSelectedProducts];
         this.productsModified = true;
         this.showProductPicker = false;
-        // Dispatch event to update products on approval record
         this.dispatchProductUpdate();
-        // Reset picker state
         this.pickerSearchTerm = '';
         this.pickerActiveCategory = 'all';
         this.applyPickerFilters();
@@ -219,7 +416,6 @@ export default class JourneyApprovalCard extends LightningElement {
     applyPickerFilters() {
         let results = [...this.pickerAllProducts];
 
-        // Filter by category
         if (this.pickerActiveCategory !== 'all') {
             const categoryLabel = this.pickerCategories.find(c => c.name === this.pickerActiveCategory)?.label;
             if (categoryLabel) {
@@ -227,7 +423,6 @@ export default class JourneyApprovalCard extends LightningElement {
             }
         }
 
-        // Filter by search term
         if (this.pickerSearchTerm) {
             const term = this.pickerSearchTerm.toLowerCase();
             results = results.filter(p =>
@@ -240,15 +435,21 @@ export default class JourneyApprovalCard extends LightningElement {
         this.pickerFilteredProducts = results;
     }
 
-    // ─── Other Event Handlers ─────────────────────────────────────────
+    // ─── Content Editing Event Handlers ────────────────────────────────
 
     handleSubjectChange(event) {
         this.editedSubject = event.target.value;
     }
 
     handleBodyChange(event) {
-        this.editedBody = event.target.value;
+        if (this.isSmsChannel || this.isPushChannel) {
+            this.editedSmsBody = event.target.value;
+        } else {
+            this.editedBody = event.target.value;
+        }
     }
+
+    // ─── Approval Actions ──────────────────────────────────────────────
 
     handleApprove() {
         this.dispatchEvent(new CustomEvent('action', {
@@ -257,27 +458,24 @@ export default class JourneyApprovalCard extends LightningElement {
                 approvalId: this.approval.Id,
                 data: {
                     subject: this.editedSubject,
-                    body: this.editedBody
+                    body: this.isEmailChannel ? this.editedBody : this.editedSmsBody
                 }
             }
         }));
     }
 
     handleApproveAndSend() {
-        // First approve, then send
         this.dispatchEvent(new CustomEvent('action', {
             detail: {
                 action: 'approve',
                 approvalId: this.approval.Id,
                 data: {
                     subject: this.editedSubject,
-                    body: this.editedBody
+                    body: this.isEmailChannel ? this.editedBody : this.editedSmsBody
                 }
             }
         }));
 
-        // The parent will handle the send after approval completes
-        // Or we can dispatch a combined action
         setTimeout(() => {
             this.dispatchEvent(new CustomEvent('action', {
                 detail: {
@@ -287,6 +485,19 @@ export default class JourneyApprovalCard extends LightningElement {
                 }
             }));
         }, 1000);
+    }
+
+    handleApproveAllSteps() {
+        // Approve all steps in the journey at once
+        this.dispatchEvent(new CustomEvent('action', {
+            detail: {
+                action: 'approveJourney',
+                approvalId: this.approval.Id,
+                data: {
+                    journeyId: this.approval.Journey_Id__c
+                }
+            }
+        }));
     }
 
     handleDecline() {
@@ -320,7 +531,6 @@ export default class JourneyApprovalCard extends LightningElement {
     }
 
     handleEditPrompt() {
-        // Open the regenerate modal to edit the prompt
         this.showRegenerateModal = true;
     }
 
