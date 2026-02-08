@@ -66,6 +66,8 @@ function rewriteImageUrl(url) {
  */
 async function downloadImage(url) {
   const resolvedUrl = rewriteImageUrl(url);
+  console.log(`[generate-journey-image] Downloading image: ${resolvedUrl}`);
+
   const parsedUrl = new URL(resolvedUrl);
   const result = await httpsRequest({
     hostname: parsedUrl.hostname,
@@ -76,9 +78,11 @@ async function downloadImage(url) {
   });
 
   if (result.statusCode !== 200) {
+    console.error(`[generate-journey-image] Image download FAILED: ${resolvedUrl} -> ${result.statusCode}`);
     throw new Error(`Failed to download image from ${resolvedUrl}: ${result.statusCode}`);
   }
 
+  console.log(`[generate-journey-image] Downloaded ${result.body.length} bytes from ${parsedUrl.pathname}`);
   return result.body;
 }
 
