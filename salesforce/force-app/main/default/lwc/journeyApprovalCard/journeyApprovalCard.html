@@ -363,9 +363,10 @@
         </div>
 
         <!-- Card Footer -->
-        <footer class="slds-card__footer">
-            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
-                <div>
+        <footer class="slds-card__footer slds-p-around_medium">
+            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center" style="width: 100%;">
+                <!-- Left: Decline button -->
+                <div class="slds-col">
                     <lightning-button
                         variant="destructive"
                         label="Decline"
@@ -373,15 +374,15 @@
                         onclick={handleDecline}>
                     </lightning-button>
                 </div>
-                <div class="slds-grid slds-grid_vertical-align-center">
-                    <!-- Approve All Steps button for multi-step journeys -->
+                <!-- Right: Approval buttons grouped together -->
+                <div class="slds-col slds-grid slds-grid_align-end slds-grid_vertical-align-center">
                     <template if:true={isMultiStepJourney}>
                         <lightning-button
                             variant="neutral"
                             label="Approve All Steps"
                             icon-name="utility:check"
                             onclick={handleApproveAllSteps}
-                            class="slds-m-right_small">
+                            class="slds-m-left_small">
                         </lightning-button>
                     </template>
                     <lightning-button
@@ -389,13 +390,14 @@
                         label="Approve"
                         icon-name="utility:check"
                         onclick={handleApprove}
-                        class="slds-m-right_small">
+                        class="slds-m-left_small">
                     </lightning-button>
                     <lightning-button
                         variant="success"
                         label="Approve & Send"
                         icon-name={channelIcon}
-                        onclick={handleApproveAndSend}>
+                        onclick={handleApproveAndSend}
+                        class="slds-m-left_small">
                     </lightning-button>
                 </div>
             </div>

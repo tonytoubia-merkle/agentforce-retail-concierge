@@ -11,18 +11,25 @@ export default class JourneyApprovalCard extends LightningElement {
         return this._approval;
     }
     set approval(value) {
-        const prevId = this._approval?.Id;
+        const oldValue = this._approval;
         this._approval = value;
 
-        // Refresh local state when approval data changes (e.g., after refreshApex)
+        // Always refresh local state when approval data changes (e.g., after refreshApex)
+        // This ensures server-regenerated content (body, prompt) is displayed immediately
         if (value) {
-            // Only update if the approval Id is the same (data refresh) or first load
-            if (!prevId || prevId === value.Id) {
+            // Check if this is new data by comparing key fields that get regenerated server-side
+            const dataChanged = !oldValue ||
+                oldValue.Suggested_Body__c !== value.Suggested_Body__c ||
+                oldValue.Recommended_Products__c !== value.Recommended_Products__c ||
+                oldValue.Firefly_Prompt__c !== value.Firefly_Prompt__c;
+
+            if (dataChanged) {
+                console.log('[JourneyApprovalCard] Data changed, updating local state');
                 this.editedSubject = value.Suggested_Subject__c || '';
                 this.editedBody = value.Suggested_Body__c || '';
                 this.editedSmsBody = value.SMS_Body__c || '';
                 this.newPrompt = value.Firefly_Prompt__c || '';
-                // After server refresh, sync local products with server state
+                // Sync local products with server state
                 this.localProducts = this.parseProducts(value.Recommended_Products__c);
                 this.productsModified = false; // Reset flag - server now has latest
             }
