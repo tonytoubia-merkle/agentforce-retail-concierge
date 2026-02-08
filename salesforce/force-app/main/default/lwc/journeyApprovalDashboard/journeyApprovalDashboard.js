@@ -17,6 +17,8 @@ export default class JourneyApprovalDashboard extends LightningElement {
     @track showToast = false;
     @track toastMessage = '';
     @track toastVariant = 'success';
+    @track showEditModal = false;
+    @track selectedStep = null;
 
     wiredApprovalsResult;
 
@@ -323,21 +325,42 @@ export default class JourneyApprovalDashboard extends LightningElement {
 
     /**
      * Handle edit step event from journey flow overview.
-     * Opens the step in edit mode (future: could open a modal)
+     * Opens the step in a modal with the journey approval card for editing.
      */
     handleEditStep(event) {
         const { journeyId, stepIndex, step } = event.detail;
         console.log('[Dashboard] Edit step requested:', journeyId, stepIndex, step?.Id);
 
-        // For now, show a toast indicating the feature
-        // In future, could open a modal with the journeyApprovalCard in edit mode
-        this.showToastMessage(`Editing Step ${stepIndex + 1}: ${step?.Suggested_Subject__c || 'Untitled'}`, 'info');
+        if (!step) {
+            this.showToastMessage('Step not found', 'error');
+            return;
+        }
 
-        // Scroll to the step if it's visible in the DOM
-        const stepElement = this.template.querySelector(`[data-step-id="${step?.Id}"]`);
-        if (stepElement) {
-            stepElement.classList.add('is-expanded');
-            stepElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Enrich step with display properties for the modal
+        this.selectedStep = {
+            ...step,
+            contactName: step.Contact__r?.Name || step.contactName || 'Unknown',
+            contactEmail: step.Contact__r?.Email || step.contactEmail || '',
+            eventType: step.Event_Type__c || 'Journey'
+        };
+        this.showEditModal = true;
+    }
+
+    handleCloseEditModal() {
+        this.showEditModal = false;
+        this.selectedStep = null;
+    }
+
+    /**
+     * Handle actions from the edit modal's journey approval card.
+     */
+    async handleEditModalAction(event) {
+        // Forward to the main card action handler
+        await this.handleCardAction(event);
+
+        // Close modal after successful action
+        if (!this.isLoading) {
+            this.handleCloseEditModal();
         }
     }
 }
