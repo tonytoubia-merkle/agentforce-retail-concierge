@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Journey_Id__c</fullName>
+    <description>Unique identifier linking to Journey_Approval__c records with the same Journey_Id__c</description>
+    <externalId>true</externalId>
+    <label>Journey Id</label>
+    <length>36</length>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

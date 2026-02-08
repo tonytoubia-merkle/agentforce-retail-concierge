@@ -46,6 +46,9 @@ public with sharing class JourneyApprovalService {
 
         @AuraEnabled @InvocableVariable
         public String errorMessage;
+
+        @AuraEnabled @InvocableVariable
+        public Id marketingFlowId;
     }
 
     // ─── Invocable Method ─────────────────────────────────────────────
@@ -621,6 +624,17 @@ public with sharing class JourneyApprovalService {
                 return result;
             }
 
+            // Create Marketing_Flow__c record to track this flow
+            Marketing_Flow__c marketingFlow = new Marketing_Flow__c(
+                Journey_Id__c = journeyId,
+                Contact__c = contact.Id,
+                Status__c = 'Pending',
+                Steps_Count__c = steps.size(),
+                Event_Type__c = steps[0].Event_Type__c,
+                Sent_Date__c = Datetime.now()
+            );
+            insert marketingFlow;
+
             // Create Platform Events for each step
             // MC Advanced Marketing Flow will handle timing/delays based on step order
             List<Journey_Send_Request__e> events = new List<Journey_Send_Request__e>();
@@ -661,6 +675,7 @@ public with sharing class JourneyApprovalService {
                     steps[i].Status__c = 'Sent';
                     steps[i].Sent_At__c = Datetime.now();
                     steps[i].MC_Journey_Key__c = 'pe-' + publishResults[i].getId();
+                    steps[i].Marketing_Flow__c = marketingFlow.Id;
                     successCount++;
                 } else {
                     steps[i].Status__c = 'Failed';
@@ -668,6 +683,16 @@ public with sharing class JourneyApprovalService {
             }
 
             update steps;
+
+            // Update Marketing Flow status based on results
+            if (successCount == steps.size()) {
+                marketingFlow.Status__c = 'Created';
+            } else if (successCount > 0) {
+                marketingFlow.Status__c = 'Created'; // Partial success still counts as created
+            } else {
+                marketingFlow.Status__c = 'Failed';
+            }
+            update marketingFlow;
 
             // Update source event
             if (steps[0].Meaningful_Event__c != null) {
@@ -677,6 +702,7 @@ public with sharing class JourneyApprovalService {
             result.success = true;
             result.message = 'Sent ' + successCount + ' of ' + steps.size() + ' steps to Marketing Flow';
             result.newStatus = 'Sent';
+            result.marketingFlowId = marketingFlow.Id;
 
         } catch (Exception e) {
             result.success = false;

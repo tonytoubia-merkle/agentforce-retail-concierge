@@ -730,7 +730,9 @@ public with sharing class PortfolioAssignmentService {
                    Assigned_Portfolio__c, Assigned_Portfolio__r.Name,
                    Journey_Id__c, Step_Number__c, Total_Steps__c, Send_Delay_Days__c,
                    Journey_Guardrails__c, SMS_Body__c,
-                   Urgency__c, Days_Until_Event__c, CreatedDate
+                   Urgency__c, Days_Until_Event__c, CreatedDate,
+                   Marketing_Flow__c, Marketing_Flow__r.Name, Marketing_Flow__r.Flow_URL__c,
+                   Marketing_Flow__r.Status__c
             FROM Journey_Approval__c
             WHERE Assigned_Portfolio__c IN :portfolioIds
             AND Status__c = 'Pending'
