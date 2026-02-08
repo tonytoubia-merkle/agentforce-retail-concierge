@@ -56,10 +56,22 @@ function httpsRequest(options, body) {
 }
 
 /**
+ * Rewrite demo domain URLs to actual Vercel app URL.
+ */
+function rewriteImageUrl(url) {
+  // Map fake demo domain to real Vercel app
+  return url.replace(
+    'https://lumiere-beauty.demo.com',
+    'https://agentforce-retail-advisor.vercel.app'
+  );
+}
+
+/**
  * Download an image from URL and return as Buffer.
  */
 async function downloadImage(url) {
-  const parsedUrl = new URL(url);
+  const resolvedUrl = rewriteImageUrl(url);
+  const parsedUrl = new URL(resolvedUrl);
   const result = await httpsRequest({
     hostname: parsedUrl.hostname,
     port: 443,
@@ -69,7 +81,7 @@ async function downloadImage(url) {
   });
 
   if (result.statusCode !== 200) {
-    throw new Error(`Failed to download image: ${result.statusCode}`);
+    throw new Error(`Failed to download image from ${resolvedUrl}: ${result.statusCode}`);
   }
 
   return result.body;
