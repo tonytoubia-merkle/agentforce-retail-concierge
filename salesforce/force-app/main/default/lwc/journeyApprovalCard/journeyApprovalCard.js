@@ -24,6 +24,8 @@ export default class JourneyApprovalCard extends LightningElement {
             // Sync local products with server state
             this.localProducts = this.parseProducts(value.Recommended_Products__c);
             this.productsModified = false; // Reset flag - server now has latest
+            // Reset image error state when approval changes
+            this.imageLoadError = false;
         }
     }
 
@@ -50,6 +52,7 @@ export default class JourneyApprovalCard extends LightningElement {
     @track pickerActiveCategory = 'all';
     @track pickerSelectedProducts = [];
     @track pickerLoading = true;
+    @track imageLoadError = false; // Track if generated image failed to load
 
     // Helper to parse products JSON
     parseProducts(productsJson) {
@@ -111,6 +114,15 @@ export default class JourneyApprovalCard extends LightningElement {
 
     get hasNextStep() {
         return this.stepNumber < this.totalSteps;
+    }
+
+    // Inverted getters for disabled state (LWC templates can't use !)
+    get isPreviousDisabled() {
+        return !this.hasPreviousStep;
+    }
+
+    get isNextDisabled() {
+        return !this.hasNextStep;
     }
 
     get stepProgressPercent() {
@@ -270,6 +282,24 @@ export default class JourneyApprovalCard extends LightningElement {
             return `This will immediately send this ${channelText} (Step ${this.stepNumber} of ${this.totalSteps}) to ${this.approval?.contactName || 'the contact'}. The remaining steps in this journey will NOT be sent yet.`;
         }
         return `This will immediately send this ${channelText} to ${this.approval?.contactName || 'the contact'}.`;
+    }
+
+    // ─── Generated Image ──────────────────────────────────────────────
+
+    get hasGeneratedImage() {
+        // Check if we have a valid URL and the image hasn't failed to load
+        const url = this.approval?.Generated_Image_URL__c;
+        return url && url.trim() !== '' && !this.imageLoadError;
+    }
+
+    handleImageError() {
+        console.warn('[JourneyApprovalCard] Generated image failed to load');
+        this.imageLoadError = true;
+    }
+
+    // Reset error state when approval changes (in case new image is generated)
+    resetImageError() {
+        this.imageLoadError = false;
     }
 
     // ─── Existing Getters ──────────────────────────────────────────────

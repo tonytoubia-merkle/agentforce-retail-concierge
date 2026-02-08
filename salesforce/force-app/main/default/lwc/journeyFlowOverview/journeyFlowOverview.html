@@ -4,7 +4,7 @@
         <div class="journey-header">
             <div class="header-left">
                 <div class="contact-avatar">
-                    <span class="avatar-initial">{contactName}</span>
+                    <span class="avatar-initial">{contactInitials}</span>
                 </div>
                 <div class="header-info">
                     <h2 class="contact-name">{contactName}</h2>
@@ -91,14 +91,14 @@
                             icon-name="utility:chevronleft"
                             alternative-text="Previous"
                             onclick={handlePrevStep}
-                            disabled={canGoBack}>
+                            disabled={isBackDisabled}>
                         </lightning-button-icon>
                         <span class="step-counter">{selectedStep.Step_Number__c} / {totalSteps}</span>
                         <lightning-button-icon
                             icon-name="utility:chevronright"
                             alternative-text="Next"
                             onclick={handleNextStep}
-                            disabled={canGoForward}>
+                            disabled={isForwardDisabled}>
                         </lightning-button-icon>
                     </div>
                 </div>

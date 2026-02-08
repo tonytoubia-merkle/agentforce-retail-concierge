@@ -1,0 +1,41 @@
+/* Tab Styling */
+.concierge-home {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.slds-tabs_default__nav {
+    background: #f3f3f3;
+    padding: 0 16px;
+    border-bottom: 1px solid #d8dde6;
+}
+
+.slds-tabs_default__item {
+    margin-bottom: -1px;
+}
+
+.slds-tabs_default__link {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    font-weight: 500;
+    color: #706e6b;
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s ease;
+}
+
+.slds-tabs_default__item.slds-is-active .slds-tabs_default__link {
+    color: #0070d2;
+    border-bottom-color: #0070d2;
+    background: white;
+}
+
+.slds-tabs_default__link:hover {
+    color: #0070d2;
+    text-decoration: none;
+}
+
+.slds-tabs_default__content {
+    padding: 0;
+}

@@ -42,6 +42,16 @@ export default class JourneyFlowOverview extends LightningElement {
         return this.journeyGroup?.contactName || 'Unknown Contact';
     }
 
+    get contactInitials() {
+        const name = this.contactName;
+        if (!name || name === 'Unknown Contact') return '?';
+        const parts = name.trim().split(/\s+/);
+        if (parts.length === 1) {
+            return parts[0].charAt(0).toUpperCase();
+        }
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+
     get contactEmail() {
         return this.journeyGroup?.contactEmail || '';
     }
@@ -206,6 +216,15 @@ export default class JourneyFlowOverview extends LightningElement {
 
     get canGoForward() {
         return this.selectedStepIndex < this.totalSteps - 1;
+    }
+
+    // Inverted getters for disabled state (LWC templates can't use !)
+    get isBackDisabled() {
+        return !this.canGoBack;
+    }
+
+    get isForwardDisabled() {
+        return !this.canGoForward;
     }
 
     // ─── Guardrails ───────────────────────────────────────────────────

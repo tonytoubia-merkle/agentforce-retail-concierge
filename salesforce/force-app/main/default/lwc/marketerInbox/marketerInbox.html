@@ -84,120 +84,198 @@
                 </template>
             </template>
 
-            <!-- Inbox Items -->
-            <template if:true={hasApprovals}>
+            <!-- Inbox Items - Grouped by Journey -->
+            <template if:true={hasGroupedApprovals}>
                 <div class="inbox-list">
-                    <template for:each={filteredApprovals} for:item="approval">
-                        <div key={approval.Id}
-                             class="inbox-item slds-box slds-m-bottom_small"
-                             data-id={approval.Id}
-                             onclick={handleViewDetails}>
+                    <template for:each={groupedApprovals} for:item="group">
+                        <div key={group.journeyId} class="journey-group slds-m-bottom_small">
 
-                            <!-- Tier Indicator -->
-                            <div class={approval.tierClass}>
-                                <lightning-icon
-                                    icon-name={approval.tierIcon}
-                                    size="x-small"
-                                    class="tier-icon">
-                                </lightning-icon>
-                            </div>
-
-                            <!-- Main Content -->
-                            <div class="inbox-item-content slds-grid slds-wrap">
-                                <!-- Left: Contact & Event Info -->
-                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
-                                    <div class="contact-info">
-                                        <h3 class="contact-name">{approval.contactName}</h3>
-                                        <p class="contact-email slds-text-color_weak">{approval.contactEmail}</p>
+                            <!-- Multi-Step Journey Group -->
+                            <template if:true={group.isMultiStep}>
+                                <div class="journey-group-header slds-box slds-p-around_small">
+                                    <!-- Tier Indicator -->
+                                    <div class={group.worstTierClass}>
+                                        <lightning-icon
+                                            icon-name={group.worstTierIcon}
+                                            size="x-small"
+                                            class="tier-icon">
+                                        </lightning-icon>
                                     </div>
-                                    <div class="event-info slds-m-top_x-small">
-                                        <span class={approval.urgencyClass}>{approval.Urgency__c}</span>
-                                        <span class="event-type slds-m-left_x-small">
-                                            {approval.eventType}
-                                        </span>
-                                        <template if:true={approval.isMultiStep}>
-                                            <span class="step-badge slds-m-left_x-small">
-                                                {approval.stepDisplay}
-                                            </span>
-                                        </template>
+
+                                    <div class="journey-group-content slds-grid slds-wrap slds-grid_vertical-align-center">
+                                        <!-- Expand Toggle + Contact Info -->
+                                        <div class="slds-col slds-size_5-of-12 slds-grid slds-grid_vertical-align-center">
+                                            <button class="slds-button slds-button_icon expand-toggle"
+                                                    data-journey-id={group.journeyId}
+                                                    onclick={handleToggleJourney}>
+                                                <lightning-icon
+                                                    icon-name={group.expandIcon}
+                                                    size="x-small">
+                                                </lightning-icon>
+                                            </button>
+                                            <div class="contact-info slds-m-left_small">
+                                                <h3 class="contact-name">{group.contactName}</h3>
+                                                <div class="event-info slds-m-top_xx-small">
+                                                    <span class={group.urgencyClass}>{group.urgency}</span>
+                                                    <span class="event-type slds-m-left_x-small">{group.eventType}</span>
+                                                    <span class="step-badge slds-m-left_x-small">{group.stepsLabel}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Deadline -->
+                                        <div class="slds-col slds-size_3-of-12">
+                                            <template if:true={group.isApproachingDeadline}>
+                                                <div class="deadline-warning">
+                                                    <lightning-icon icon-name="utility:warning" size="xx-small" variant="warning"></lightning-icon>
+                                                    <span>{group.deadlineDisplay}</span>
+                                                </div>
+                                            </template>
+                                            <template if:false={group.isApproachingDeadline}>
+                                                <template if:true={group.deadlineDisplay}>
+                                                    <div class="deadline-info slds-text-color_weak">
+                                                        <lightning-icon icon-name="utility:clock" size="xx-small"></lightning-icon>
+                                                        <span>{group.deadlineDisplay}</span>
+                                                    </div>
+                                                </template>
+                                            </template>
+                                        </div>
+
+                                        <!-- Bulk Actions -->
+                                        <div class="slds-col slds-size_4-of-12 slds-text-align_right">
+                                            <lightning-button
+                                                label="Approve All"
+                                                variant="brand"
+                                                icon-name="utility:check"
+                                                data-journey-id={group.journeyId}
+                                                onclick={handleApproveAllSteps}
+                                                class="slds-m-right_x-small">
+                                            </lightning-button>
+                                            <lightning-button
+                                                label="Send Flow"
+                                                variant="success"
+                                                icon-name="utility:send"
+                                                data-journey-id={group.journeyId}
+                                                onclick={handleSendFlow}>
+                                            </lightning-button>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Center: Subject & Channel -->
-                                <div class="slds-col slds-size_1-of-3">
-                                    <div class="subject-preview">
-                                        <lightning-icon
-                                            icon-name={approval.channelIcon}
-                                            size="x-small"
-                                            class="channel-icon">
-                                        </lightning-icon>
-                                        <span class="subject-text">{approval.Suggested_Subject__c}</span>
-                                    </div>
-                                    <template if:true={approval.isApproachingDeadline}>
-                                        <div class="deadline-warning slds-m-top_x-small">
-                                            <lightning-icon
-                                                icon-name="utility:warning"
-                                                size="xx-small"
-                                                variant="warning">
-                                            </lightning-icon>
-                                            <span>{approval.deadlineDisplay}</span>
-                                        </div>
-                                    </template>
-                                    <template if:false={approval.isApproachingDeadline}>
-                                        <template if:true={approval.deadlineDisplay}>
-                                            <div class="deadline-info slds-m-top_x-small slds-text-color_weak">
-                                                <lightning-icon
-                                                    icon-name="utility:clock"
-                                                    size="xx-small">
-                                                </lightning-icon>
-                                                <span>{approval.deadlineDisplay}</span>
+                                <!-- Expanded Steps -->
+                                <template if:true={group.isExpanded}>
+                                    <div class="journey-steps slds-p-left_large">
+                                        <template for:each={group.steps} for:item="step">
+                                            <div key={step.Id}
+                                                 class="inbox-item inbox-item-step slds-box slds-m-top_x-small"
+                                                 data-id={step.Id}
+                                                 onclick={handleViewDetails}>
+
+                                                <!-- Step Tier Indicator -->
+                                                <div class={step.tierClass}>
+                                                    <lightning-icon icon-name={step.tierIcon} size="x-small" class="tier-icon"></lightning-icon>
+                                                </div>
+
+                                                <div class="inbox-item-content slds-grid slds-wrap">
+                                                    <!-- Step Info -->
+                                                    <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                                        <div class="step-header">
+                                                            <span class="step-number">Step {step.Step_Number__c}</span>
+                                                            <lightning-icon icon-name={step.channelIcon} size="x-small" class="channel-icon slds-m-left_x-small"></lightning-icon>
+                                                            <span class="channel-label slds-m-left_xx-small">{step.Channel__c}</span>
+                                                        </div>
+                                                        <p class="subject-text slds-m-top_xx-small">{step.Suggested_Subject__c}</p>
+                                                    </div>
+
+                                                    <!-- Confidence -->
+                                                    <div class="slds-col slds-size_1-of-4">
+                                                        <span class={step.confidenceClass}>AI: {step.Confidence_Score__c}%</span>
+                                                    </div>
+
+                                                    <!-- Step Actions -->
+                                                    <div class="slds-col slds-size_1-of-4 slds-text-align_right action-buttons">
+                                                        <lightning-button-group>
+                                                            <lightning-button-icon icon-name="utility:check" title="Approve" variant="brand" data-id={step.Id} onclick={handleQuickApprove}></lightning-button-icon>
+                                                            <lightning-button-icon icon-name="utility:email" title="Send" variant="success" data-id={step.Id} onclick={handleQuickSend}></lightning-button-icon>
+                                                            <lightning-button-icon icon-name="utility:close" title="Decline" variant="destructive" data-id={step.Id} onclick={handleQuickDecline}></lightning-button-icon>
+                                                        </lightning-button-group>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </template>
-                                    </template>
-                                </div>
+                                    </div>
+                                </template>
+                            </template>
 
-                                <!-- Right: Actions -->
-                                <div class="slds-col slds-size_1-of-6 slds-text-align_right action-buttons">
-                                    <lightning-button-group>
-                                        <lightning-button-icon
-                                            icon-name="utility:check"
-                                            alternative-text="Approve"
-                                            title="Quick Approve"
-                                            variant="brand"
-                                            data-id={approval.Id}
-                                            onclick={handleQuickApprove}>
-                                        </lightning-button-icon>
-                                        <lightning-button-icon
-                                            icon-name="utility:email"
-                                            alternative-text="Approve & Send"
-                                            title="Approve & Send"
-                                            variant="success"
-                                            data-id={approval.Id}
-                                            onclick={handleQuickSend}>
-                                        </lightning-button-icon>
-                                        <lightning-button-icon
-                                            icon-name="utility:close"
-                                            alternative-text="Decline"
-                                            title="Quick Decline"
-                                            variant="destructive"
-                                            data-id={approval.Id}
-                                            onclick={handleQuickDecline}>
-                                        </lightning-button-icon>
-                                    </lightning-button-group>
-                                </div>
-                            </div>
+                            <!-- Single-Step Item (No Grouping) -->
+                            <template if:false={group.isMultiStep}>
+                                <template for:each={group.steps} for:item="approval">
+                                    <div key={approval.Id}
+                                         class="inbox-item slds-box"
+                                         data-id={approval.Id}
+                                         onclick={handleViewDetails}>
 
-                            <!-- Confidence & Priority Indicators -->
-                            <div class="inbox-item-footer slds-grid slds-grid_align-spread">
-                                <div class="confidence-indicator">
-                                    <span class={approval.confidenceClass}>
-                                        AI Confidence: {approval.Confidence_Score__c}%
-                                    </span>
-                                </div>
-                                <div class="priority-indicator slds-text-color_weak">
-                                    {approval.priorityDisplay}
-                                </div>
-                            </div>
+                                        <!-- Tier Indicator -->
+                                        <div class={approval.tierClass}>
+                                            <lightning-icon icon-name={approval.tierIcon} size="x-small" class="tier-icon"></lightning-icon>
+                                        </div>
+
+                                        <!-- Main Content -->
+                                        <div class="inbox-item-content slds-grid slds-wrap">
+                                            <!-- Left: Contact & Event Info -->
+                                            <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                                <div class="contact-info">
+                                                    <h3 class="contact-name">{approval.contactName}</h3>
+                                                    <p class="contact-email slds-text-color_weak">{approval.contactEmail}</p>
+                                                </div>
+                                                <div class="event-info slds-m-top_x-small">
+                                                    <span class={approval.urgencyClass}>{approval.Urgency__c}</span>
+                                                    <span class="event-type slds-m-left_x-small">{approval.eventType}</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Center: Subject & Channel -->
+                                            <div class="slds-col slds-size_1-of-3">
+                                                <div class="subject-preview">
+                                                    <lightning-icon icon-name={approval.channelIcon} size="x-small" class="channel-icon"></lightning-icon>
+                                                    <span class="subject-text">{approval.Suggested_Subject__c}</span>
+                                                </div>
+                                                <template if:true={approval.isApproachingDeadline}>
+                                                    <div class="deadline-warning slds-m-top_x-small">
+                                                        <lightning-icon icon-name="utility:warning" size="xx-small" variant="warning"></lightning-icon>
+                                                        <span>{approval.deadlineDisplay}</span>
+                                                    </div>
+                                                </template>
+                                                <template if:false={approval.isApproachingDeadline}>
+                                                    <template if:true={approval.deadlineDisplay}>
+                                                        <div class="deadline-info slds-m-top_x-small slds-text-color_weak">
+                                                            <lightning-icon icon-name="utility:clock" size="xx-small"></lightning-icon>
+                                                            <span>{approval.deadlineDisplay}</span>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                            </div>
+
+                                            <!-- Right: Actions -->
+                                            <div class="slds-col slds-size_1-of-6 slds-text-align_right action-buttons">
+                                                <lightning-button-group>
+                                                    <lightning-button-icon icon-name="utility:check" title="Approve" variant="brand" data-id={approval.Id} onclick={handleQuickApprove}></lightning-button-icon>
+                                                    <lightning-button-icon icon-name="utility:email" title="Send" variant="success" data-id={approval.Id} onclick={handleQuickSend}></lightning-button-icon>
+                                                    <lightning-button-icon icon-name="utility:close" title="Decline" variant="destructive" data-id={approval.Id} onclick={handleQuickDecline}></lightning-button-icon>
+                                                </lightning-button-group>
+                                            </div>
+                                        </div>
+
+                                        <!-- Confidence & Priority -->
+                                        <div class="inbox-item-footer slds-grid slds-grid_align-spread">
+                                            <div class="confidence-indicator">
+                                                <span class={approval.confidenceClass}>AI Confidence: {approval.Confidence_Score__c}%</span>
+                                            </div>
+                                            <div class="priority-indicator slds-text-color_weak">{approval.priorityDisplay}</div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
                         </div>
                     </template>
                 </div>

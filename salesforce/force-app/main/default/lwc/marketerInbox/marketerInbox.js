@@ -5,6 +5,8 @@ import getMyInboxStats from '@salesforce/apex/PortfolioAssignmentService.getMyIn
 import approveJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.approveJourneyFromLWC';
 import declineJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.declineJourneyFromLWC';
 import sendJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.sendJourneyFromLWC';
+import approveAllJourneySteps from '@salesforce/apex/JourneyApprovalService.approveAllJourneySteps';
+import sendJourneyToMarketingFlow from '@salesforce/apex/JourneyApprovalService.sendJourneyToMarketingFlow';
 import Id from '@salesforce/user/Id';
 
 /**
@@ -12,9 +14,11 @@ import Id from '@salesforce/user/Id';
  *
  * Personal inbox for marketers showing their portfolio's pending opportunities.
  * Features:
+ * - Journey grouping (multi-step flows shown together)
  * - Tiered view (Auto-Send, Soft Review, Review Required, Escalate)
  * - Priority-based ordering
  * - Quick actions (approve, decline, edit, send)
+ * - Bulk actions for multi-step journeys
  * - Deadline countdown for soft review items
  * - Stats dashboard
  */
@@ -28,10 +32,7 @@ export default class MarketerInbox extends LightningElement {
     @track showToast = false;
     @track toastMessage = '';
     @track toastVariant = 'success';
-
-    // For demo: allow viewing as different users
-    @track viewAsUserId = null;
-    @track showUserPicker = false;
+    @track expandedJourneys = new Set(); // Track which journey groups are expanded
 
     currentUserId = Id;
     wiredApprovalsResult;
@@ -103,8 +104,106 @@ export default class MarketerInbox extends LightningElement {
         });
     }
 
+    /**
+     * Group approvals by Journey_Id__c for multi-step flows.
+     * Single-step items get their own "group" for consistent rendering.
+     */
+    get groupedApprovals() {
+        const groups = new Map();
+
+        for (const approval of this.filteredApprovals) {
+            const journeyId = approval.Journey_Id__c || approval.Id; // Use record ID for single-step
+
+            if (!groups.has(journeyId)) {
+                groups.set(journeyId, {
+                    journeyId: journeyId,
+                    isMultiStep: !!approval.Journey_Id__c && approval.Total_Steps__c > 1,
+                    contactName: approval.contactName,
+                    contactEmail: approval.contactEmail,
+                    eventType: approval.eventType,
+                    eventDate: approval.eventDate,
+                    portfolioName: approval.portfolioName,
+                    totalSteps: approval.Total_Steps__c || 1,
+                    steps: [],
+                    // Aggregate tier (worst tier in the group)
+                    worstTier: null,
+                    worstTierClass: null,
+                    worstTierIcon: null,
+                    // Priority (highest in group)
+                    highestPriority: 0,
+                    // Urgency (most urgent in group)
+                    urgency: null,
+                    urgencyClass: null,
+                    // Deadline (earliest in group)
+                    earliestDeadline: null,
+                    isApproachingDeadline: false,
+                    // Expansion state
+                    isExpanded: this.expandedJourneys.has(journeyId),
+                    expandIcon: this.expandedJourneys.has(journeyId) ? 'utility:chevrondown' : 'utility:chevronright'
+                });
+            }
+
+            const group = groups.get(journeyId);
+            group.steps.push(approval);
+
+            // Update aggregate values
+            group.highestPriority = Math.max(group.highestPriority, approval.Priority_Score__c || 0);
+
+            // Track worst tier (Escalate > Review Required > Soft Review > Auto-Send)
+            const tierRank = this.getTierRank(approval.Approval_Tier__c);
+            const currentRank = this.getTierRank(group.worstTier);
+            if (tierRank > currentRank) {
+                group.worstTier = approval.Approval_Tier__c;
+                group.worstTierClass = approval.tierClass;
+                group.worstTierIcon = approval.tierIcon;
+            }
+
+            // Track most urgent
+            const urgencyRank = this.getUrgencyRank(approval.Urgency__c);
+            const currentUrgencyRank = this.getUrgencyRank(group.urgency);
+            if (urgencyRank > currentUrgencyRank) {
+                group.urgency = approval.Urgency__c;
+                group.urgencyClass = approval.urgencyClass;
+            }
+
+            // Track earliest deadline
+            if (approval.Auto_Send_Deadline__c) {
+                if (!group.earliestDeadline || new Date(approval.Auto_Send_Deadline__c) < new Date(group.earliestDeadline)) {
+                    group.earliestDeadline = approval.Auto_Send_Deadline__c;
+                    group.deadlineDisplay = approval.deadlineDisplay;
+                    group.isApproachingDeadline = approval.isApproachingDeadline;
+                }
+            }
+        }
+
+        // Sort steps within each group by step number
+        for (const group of groups.values()) {
+            group.steps.sort((a, b) => (a.Step_Number__c || 0) - (b.Step_Number__c || 0));
+            group.stepCount = group.steps.length;
+            group.stepsLabel = group.isMultiStep ?
+                `${group.stepCount} step${group.stepCount > 1 ? 's' : ''}` : null;
+        }
+
+        // Convert to array and sort by priority
+        return Array.from(groups.values()).sort((a, b) => b.highestPriority - a.highestPriority);
+    }
+
+    getTierRank(tier) {
+        const ranks = { 'Auto-Send': 1, 'Soft Review': 2, 'Review Required': 3, 'Escalate': 4 };
+        return ranks[tier] || 0;
+    }
+
+    getUrgencyRank(urgency) {
+        const ranks = { 'Immediate': 4, 'This Week': 3, 'This Month': 2, 'Future': 1 };
+        return ranks[urgency] || 0;
+    }
+
     get hasApprovals() {
         return this.filteredApprovals && this.filteredApprovals.length > 0;
+    }
+
+    get hasGroupedApprovals() {
+        return this.groupedApprovals && this.groupedApprovals.length > 0;
     }
 
     get filterOptions() {
@@ -213,6 +312,88 @@ export default class MarketerInbox extends LightningElement {
             this.isLoading = false;
             this.showToastMessage('Inbox refreshed', 'success');
         });
+    }
+
+    /**
+     * Toggle journey group expansion.
+     */
+    handleToggleJourney(event) {
+        event.stopPropagation();
+        const journeyId = event.currentTarget.dataset.journeyId;
+
+        if (this.expandedJourneys.has(journeyId)) {
+            this.expandedJourneys.delete(journeyId);
+        } else {
+            this.expandedJourneys.add(journeyId);
+        }
+
+        // Force re-render by creating new Set
+        this.expandedJourneys = new Set(this.expandedJourneys);
+    }
+
+    /**
+     * Approve all steps in a multi-step journey.
+     */
+    async handleApproveAllSteps(event) {
+        event.stopPropagation();
+        const journeyId = event.currentTarget.dataset.journeyId;
+        const group = this.groupedApprovals.find(g => g.journeyId === journeyId);
+
+        if (!group) return;
+
+        this.isLoading = true;
+        try {
+            const result = await approveAllJourneySteps({ journeyId: journeyId });
+
+            if (result.success) {
+                this.showToastMessage(`Approved all ${group.stepCount} steps for ${group.contactName}`, 'success');
+                await refreshApex(this.wiredApprovalsResult);
+                await refreshApex(this.wiredStatsResult);
+            } else {
+                this.showToastMessage(result.errorMessage || 'Bulk approval failed', 'error');
+            }
+        } catch (error) {
+            this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    /**
+     * Send entire journey flow to Marketing Cloud.
+     */
+    async handleSendFlow(event) {
+        event.stopPropagation();
+        const journeyId = event.currentTarget.dataset.journeyId;
+        const group = this.groupedApprovals.find(g => g.journeyId === journeyId);
+
+        if (!group) return;
+
+        this.isLoading = true;
+        try {
+            // First approve all if not already approved
+            let approveResult = await approveAllJourneySteps({ journeyId: journeyId });
+
+            if (!approveResult.success) {
+                this.showToastMessage(approveResult.errorMessage || 'Approval failed', 'error');
+                return;
+            }
+
+            // Then send to MC
+            const sendResult = await sendJourneyToMarketingFlow({ journeyId: journeyId });
+
+            if (sendResult.success) {
+                this.showToastMessage(`Sent ${group.stepCount}-step journey for ${group.contactName} to Marketing Flow`, 'success');
+                await refreshApex(this.wiredApprovalsResult);
+                await refreshApex(this.wiredStatsResult);
+            } else {
+                this.showToastMessage(sendResult.errorMessage || 'Send failed', 'error');
+            }
+        } catch (error) {
+            this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');
+        } finally {
+            this.isLoading = false;
+        }
     }
 
     handleViewDetails(event) {

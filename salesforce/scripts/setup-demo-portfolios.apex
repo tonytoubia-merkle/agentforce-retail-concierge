@@ -99,7 +99,7 @@ if (!toInsert.isEmpty()) {
 
 // Get all portfolios (including newly created)
 Map<String, Marketer_Portfolio__c> portfolioMap = new Map<String, Marketer_Portfolio__c>();
-for (Marketer_Portfolio__c p : [SELECT Id, Name, Portfolio_Type__c, Specialty_Events__c FROM Marketer_Portfolio__c WHERE Is_Active__c = true]) {
+for (Marketer_Portfolio__c p : [SELECT Id, Name, Portfolio_Type__c, Specialty_Events__c, Primary_Marketer__c, Auto_Approval_Enabled__c FROM Marketer_Portfolio__c WHERE Is_Active__c = true]) {
     portfolioMap.put(p.Name, p);
 }
 
@@ -163,7 +163,7 @@ List<Journey_Approval__c> approvalsToUpdate = new List<Journey_Approval__c>();
 for (Journey_Approval__c ja : [
     SELECT Id, Contact__c, Contact__r.Demo_Profile__c, Contact__r.MailingState,
            Meaningful_Event__r.Event_Type__c, Assigned_Portfolio__c,
-           Confidence_Score__c, Customer_Value_Score__c
+           Confidence_Score__c, Customer_Value_Score__c, Days_Until_Event__c
     FROM Journey_Approval__c
     WHERE Status__c = 'Pending'
     AND Assigned_Portfolio__c = null

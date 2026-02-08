@@ -247,3 +247,89 @@
 .slds-modal_large .slds-modal__container {
     max-width: 900px;
 }
+
+/* Journey Group Styles */
+.journey-group {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.journey-group-header {
+    position: relative;
+    padding: 12px 12px 12px 56px;
+    background: linear-gradient(135deg, #f8f9fb 0%, #f0f3f7 100%);
+    border: 1px solid #d8dde6;
+    border-radius: 8px;
+}
+
+.journey-group-header:hover {
+    background: linear-gradient(135deg, #f0f3f7 0%, #e8ecf2 100%);
+    border-color: #0070d2;
+}
+
+.journey-group-content {
+    width: 100%;
+}
+
+.expand-toggle {
+    padding: 4px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.expand-toggle:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Journey Steps Container */
+.journey-steps {
+    border-left: 3px solid #0070d2;
+    margin-left: 20px;
+    padding-left: 16px;
+    margin-top: 4px;
+}
+
+.inbox-item-step {
+    padding: 10px 10px 10px 48px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e5e5e5;
+}
+
+.inbox-item-step:hover {
+    background: #f9f9f9;
+    border-color: #0070d2;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+}
+
+.step-number {
+    font-weight: 600;
+    color: #0070d2;
+    background: #e8f4ff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.channel-label {
+    font-size: 12px;
+    color: #706e6b;
+}
+
+/* Multi-step journey header step badge */
+.journey-group-header .step-badge {
+    font-size: 11px;
+    background: #0070d2;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+}

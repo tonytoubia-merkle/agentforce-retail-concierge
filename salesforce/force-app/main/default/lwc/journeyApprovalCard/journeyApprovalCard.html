@@ -33,18 +33,16 @@
                             icon-name="utility:chevronleft"
                             alternative-text="Previous step"
                             onclick={handlePreviousStep}
-                            disabled={hasPreviousStep}
-                            class="slds-m-right_x-small"
-                            if:true={hasPreviousStep}>
+                            disabled={isPreviousDisabled}
+                            class="slds-m-right_x-small">
                         </lightning-button-icon>
                         <span class="step-label">{stepLabel}</span>
                         <lightning-button-icon
                             icon-name="utility:chevronright"
                             alternative-text="Next step"
                             onclick={handleNextStep}
-                            disabled={hasNextStep}
-                            class="slds-m-left_x-small"
-                            if:true={hasNextStep}>
+                            disabled={isNextDisabled}
+                            class="slds-m-left_x-small">
                         </lightning-button-icon>
                     </div>
                     <span class="send-timing">
@@ -149,11 +147,11 @@
                     </div>
 
                     <!-- Generated Image Display (Thumbnail with click to expand) -->
-                    <template if:true={approval.Generated_Image_URL__c}>
+                    <template if:true={hasGeneratedImage}>
                         <div class="slds-m-bottom_small">
                             <p class="slds-text-title_caps slds-m-bottom_xx-small">Generated Image</p>
                             <div class="image-thumbnail-container" onclick={handleImageClick} title="Click to preview full size">
-                                <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="image-thumbnail"/>
+                                <img src={approval.Generated_Image_URL__c} alt="Generated journey image" class="image-thumbnail" onerror={handleImageError}/>
                                 <div class="image-expand-overlay">
                                     <lightning-icon icon-name="utility:zoomin" size="small" variant="inverse"></lightning-icon>
                                 </div>
@@ -170,8 +168,8 @@
                         </div>
                     </template>
 
-                    <!-- Generate Image Placeholder (when no image yet) -->
-                    <template if:false={approval.Generated_Image_URL__c}>
+                    <!-- Generate Image Placeholder (when no image yet or load failed) -->
+                    <template if:false={hasGeneratedImage}>
                         <div class="slds-m-bottom_small">
                             <div class="slds-box slds-theme_default slds-text-align_center" style="border: 2px dashed #d8dde6; padding: 1.5rem;">
                                 <lightning-icon icon-name="utility:image" size="medium" class="slds-m-bottom_small"></lightning-icon>
