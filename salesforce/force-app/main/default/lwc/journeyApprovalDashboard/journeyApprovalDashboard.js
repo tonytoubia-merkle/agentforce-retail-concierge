@@ -6,6 +6,8 @@ import regenerateImageFromLWC from '@salesforce/apex/JourneyApprovalService.rege
 import sendJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.sendJourneyFromLWC';
 import updateProductsFromLWC from '@salesforce/apex/JourneyApprovalService.updateProductsFromLWC';
 import approveAllJourneySteps from '@salesforce/apex/JourneyApprovalService.approveAllJourneySteps';
+import declineAllJourneySteps from '@salesforce/apex/JourneyStepService.declineAllSteps';
+import sendJourneyToMarketingFlow from '@salesforce/apex/JourneyApprovalService.sendJourneyToMarketingFlow';
 import { refreshApex } from '@salesforce/apex';
 
 export default class JourneyApprovalDashboard extends LightningElement {
@@ -270,6 +272,19 @@ export default class JourneyApprovalDashboard extends LightningElement {
                     });
                     break;
 
+                case 'declineJourney':
+                    result = await declineAllJourneySteps({
+                        journeyId: data.journeyId,
+                        reason: data.reason || 'Declined by marketer'
+                    });
+                    break;
+
+                case 'sendJourney':
+                    result = await sendJourneyToMarketingFlow({
+                        journeyId: data.journeyId
+                    });
+                    break;
+
                 default:
                     throw new Error('Unknown action: ' + action);
             }
@@ -304,5 +319,25 @@ export default class JourneyApprovalDashboard extends LightningElement {
 
     closeToast() {
         this.showToast = false;
+    }
+
+    /**
+     * Handle edit step event from journey flow overview.
+     * Opens the step in edit mode (future: could open a modal)
+     */
+    handleEditStep(event) {
+        const { journeyId, stepIndex, step } = event.detail;
+        console.log('[Dashboard] Edit step requested:', journeyId, stepIndex, step?.Id);
+
+        // For now, show a toast indicating the feature
+        // In future, could open a modal with the journeyApprovalCard in edit mode
+        this.showToastMessage(`Editing Step ${stepIndex + 1}: ${step?.Suggested_Subject__c || 'Untitled'}`, 'info');
+
+        // Scroll to the step if it's visible in the DOM
+        const stepElement = this.template.querySelector(`[data-step-id="${step?.Id}"]`);
+        if (stepElement) {
+            stepElement.classList.add('is-expanded');
+            stepElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
 }

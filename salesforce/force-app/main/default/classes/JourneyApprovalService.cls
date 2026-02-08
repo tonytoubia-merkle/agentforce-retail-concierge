@@ -569,6 +569,123 @@ public with sharing class JourneyApprovalService {
         return results[0];
     }
 
+    /**
+     * Send all approved steps in a journey to Marketing Cloud Advanced.
+     * Creates a multi-step Marketing Flow via Platform Events.
+     *
+     * @param journeyId The unique journey identifier (Journey_Id__c)
+     * @return ApprovalActionResult with success/error info
+     */
+    @AuraEnabled
+    public static ApprovalActionResult sendJourneyToMarketingFlow(String journeyId) {
+        ApprovalActionResult result = new ApprovalActionResult();
+
+        if (String.isBlank(journeyId)) {
+            result.success = false;
+            result.errorMessage = 'Journey ID is required';
+            return result;
+        }
+
+        try {
+            // Get all approved steps for this journey
+            List<Journey_Approval__c> steps = [
+                SELECT Id, Status__c, Contact__c, Contact__r.Email, Contact__r.FirstName,
+                       Approved_Subject__c, Approved_Body__c, Suggested_Subject__c, Suggested_Body__c,
+                       SMS_Body__c, Generated_Image_URL__c, Event_Type__c,
+                       Step_Number__c, Total_Steps__c, Channel__c,
+                       Send_Delay_Days__c, Scheduled_Send_Date__c,
+                       Meaningful_Event__c
+                FROM Journey_Approval__c
+                WHERE Journey_Id__c = :journeyId
+                AND Status__c = 'Approved'
+                ORDER BY Step_Number__c ASC
+            ];
+
+            if (steps.isEmpty()) {
+                result.success = false;
+                result.errorMessage = 'No approved steps found for this journey';
+                return result;
+            }
+
+            // Validate contact email
+            Contact contact = [
+                SELECT Id, Email, FirstName
+                FROM Contact
+                WHERE Id = :steps[0].Contact__c
+                LIMIT 1
+            ];
+
+            if (String.isBlank(contact.Email)) {
+                result.success = false;
+                result.errorMessage = 'Contact has no email address';
+                return result;
+            }
+
+            // Create Platform Events for each step
+            // MC Advanced Marketing Flow will handle timing/delays based on step order
+            List<Journey_Send_Request__e> events = new List<Journey_Send_Request__e>();
+
+            for (Journey_Approval__c step : steps) {
+                String subject = String.isNotBlank(step.Approved_Subject__c) ?
+                    step.Approved_Subject__c : step.Suggested_Subject__c;
+                String body = step.Channel__c == 'Email' ?
+                    (String.isNotBlank(step.Approved_Body__c) ? step.Approved_Body__c : step.Suggested_Body__c) :
+                    step.SMS_Body__c;
+
+                Journey_Send_Request__e sendEvent = new Journey_Send_Request__e(
+                    Contact_Id__c = String.valueOf(contact.Id),
+                    Email__c = contact.Email,
+                    First_Name__c = contact.FirstName,
+                    Subject__c = subject,
+                    Body__c = body,
+                    Image_URL__c = step.Generated_Image_URL__c,
+                    Approval_Id__c = String.valueOf(step.Id),
+                    Event_Type__c = step.Event_Type__c,
+                    Journey_Id__c = journeyId,
+                    Step_Number__c = step.Step_Number__c,
+                    Total_Steps__c = step.Total_Steps__c,
+                    Channel__c = step.Channel__c,
+                    Send_Delay_Days__c = step.Send_Delay_Days__c
+                );
+
+                events.add(sendEvent);
+            }
+
+            // Publish all events
+            List<Database.SaveResult> publishResults = EventBus.publish(events);
+
+            // Check results and update steps
+            Integer successCount = 0;
+            for (Integer i = 0; i < publishResults.size(); i++) {
+                if (publishResults[i].isSuccess()) {
+                    steps[i].Status__c = 'Sent';
+                    steps[i].Sent_At__c = Datetime.now();
+                    steps[i].MC_Journey_Key__c = 'pe-' + publishResults[i].getId();
+                    successCount++;
+                } else {
+                    steps[i].Status__c = 'Failed';
+                }
+            }
+
+            update steps;
+
+            // Update source event
+            if (steps[0].Meaningful_Event__c != null) {
+                updateSourceEvent(steps[0].Meaningful_Event__c, 'Journey Sent');
+            }
+
+            result.success = true;
+            result.message = 'Sent ' + successCount + ' of ' + steps.size() + ' steps to Marketing Flow';
+            result.newStatus = 'Sent';
+
+        } catch (Exception e) {
+            result.success = false;
+            result.errorMessage = 'Failed to send journey: ' + e.getMessage();
+        }
+
+        return result;
+    }
+
     // ─── Custom Exception ─────────────────────────────────────────────
 
     public class JourneyApprovalException extends Exception {}

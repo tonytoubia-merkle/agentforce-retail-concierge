@@ -58,84 +58,51 @@
             <!-- Journey Groups -->
             <template if:true={hasApprovals}>
                 <template for:each={journeyGroups} for:item="group">
-                    <div key={group.key} class="journey-group slds-m-bottom_medium">
-                        <!-- Journey Header -->
-                        <div class="journey-header slds-p-around_medium">
-                            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
-                                <div class="slds-col">
-                                    <div class="slds-grid slds-grid_vertical-align-center">
-                                        <span class="journey-icon">
-                                            <lightning-icon icon-name="standard:campaign" size="medium"></lightning-icon>
-                                        </span>
-                                        <div class="slds-m-left_small">
-                                            <h2 class="slds-text-heading_small">{group.journeyTitle}</h2>
-                                            <p class="slds-text-body_small slds-text-color_weak">
-                                                {group.contactName} • {group.channelSummary}
-                                            </p>
+                    <div key={group.key} class="slds-m-bottom_medium">
+                        <!-- Multi-Step Journey: Use Flow Overview -->
+                        <template if:true={group.isMultiStep}>
+                            <c-journey-flow-overview
+                                journey-group={group}
+                                onaction={handleCardAction}
+                                oneditstep={handleEditStep}>
+                            </c-journey-flow-overview>
+                        </template>
+
+                        <!-- Single-Step Journey: Use Original Card Layout -->
+                        <template if:false={group.isMultiStep}>
+                            <div class="journey-group">
+                                <!-- Journey Header -->
+                                <div class="journey-header slds-p-around_medium">
+                                    <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                                        <div class="slds-col">
+                                            <div class="slds-grid slds-grid_vertical-align-center">
+                                                <span class="journey-icon">
+                                                    <lightning-icon icon-name="standard:email" size="medium"></lightning-icon>
+                                                </span>
+                                                <div class="slds-m-left_small">
+                                                    <h2 class="slds-text-heading_small">{group.journeyTitle}</h2>
+                                                    <p class="slds-text-body_small slds-text-color_weak">
+                                                        {group.contactName} • {group.channelSummary}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-text-align_right slds-grid slds-grid_vertical-align-center slds-grid_align-end">
+                                            <span class={group.urgencyClass}>{group.urgency}</span>
+                                            <span class="slds-m-left_small slds-text-body_small">{group.daysDisplay}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="slds-col slds-text-align_right slds-grid slds-grid_vertical-align-center slds-grid_align-end">
-                                    <span class={group.urgencyClass}>{group.urgency}</span>
-                                    <span class="slds-m-left_small slds-text-body_small">{group.daysDisplay}</span>
-                                    <template if:true={group.isMultiStep}>
-                                        <lightning-button
-                                            class="slds-m-left_medium"
-                                            label="Approve All"
-                                            variant="brand"
-                                            icon-name="utility:check"
-                                            onclick={handleApproveAllSteps}
-                                            data-journey-id={group.journeyId}>
-                                        </lightning-button>
-                                    </template>
+
+                                <!-- Single Step Card -->
+                                <div class="slds-p-around_medium">
+                                    <c-journey-approval-card
+                                        approval={group.firstStep}
+                                        onaction={handleCardAction}>
+                                    </c-journey-approval-card>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Linear Step List (Accordion Style) -->
-                        <div class="step-list">
-                            <template for:each={group.steps} for:item="step">
-                                <div key={step.Id} class="step-row" data-step-id={step.Id}>
-                                    <!-- Compact Step Header (always visible) -->
-                                    <div class="step-row-header" onclick={handleToggleStep} data-step-id={step.Id}>
-                                        <div class="step-row-left">
-                                            <div class="step-number-badge" data-channel={step.Channel__c}>
-                                                {step.Step_Number__c}
-                                            </div>
-                                            <div class="step-channel-icon">
-                                                <lightning-icon icon-name={step.channelIcon} size="x-small"></lightning-icon>
-                                            </div>
-                                            <div class="step-row-info">
-                                                <span class="step-row-subject">{step.Suggested_Subject__c}</span>
-                                                <span class="step-row-meta">
-                                                    {step.Channel__c} •
-                                                    <template if:true={step.isFirstStep}>Sends immediately</template>
-                                                    <template if:false={step.isFirstStep}>+{step.Send_Delay_Days__c} days</template>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="step-row-right">
-                                            <span class="step-status-badge" data-status={step.Status__c}>{step.Status__c}</span>
-                                            <lightning-icon
-                                                icon-name="utility:chevrondown"
-                                                size="x-small"
-                                                class="step-expand-icon">
-                                            </lightning-icon>
-                                        </div>
-                                    </div>
-
-                                    <!-- Expanded Step Content (hidden by default) -->
-                                    <div class="step-row-content" data-step-id={step.Id}>
-                                        <c-journey-approval-card
-                                            approval={step}
-                                            journey-steps={group.steps}
-                                            compact-mode="true"
-                                            onaction={handleCardAction}>
-                                        </c-journey-approval-card>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
+                        </template>
                     </div>
                 </template>
             </template>

@@ -1,0 +1,281 @@
+<template>
+    <div class="journey-flow-container">
+        <!-- Journey Header -->
+        <div class="journey-header">
+            <div class="header-left">
+                <div class="contact-avatar">
+                    <span class="avatar-initial">{contactName}</span>
+                </div>
+                <div class="header-info">
+                    <h2 class="contact-name">{contactName}</h2>
+                    <p class="contact-email">{contactEmail}</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class={journeyStatusClass}>{journeyStatus}</span>
+                <span class={urgencyClass}>{urgency}</span>
+            </div>
+        </div>
+
+        <!-- Event Banner -->
+        <div class="event-banner">
+            <div class="event-icon">
+                <lightning-icon icon-name="utility:event" size="small"></lightning-icon>
+            </div>
+            <div class="event-details">
+                <span class="event-type">{eventType}</span>
+                <template if:true={eventDate}>
+                    <span class="event-date">{eventDate}</span>
+                    <span class="event-countdown">{daysUntilEvent}</span>
+                </template>
+            </div>
+        </div>
+
+        <!-- Flow Timeline -->
+        <div class="flow-timeline-section">
+            <h3 class="section-title">
+                <lightning-icon icon-name="utility:flow" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                Marketing Flow Timeline
+            </h3>
+
+            <div class="flow-timeline">
+                <template for:each={timelineSteps} for:item="step">
+                    <div key={step.Id} class="timeline-node-wrapper">
+                        <!-- Connector Line (before node, except first) -->
+                        <template if:false={step.isFirst}>
+                            <div class="timeline-connector">
+                                <div class="connector-line"></div>
+                                <span class="connector-delay">{step.timingLabel}</span>
+                            </div>
+                        </template>
+
+                        <!-- Timeline Node -->
+                        <div class={step.stepClass}
+                             data-index={step.index}
+                             onclick={handleStepClick}
+                             title="Click to preview">
+                            <div class="step-number">{step.Step_Number__c}</div>
+                            <div class={step.channelClass}>
+                                <lightning-icon icon-name={step.channelIcon} size="small"></lightning-icon>
+                            </div>
+                            <span class="step-channel-label">{step.Channel__c}</span>
+                            <div class="step-status-indicator">
+                                <lightning-icon icon-name={step.statusIcon} size="xx-small"></lightning-icon>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- End Node -->
+                <div class="timeline-node-wrapper">
+                    <div class="timeline-connector">
+                        <div class="connector-line"></div>
+                    </div>
+                    <div class="timeline-end-node">
+                        <lightning-icon icon-name="utility:success" size="x-small"></lightning-icon>
+                        <span>Complete</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected Step Preview -->
+        <template if:true={hasSelectedStep}>
+            <div class="step-preview-section">
+                <div class="preview-header">
+                    <h3 class="section-title">
+                        Step {selectedStep.Step_Number__c}: {selectedStep.Channel__c} Preview
+                    </h3>
+                    <div class="preview-nav">
+                        <lightning-button-icon
+                            icon-name="utility:chevronleft"
+                            alternative-text="Previous"
+                            onclick={handlePrevStep}
+                            disabled={canGoBack}>
+                        </lightning-button-icon>
+                        <span class="step-counter">{selectedStep.Step_Number__c} / {totalSteps}</span>
+                        <lightning-button-icon
+                            icon-name="utility:chevronright"
+                            alternative-text="Next"
+                            onclick={handleNextStep}
+                            disabled={canGoForward}>
+                        </lightning-button-icon>
+                    </div>
+                </div>
+
+                <div class="preview-card">
+                    <div class="preview-subject">
+                        <strong>Subject:</strong> {selectedStep.Suggested_Subject__c}
+                    </div>
+                    <template if:true={selectedStep.Generated_Image_URL__c}>
+                        <div class="preview-image">
+                            <img src={selectedStep.Generated_Image_URL__c} alt="Generated image" />
+                        </div>
+                    </template>
+                    <div class="preview-body">
+                        {selectedStep.previewText}
+                    </div>
+                    <div class="preview-actions">
+                        <lightning-button
+                            label="Edit Step"
+                            variant="neutral"
+                            icon-name="utility:edit"
+                            onclick={handleEditStep}>
+                        </lightning-button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Guardrails Section -->
+        <template if:true={hasGuardrails}>
+            <div class="guardrails-section">
+                <h3 class="section-title">
+                    <lightning-icon icon-name="utility:shield" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    Journey Guardrails
+                </h3>
+                <div class="guardrails-list">
+                    <template for:each={guardrails} for:item="guardrail">
+                        <div key={guardrail.key} class="guardrail-item">
+                            <lightning-icon icon-name={guardrail.icon} size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                            {guardrail.label}
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <!-- Journey Actions -->
+        <div class="journey-actions">
+            <div class="action-info">
+                <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                <span>{marketingFlowDescription}</span>
+            </div>
+
+            <div class="action-buttons">
+                <template if:false={allStepsApproved}>
+                    <lightning-button
+                        label="Decline Journey"
+                        variant="destructive-text"
+                        icon-name="utility:close"
+                        onclick={handleDeclineJourney}>
+                    </lightning-button>
+                    <lightning-button
+                        label="Approve Journey"
+                        variant="brand"
+                        icon-name="utility:check"
+                        onclick={handleApproveJourney}>
+                    </lightning-button>
+                </template>
+                <template if:true={allStepsApproved}>
+                    <template if:false={allStepsSent}>
+                        <lightning-button
+                            label="Send to Marketing Flow"
+                            variant="brand"
+                            icon-name="utility:send"
+                            onclick={handleSendJourney}>
+                        </lightning-button>
+                    </template>
+                    <template if:true={allStepsSent}>
+                        <span class="sent-message">
+                            <lightning-icon icon-name="utility:success" size="x-small" variant="success" class="slds-m-right_x-small"></lightning-icon>
+                            Journey sent to Marketing Flow
+                        </span>
+                    </template>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approve Journey Confirmation Modal -->
+    <template if:true={showApproveConfirm}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close" onclick={closeApproveConfirm}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">Approve Journey</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p>This will approve all <strong>{totalSteps}</strong> steps in this journey.</p>
+                    <p class="slds-m-top_small slds-text-color_weak">
+                        After approval, you can send the journey to Marketing Cloud Advanced to create the Marketing Flow.
+                    </p>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeApproveConfirm}></lightning-button>
+                    <lightning-button label="Approve All Steps" variant="brand" onclick={confirmApproveJourney}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Decline Journey Confirmation Modal -->
+    <template if:true={showDeclineConfirm}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header slds-theme_error">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeDeclineConfirm}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">Decline Journey</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p>This will decline all <strong>{totalSteps}</strong> steps in this journey.</p>
+                    <p class="slds-m-top_small slds-text-color_weak">
+                        The contact will not receive any messages from this journey.
+                    </p>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeDeclineConfirm}></lightning-button>
+                    <lightning-button label="Decline Journey" variant="destructive" onclick={confirmDeclineJourney}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Send to Marketing Flow Confirmation Modal -->
+    <template if:true={showSendConfirm}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header slds-theme_success">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeSendConfirm}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                    <h2 class="slds-modal__title">
+                        <lightning-icon icon-name="utility:send" size="small" class="slds-m-right_x-small"></lightning-icon>
+                        Send to Marketing Flow
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p>This will create a <strong>{totalSteps}-step Marketing Flow</strong> in Marketing Cloud Advanced.</p>
+
+                    <div class="send-summary slds-m-top_medium">
+                        <h4 class="slds-text-title_caps slds-m-bottom_small">Flow Summary</h4>
+                        <ul class="send-summary-list">
+                            <template for:each={timelineSteps} for:item="step">
+                                <li key={step.Id}>
+                                    <lightning-icon icon-name={step.channelIcon} size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                    Step {step.Step_Number__c}: {step.Channel__c}
+                                    <span class="send-timing">({step.timingLabel})</span>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+
+                    <p class="slds-m-top_medium slds-text-color_weak">
+                        The Marketing Flow will handle timing, personalization, and delivery automatically.
+                    </p>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={closeSendConfirm}></lightning-button>
+                    <lightning-button label="Create Marketing Flow" variant="brand" icon-name="utility:send" onclick={confirmSendJourney}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>
