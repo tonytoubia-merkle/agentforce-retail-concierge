@@ -197,7 +197,18 @@ public with sharing class JourneyApprovalService {
         }
 
         if (fireflyResult != null && fireflyResult.success) {
-            approval.Generated_Image_URL__c = fireflyResult.imageUrl;
+            // Use permanent public URL from ContentVersion instead of temporary Firefly URL
+            String publicUrl = fireflyResult.imageUrl;
+            if (String.isNotBlank(fireflyResult.contentVersionId)) {
+                try {
+                    publicUrl = FireflyApexService.createPublicUrl(fireflyResult.contentVersionId);
+                } catch (Exception e) {
+                    // Fall back to original URL if public URL creation fails
+                    System.debug(LoggingLevel.WARN, 'Could not create public URL: ' + e.getMessage());
+                }
+            }
+
+            approval.Generated_Image_URL__c = publicUrl;
             approval.Image_Content_Version_Id__c = fireflyResult.contentVersionId;
             approval.Firefly_Prompt__c = prompt;
 
@@ -205,7 +216,7 @@ public with sharing class JourneyApprovalService {
 
             result.success = true;
             result.message = 'Image regenerated successfully';
-            result.newImageUrl = fireflyResult.imageUrl;
+            result.newImageUrl = publicUrl;
         } else {
             result.success = false;
             result.errorMessage = fireflyResult == null ? 'No result' : fireflyResult.errorMessage;

@@ -392,6 +392,53 @@ public with sharing class FireflyApexService {
         return cv.Id;
     }
 
+    /**
+     * Create a public URL for a ContentVersion by creating a ContentDistribution.
+     * This allows the image to be displayed without authentication.
+     */
+    public static String createPublicUrl(Id contentVersionId) {
+        // Get the ContentDocumentId
+        ContentVersion cv = [
+            SELECT Id, ContentDocumentId
+            FROM ContentVersion
+            WHERE Id = :contentVersionId
+            LIMIT 1
+        ];
+
+        // Check if a ContentDistribution already exists
+        List<ContentDistribution> existingDist = [
+            SELECT Id, DistributionPublicUrl, ContentDownloadUrl
+            FROM ContentDistribution
+            WHERE ContentVersionId = :contentVersionId
+            LIMIT 1
+        ];
+
+        if (!existingDist.isEmpty()) {
+            return existingDist[0].ContentDownloadUrl;
+        }
+
+        // Create a new ContentDistribution for public access
+        ContentDistribution cd = new ContentDistribution();
+        cd.Name = 'Journey Image';
+        cd.ContentVersionId = contentVersionId;
+        cd.PreferencesAllowViewInBrowser = true;
+        cd.PreferencesLinkLatestVersion = true;
+        cd.PreferencesNotifyOnVisit = false;
+        cd.PreferencesPasswordRequired = false;
+        cd.PreferencesAllowOriginalDownload = true;
+        insert cd;
+
+        // Re-query to get the generated URL
+        cd = [
+            SELECT Id, DistributionPublicUrl, ContentDownloadUrl
+            FROM ContentDistribution
+            WHERE Id = :cd.Id
+            LIMIT 1
+        ];
+
+        return cd.ContentDownloadUrl;
+    }
+
     // ─── Prompt Building ──────────────────────────────────────────────
 
     /**
