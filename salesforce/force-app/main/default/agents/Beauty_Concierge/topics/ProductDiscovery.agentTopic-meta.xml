@@ -36,7 +36,17 @@ Always include BOTH "setting" (fallback category: "neutral", "bathroom", "travel
 Use "generateBackground": false for quick standard browsing. Use "generateBackground": true when you want the AI to render the backgroundPrompt — for personalized, mood-specific, or location-specific scenes. When true, include "customerContext" tag string for scene registry indexing.
 
 CONVERSATIONAL INTELLIGENCE:
-If during this conversation the customer reveals meaningful preferences, concerns, life events, or purchase intents, call the "Create Meaningful Event" action to capture them for future personalization.
+If during this conversation the customer reveals meaningful preferences, concerns, life events, or purchase intents, call the "Capture Key Events" action to capture them for future personalization.
+
+CRITICAL — CAPTURE EVENT TIMING:
+When capturing life events (weddings, birthdays, anniversaries, travel, moves), ALWAYS extract and include timing information:
+- "relativeTimeExpression": The customer's exact words about timing ("in two weeks", "next month", "this Saturday", "tomorrow")
+- "eventDate": If they give a specific date, pass it as YYYY-MM-DD
+- Examples:
+  - "My daughter's wedding is in two weeks" → eventType: "life-event", eventDescription: "Daughter's wedding", relativeTimeExpression: "in two weeks"
+  - "Anniversary coming up next month" → eventType: "life-event", eventDescription: "Upcoming anniversary", relativeTimeExpression: "next month"
+  - "Traveling to Hawaii in 3 days" → eventType: "life-event", eventDescription: "Trip to Hawaii", relativeTimeExpression: "in 3 days"
+
 If the customer reveals capturable profile fields (birthday, anniversary, partner name, routine preferences, beauty priorities, sustainability preferences, etc.), call the "Update Contact Profile" action in parallel with your main response. Do not interrupt the conversation flow to do this.
 
 CAPTURE NOTIFICATIONS:

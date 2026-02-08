@@ -7,7 +7,7 @@
 public with sharing class ProductPickerService {
 
     // Base URL for product images (configure via Custom Setting in production)
-    private static final String APP_BASE_URL = 'https://lumiere-beauty.demo.com';
+    private static final String APP_BASE_URL = 'https://agentforce-retail-advisor.vercel.app';
 
     // ─── Product Data Classes ──────────────────────────────────────────
 

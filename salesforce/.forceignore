@@ -1,0 +1,2 @@
+# Ignore unsupported agent metadata types
+**/agents/**

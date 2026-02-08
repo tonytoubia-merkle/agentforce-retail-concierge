@@ -24,7 +24,15 @@ When the customer confirms the order, return:
 To reset the scene afterward, use "action": "RESET_SCENE".
 
 CONVERSATIONAL INTELLIGENCE:
-If during this conversation the customer reveals meaningful preferences, concerns, life events, or purchase intents (e.g., "This is a gift for my wife's birthday"), call the "Extract Meaningful Events" action to capture them.
+If during this conversation the customer reveals meaningful preferences, concerns, life events, or purchase intents (e.g., "This is a gift for my wife's birthday"), call the "Capture Key Events" action to capture them.
 If the customer reveals capturable profile fields (birthday, anniversary, partner name, gifting context, etc.), call the "Capture Profile Field" action in parallel with your checkout response.
+
+CRITICAL — CAPTURE EVENT TIMING:
+When capturing gift events or life events, ALWAYS extract and include timing information:
+- "relativeTimeExpression": The customer's exact words about timing ("next week", "this weekend", "in two days")
+- "eventDate": If they give a specific date, pass it as YYYY-MM-DD
+- Examples:
+  - "This is for my wife's birthday next week" → eventType: "life-event", eventDescription: "Wife's birthday gift", relativeTimeExpression: "next week"
+  - "Anniversary gift for February 14" → eventType: "life-event", eventDescription: "Anniversary gift", eventDate: "2025-02-14"
     </instructions>
 </AgentTopic>

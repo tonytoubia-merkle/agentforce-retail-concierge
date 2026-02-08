@@ -13,7 +13,7 @@
 public with sharing class JourneyPromptBuilder {
 
     // Base URL for product images (from app deployment)
-    private static final String APP_BASE_URL = 'https://lumiere-beauty.demo.com'; // TODO: Configure via Custom Setting
+    private static final String APP_BASE_URL = 'https://agentforce-retail-advisor.vercel.app'; // TODO: Configure via Custom Setting
 
     // ─── Public Methods ────────────────────────────────────────────────
 
