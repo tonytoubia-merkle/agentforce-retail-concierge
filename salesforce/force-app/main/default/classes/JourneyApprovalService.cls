@@ -32,19 +32,19 @@ public with sharing class JourneyApprovalService {
     }
 
     public class ApprovalActionResult {
-        @InvocableVariable
+        @AuraEnabled @InvocableVariable
         public Boolean success;
 
-        @InvocableVariable
+        @AuraEnabled @InvocableVariable
         public String message;
 
-        @InvocableVariable
+        @AuraEnabled @InvocableVariable
         public String newStatus;
 
-        @InvocableVariable
+        @AuraEnabled @InvocableVariable
         public String newImageUrl;
 
-        @InvocableVariable
+        @AuraEnabled @InvocableVariable
         public String errorMessage;
     }
 
