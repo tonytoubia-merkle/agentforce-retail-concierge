@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Approval_Tier__c</fullName>
+    <description>Approval tier based on confidence, customer value, and risk</description>
+    <externalId>false</externalId>
+    <label>Approval Tier</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Auto-Send</fullName>
+                <default>false</default>
+                <label>Auto-Send</label>
+                <description>High confidence, standard event - sends automatically with notification</description>
+            </value>
+            <value>
+                <fullName>Soft Review</fullName>
+                <default>false</default>
+                <label>Soft Review</label>
+                <description>Medium confidence - auto-sends in 4 hours unless marketer intervenes</description>
+            </value>
+            <value>
+                <fullName>Review Required</fullName>
+                <default>true</default>
+                <label>Review Required</label>
+                <description>Low confidence or high-value customer - marketer must approve</description>
+            </value>
+            <value>
+                <fullName>Escalate</fullName>
+                <default>false</default>
+                <label>Escalate</label>
+                <description>Very high value or sensitive content - requires manager approval</description>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

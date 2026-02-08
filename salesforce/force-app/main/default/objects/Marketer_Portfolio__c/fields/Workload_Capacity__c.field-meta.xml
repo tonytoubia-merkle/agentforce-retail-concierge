@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Workload_Capacity__c</fullName>
+    <defaultValue>50</defaultValue>
+    <description>Maximum number of active opportunities this portfolio can handle at once</description>
+    <externalId>false</externalId>
+    <label>Workload Capacity</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <type>Number</type>
+</CustomField>

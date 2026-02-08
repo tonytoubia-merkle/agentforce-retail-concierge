@@ -1,0 +1,256 @@
+<template>
+    <lightning-card icon-name="standard:lead_list">
+        <span slot="title">
+            My Marketing Inbox
+            <template if:true={hasDeadlineWarning}>
+                <lightning-badge
+                    label={stats.approachingDeadlineCount}
+                    icon-name="utility:warning"
+                    class="slds-m-left_x-small slds-theme_warning deadline-badge">
+                </lightning-badge>
+            </template>
+        </span>
+
+        <div slot="actions" class="slds-grid slds-grid_vertical-align-center">
+            <lightning-combobox
+                name="filter"
+                value={activeFilter}
+                options={filterOptions}
+                onchange={handleFilterChange}
+                variant="label-hidden"
+                class="slds-m-right_small filter-combo">
+            </lightning-combobox>
+            <lightning-button
+                label="Refresh"
+                icon-name="utility:refresh"
+                onclick={handleRefresh}>
+            </lightning-button>
+        </div>
+
+        <div class="slds-p-around_medium">
+            <!-- Stats Summary -->
+            <template if:true={hasStats}>
+                <div class="stats-bar slds-grid slds-gutters slds-m-bottom_medium">
+                    <div class="slds-col slds-size_1-of-5">
+                        <div class="stat-card">
+                            <div class="stat-value">{stats.totalPending}</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-5">
+                        <div class="stat-card stat-immediate">
+                            <div class="stat-value">{stats.immediateCount}</div>
+                            <div class="stat-label">Immediate</div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-5">
+                        <div class="stat-card stat-soft-review">
+                            <div class="stat-value">{stats.softReviewCount}</div>
+                            <div class="stat-label">Soft Review</div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-5">
+                        <div class="stat-card stat-review-required">
+                            <div class="stat-value">{stats.reviewRequiredCount}</div>
+                            <div class="stat-label">Review Required</div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-5">
+                        <div class="stat-card stat-escalate">
+                            <div class="stat-value">{stats.escalateCount}</div>
+                            <div class="stat-label">Escalate</div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Empty State -->
+            <template if:false={isLoading}>
+                <template if:false={hasApprovals}>
+                    <div class="slds-illustration slds-illustration_small slds-align_absolute-center empty-state">
+                        <lightning-icon icon-name="utility:like" size="large" class="slds-m-bottom_small"></lightning-icon>
+                        <h3 class="slds-text-heading_small">All caught up!</h3>
+                        <p class="slds-text-body_regular slds-text-color_weak">
+                            No pending opportunities in your inbox.
+                        </p>
+                    </div>
+                </template>
+            </template>
+
+            <!-- Inbox Items -->
+            <template if:true={hasApprovals}>
+                <div class="inbox-list">
+                    <template for:each={filteredApprovals} for:item="approval">
+                        <div key={approval.Id}
+                             class="inbox-item slds-box slds-m-bottom_small"
+                             data-id={approval.Id}
+                             onclick={handleViewDetails}>
+
+                            <!-- Tier Indicator -->
+                            <div class={approval.tierClass}>
+                                <lightning-icon
+                                    icon-name={approval.tierIcon}
+                                    size="x-small"
+                                    class="tier-icon">
+                                </lightning-icon>
+                            </div>
+
+                            <!-- Main Content -->
+                            <div class="inbox-item-content slds-grid slds-wrap">
+                                <!-- Left: Contact & Event Info -->
+                                <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
+                                    <div class="contact-info">
+                                        <h3 class="contact-name">{approval.contactName}</h3>
+                                        <p class="contact-email slds-text-color_weak">{approval.contactEmail}</p>
+                                    </div>
+                                    <div class="event-info slds-m-top_x-small">
+                                        <span class={approval.urgencyClass}>{approval.Urgency__c}</span>
+                                        <span class="event-type slds-m-left_x-small">
+                                            {approval.eventType}
+                                        </span>
+                                        <template if:true={approval.isMultiStep}>
+                                            <span class="step-badge slds-m-left_x-small">
+                                                {approval.stepDisplay}
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Center: Subject & Channel -->
+                                <div class="slds-col slds-size_1-of-3">
+                                    <div class="subject-preview">
+                                        <lightning-icon
+                                            icon-name={approval.channelIcon}
+                                            size="x-small"
+                                            class="channel-icon">
+                                        </lightning-icon>
+                                        <span class="subject-text">{approval.Suggested_Subject__c}</span>
+                                    </div>
+                                    <template if:true={approval.isApproachingDeadline}>
+                                        <div class="deadline-warning slds-m-top_x-small">
+                                            <lightning-icon
+                                                icon-name="utility:warning"
+                                                size="xx-small"
+                                                variant="warning">
+                                            </lightning-icon>
+                                            <span>{approval.deadlineDisplay}</span>
+                                        </div>
+                                    </template>
+                                    <template if:false={approval.isApproachingDeadline}>
+                                        <template if:true={approval.deadlineDisplay}>
+                                            <div class="deadline-info slds-m-top_x-small slds-text-color_weak">
+                                                <lightning-icon
+                                                    icon-name="utility:clock"
+                                                    size="xx-small">
+                                                </lightning-icon>
+                                                <span>{approval.deadlineDisplay}</span>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
+
+                                <!-- Right: Actions -->
+                                <div class="slds-col slds-size_1-of-6 slds-text-align_right action-buttons">
+                                    <lightning-button-group>
+                                        <lightning-button-icon
+                                            icon-name="utility:check"
+                                            alternative-text="Approve"
+                                            title="Quick Approve"
+                                            variant="brand"
+                                            data-id={approval.Id}
+                                            onclick={handleQuickApprove}>
+                                        </lightning-button-icon>
+                                        <lightning-button-icon
+                                            icon-name="utility:email"
+                                            alternative-text="Approve & Send"
+                                            title="Approve & Send"
+                                            variant="success"
+                                            data-id={approval.Id}
+                                            onclick={handleQuickSend}>
+                                        </lightning-button-icon>
+                                        <lightning-button-icon
+                                            icon-name="utility:close"
+                                            alternative-text="Decline"
+                                            title="Quick Decline"
+                                            variant="destructive"
+                                            data-id={approval.Id}
+                                            onclick={handleQuickDecline}>
+                                        </lightning-button-icon>
+                                    </lightning-button-group>
+                                </div>
+                            </div>
+
+                            <!-- Confidence & Priority Indicators -->
+                            <div class="inbox-item-footer slds-grid slds-grid_align-spread">
+                                <div class="confidence-indicator">
+                                    <span class={approval.confidenceClass}>
+                                        AI Confidence: {approval.Confidence_Score__c}%
+                                    </span>
+                                </div>
+                                <div class="priority-indicator slds-text-color_weak">
+                                    {approval.priorityDisplay}
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Detail Modal -->
+    <template if:true={showDetailModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_large">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close"
+                        onclick={handleCloseModal}
+                        class="slds-modal__close">
+                    </lightning-button-icon>
+                    <h2 class="slds-modal__title">
+                        {selectedApproval.contactName} - {selectedApproval.eventType}
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <c-journey-approval-card
+                        approval={selectedApproval}
+                        onaction={handleCardAction}>
+                    </c-journey-approval-card>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Close"
+                        onclick={handleCloseModal}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Toast -->
+    <template if:true={showToast}>
+        <div class="slds-notify_container">
+            <div class={toastClass} role="status">
+                <span class="slds-icon_container slds-m-right_small">
+                    <lightning-icon icon-name={toastIcon} size="small" variant="inverse"></lightning-icon>
+                </span>
+                <div class="slds-notify__content">
+                    <h2 class="slds-text-heading_small">{toastMessage}</h2>
+                </div>
+                <button class="slds-button slds-button_icon slds-notify__close" onclick={closeToast}>
+                    <lightning-icon icon-name="utility:close" size="small" variant="inverse"></lightning-icon>
+                </button>
+            </div>
+        </div>
+    </template>
+</template>

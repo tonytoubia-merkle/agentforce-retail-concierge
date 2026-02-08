@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Junction object linking Contacts to Marketer Portfolios. A Contact can belong to multiple portfolios (e.g., regional + VIP).</description>
+    <enableActivities>false</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Portfolio Member</label>
+    <nameField>
+        <displayFormat>PM-{0000}</displayFormat>
+        <label>Member ID</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Portfolio Members</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

@@ -1,0 +1,249 @@
+/* Stats Bar */
+.stats-bar {
+    background: #f3f3f3;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 12px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #16325c;
+}
+
+.stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #706e6b;
+    margin-top: 4px;
+}
+
+.stat-immediate .stat-value {
+    color: #c23934;
+}
+
+.stat-soft-review .stat-value {
+    color: #ff9a3c;
+}
+
+.stat-review-required .stat-value {
+    color: #0070d2;
+}
+
+.stat-escalate .stat-value {
+    color: #ba0517;
+}
+
+/* Inbox Items */
+.inbox-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.inbox-item {
+    position: relative;
+    padding: 16px 16px 12px 56px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid #d8dde6;
+    border-radius: 8px;
+}
+
+.inbox-item:hover {
+    background: #f4f6f9;
+    border-color: #0070d2;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Tier Indicator - Left Side Bar */
+.tier-auto-send,
+.tier-soft-review,
+.tier-review-required,
+.tier-escalate,
+.tier-default {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px 0 0 8px;
+}
+
+.tier-auto-send {
+    background: linear-gradient(180deg, #4bca81 0%, #2e844a 100%);
+}
+
+.tier-soft-review {
+    background: linear-gradient(180deg, #ffb75d 0%, #ff9a3c 100%);
+}
+
+.tier-review-required {
+    background: linear-gradient(180deg, #1b96ff 0%, #0070d2 100%);
+}
+
+.tier-escalate {
+    background: linear-gradient(180deg, #fe5c4c 0%, #c23934 100%);
+}
+
+.tier-default {
+    background: #d8dde6;
+}
+
+.tier-icon {
+    --slds-c-icon-color-foreground-default: white;
+}
+
+/* Contact Info */
+.contact-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #16325c;
+}
+
+.contact-email {
+    font-size: 12px;
+}
+
+.event-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.event-type {
+    font-size: 12px;
+    color: #706e6b;
+}
+
+.step-badge {
+    font-size: 11px;
+    background: #e0e5ee;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #16325c;
+}
+
+/* Subject Preview */
+.subject-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.channel-icon {
+    --slds-c-icon-color-foreground-default: #706e6b;
+}
+
+.subject-text {
+    font-size: 13px;
+    color: #3e3e3c;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+
+/* Deadline Indicators */
+.deadline-warning {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #ff9a3c;
+    font-weight: 600;
+}
+
+.deadline-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Footer Indicators */
+.inbox-item-footer {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.confidence-indicator span {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.confidence-high {
+    background: #e7f5e7;
+    color: #2e844a;
+}
+
+.confidence-medium {
+    background: #fff7e5;
+    color: #9e6200;
+}
+
+.confidence-low {
+    background: #fee8e6;
+    color: #c23934;
+}
+
+.priority-indicator {
+    font-size: 11px;
+}
+
+/* Empty State */
+.empty-state {
+    padding: 48px;
+    text-align: center;
+}
+
+.empty-state lightning-icon {
+    --slds-c-icon-color-foreground-default: #4bca81;
+}
+
+/* Filter Combo */
+.filter-combo {
+    min-width: 180px;
+}
+
+/* Deadline Badge in Title */
+.deadline-badge {
+    vertical-align: middle;
+}
+
+/* Toast */
+.slds-notify_container {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+}
+
+/* Modal Sizing */
+.slds-modal_large .slds-modal__container {
+    max-width: 900px;
+}

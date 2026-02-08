@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Current_Workload__c</fullName>
+    <defaultValue>0</defaultValue>
+    <description>Current number of active opportunities in this portfolio (rollup from Journey_Approval__c)</description>
+    <externalId>false</externalId>
+    <label>Current Workload</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <type>Number</type>
+</CustomField>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Auto_Approval_Confidence_Threshold__c</fullName>
+    <defaultValue>85</defaultValue>
+    <description>Minimum confidence score (0-100) required for auto-approval</description>
+    <externalId>false</externalId>
+    <label>Auto-Approval Confidence Threshold</label>
+    <precision>3</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <type>Number</type>
+</CustomField>

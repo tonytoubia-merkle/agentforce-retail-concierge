@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Secondary_Marketer__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Backup marketer for this portfolio when primary is unavailable</description>
+    <externalId>false</externalId>
+    <label>Secondary Marketer</label>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>Secondary Portfolios</relationshipLabel>
+    <relationshipName>Secondary_Portfolios</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Lookup</type>
+</CustomField>

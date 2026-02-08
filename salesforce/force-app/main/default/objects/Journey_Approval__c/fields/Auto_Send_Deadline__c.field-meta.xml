@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Auto_Send_Deadline__c</fullName>
+    <description>For Soft Review tier: datetime when this will auto-send if not reviewed</description>
+    <externalId>false</externalId>
+    <label>Auto-Send Deadline</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

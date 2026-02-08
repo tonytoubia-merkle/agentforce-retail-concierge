@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Was_Auto_Approved__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Whether this opportunity was auto-approved based on confidence score</description>
+    <externalId>false</externalId>
+    <label>Auto-Approved</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

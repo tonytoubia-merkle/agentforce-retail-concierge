@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Assigned_Portfolio__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The marketer portfolio this opportunity is assigned to</description>
+    <externalId>false</externalId>
+    <label>Assigned Portfolio</label>
+    <referenceTo>Marketer_Portfolio__c</referenceTo>
+    <relationshipLabel>Journey Approvals</relationshipLabel>
+    <relationshipName>Journey_Approvals</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
