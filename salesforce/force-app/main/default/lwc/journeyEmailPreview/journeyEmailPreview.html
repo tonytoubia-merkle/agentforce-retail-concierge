@@ -11,7 +11,7 @@
                 <!-- Email Header (mock inbox) -->
                 <div class="email-header">
                     <div class="email-header-row">
-                        <span class="email-from">LUMIÈRE Beauty</span>
+                        <span class="email-from">BEAUTÉ</span>
                         <span class="email-date">{previewDate}</span>
                     </div>
                     <div class="email-to">
@@ -36,28 +36,36 @@
                         </div>
                     </template>
 
-                    <!-- Body Content -->
-                    <div class="email-content" lwc:dom="manual"></div>
+                    <!-- Body Content with Inline Products -->
+                    <div class="email-content-wrapper">
+                        <div class="email-content" lwc:dom="manual"></div>
 
-                    <!-- Product Grid (if products exist) -->
-                    <template if:true={hasProducts}>
-                        <div class="product-section">
-                            <h3 class="product-section-title">Recommended For You</h3>
-                            <div class="product-grid">
-                                <template for:each={displayProducts} for:item="product">
-                                    <div key={product.productCode} class="product-card">
-                                        <img src={product.imageUrl} alt={product.name} class="product-card-image" />
-                                        <p class="product-card-name">{product.name}</p>
-                                    </div>
-                                </template>
+                        <!-- Product Grid - Integrated into body flow -->
+                        <template if:true={hasProducts}>
+                            <div class="product-section-inline">
+                                <h3 class="product-section-title-inline">Recommended For You</h3>
+                                <div class="product-grid-inline">
+                                    <template for:each={displayProducts} for:item="product">
+                                        <div key={product.productCode} class="product-card-inline">
+                                            <img src={product.imageUrl} alt={product.name} class="product-card-image-inline" />
+                                            <p class="product-card-name-inline">{product.name}</p>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
+                        </template>
+
+                        <!-- Closing signature -->
+                        <div class="email-signature">
+                            <p>Warm regards,</p>
+                            <p class="signature-name">The BEAUTÉ Team</p>
                         </div>
-                    </template>
+                    </div>
 
                     <!-- Footer -->
                     <div class="email-footer">
-                        <p class="footer-logo">LUMIÈRE</p>
-                        <p class="footer-tagline">Radiance in Every Drop</p>
+                        <p class="footer-logo">BEAUTÉ</p>
+                        <p class="footer-tagline">Curated beauty for the modern you.</p>
                         <p class="footer-links">
                             <a href="#">Unsubscribe</a> | <a href="#">View in Browser</a> | <a href="#">Privacy Policy</a>
                         </p>
@@ -72,7 +80,7 @@
             <div class="sms-preview">
                 <div class="sms-phone-frame">
                     <div class="sms-phone-header">
-                        <span class="sms-carrier">LUMIÈRE</span>
+                        <span class="sms-carrier">BEAUTÉ</span>
                         <span class="sms-time">{previewDate}</span>
                     </div>
                     <div class="sms-messages">
@@ -90,10 +98,10 @@
             <div class="push-preview">
                 <div class="push-notification">
                     <div class="push-icon">
-                        <span class="push-icon-text">L</span>
+                        <span class="push-icon-text">B</span>
                     </div>
                     <div class="push-content">
-                        <div class="push-app-name">LUMIÈRE Beauty</div>
+                        <div class="push-app-name">BEAUTÉ</div>
                         <div class="push-title">{pushTitle}</div>
                         <div class="push-body">{pushBody}</div>
                     </div>

@@ -7,7 +7,7 @@ import { LightningElement, api } from 'lwc';
  * - Subject line header
  * - Hero image (Firefly generated)
  * - Body content (HTML)
- * - LUMIÈRE brand styling
+ * - BEAUTÉ brand styling
  */
 export default class JourneyEmailPreview extends LightningElement {
     @api subject = '';
@@ -116,7 +116,7 @@ export default class JourneyEmailPreview extends LightningElement {
 
     get pushTitle() {
         // Use subject as push notification title
-        return this.subject || 'LUMIÈRE Beauty';
+        return this.subject || 'BEAUTÉ Beauty';
     }
 
     get pushBody() {
