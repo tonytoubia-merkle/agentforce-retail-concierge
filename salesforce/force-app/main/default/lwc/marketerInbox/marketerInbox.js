@@ -7,6 +7,8 @@ import isManager from '@salesforce/apex/PortfolioAssignmentService.isManager';
 import approveJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.approveJourneyFromLWC';
 import declineJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.declineJourneyFromLWC';
 import sendJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.sendJourneyFromLWC';
+import regenerateImageFromLWC from '@salesforce/apex/JourneyApprovalService.regenerateImageFromLWC';
+import updateProductsFromLWC from '@salesforce/apex/JourneyApprovalService.updateProductsFromLWC';
 import approveAllJourneySteps from '@salesforce/apex/JourneyApprovalService.approveAllJourneySteps';
 import sendJourneyToMarketingFlow from '@salesforce/apex/JourneyApprovalService.sendJourneyToMarketingFlow';
 import Id from '@salesforce/user/Id';
@@ -558,13 +560,84 @@ export default class MarketerInbox extends LightningElement {
         }
     }
 
-    // Forward action from detail card
-    handleCardAction(event) {
+    // Handle action from detail card
+    async handleCardAction(event) {
         const { action, approvalId, data } = event.detail;
-        // Re-dispatch to parent or handle here
-        this.dispatchEvent(new CustomEvent('action', {
-            detail: { action, approvalId, data }
-        }));
+        console.log('[MarketerInbox] handleCardAction:', action, approvalId);
+        this.isLoading = true;
+
+        try {
+            let result;
+
+            switch (action) {
+                case 'approve':
+                    result = await approveJourneyFromLWC({
+                        approvalId: approvalId,
+                        subject: data.subject,
+                        body: data.body
+                    });
+                    break;
+
+                case 'decline':
+                    result = await declineJourneyFromLWC({
+                        approvalId: approvalId,
+                        reason: data.reason
+                    });
+                    break;
+
+                case 'regenerate':
+                    result = await regenerateImageFromLWC({
+                        approvalId: approvalId,
+                        newPrompt: data.prompt
+                    });
+                    break;
+
+                case 'send':
+                    result = await sendJourneyFromLWC({
+                        approvalId: approvalId
+                    });
+                    break;
+
+                case 'updateProducts':
+                    result = await updateProductsFromLWC({
+                        approvalId: approvalId,
+                        productsJson: data.products
+                    });
+                    break;
+
+                case 'approveJourney':
+                    result = await approveAllJourneySteps({
+                        journeyId: data.journeyId
+                    });
+                    break;
+
+                case 'sendJourney':
+                    result = await sendJourneyToMarketingFlow({
+                        journeyId: data.journeyId
+                    });
+                    break;
+
+                default:
+                    console.warn('[MarketerInbox] Unknown action:', action);
+                    this.isLoading = false;
+                    return;
+            }
+
+            console.log('[MarketerInbox] Action result:', result);
+            if (result.success) {
+                this.showToastMessage(result.message || 'Action completed', 'success');
+                await refreshApex(this.wiredApprovalsResult);
+                await refreshApex(this.wiredStatsResult);
+            } else {
+                this.showToastMessage(result.errorMessage || 'Action failed', 'error');
+            }
+
+        } catch (error) {
+            console.error('[MarketerInbox] Action error:', error);
+            this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');
+        } finally {
+            this.isLoading = false;
+        }
     }
 
     showToastMessage(message, variant) {
