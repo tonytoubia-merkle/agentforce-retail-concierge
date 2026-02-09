@@ -361,22 +361,25 @@ export class DataCloudCustomerService {
   }
 
   async getCustomerLoyalty(customerId: string): Promise<LoyaltyData | null> {
+    // Query standard Salesforce Loyalty Management object
+    // Note: TierName comes from related LoyaltyMemberTier, not directly on LoyaltyProgramMember
     const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+MembershipNumber,TierName,TotalPointsAccrued,TotalPointsRedeemed,EnrollmentDate,TierExpirationDate+FROM+LoyaltyProgramMember+WHERE+ContactId='${customerId}'+LIMIT+1`
+      `/services/data/v60.0/query/?q=SELECT+MembershipNumber,TotalPointsAccrued,TotalPointsRedeemed,EnrollmentDate,(SELECT+LoyaltyTier.Name,ExpirationDate+FROM+LoyaltyMemberTiers+WHERE+Status='Active'+ORDER+BY+CreatedDate+DESC+LIMIT+1)+FROM+LoyaltyProgramMember+WHERE+ContactId='${customerId}'+LIMIT+1`
     );
 
     const records = data.records || [];
     if (records.length === 0) return null;
 
     const member = records[0];
+    const activeTier = member.LoyaltyMemberTiers?.records?.[0];
     const balance = (member.TotalPointsAccrued || 0) - (member.TotalPointsRedeemed || 0);
 
     return {
-      tier: (member.TierName || 'bronze').toLowerCase() as LoyaltyData['tier'],
+      tier: (activeTier?.LoyaltyTier?.Name || 'bronze').toLowerCase() as LoyaltyData['tier'],
       pointsBalance: balance,
       lifetimePoints: member.TotalPointsAccrued || 0,
       memberSince: member.EnrollmentDate,
-      tierExpiryDate: member.TierExpirationDate,
+      tierExpiryDate: activeTier?.ExpirationDate,
       rewardsAvailable: [],
     };
   }
