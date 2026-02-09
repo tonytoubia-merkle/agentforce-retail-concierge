@@ -1147,18 +1147,46 @@ const server = http.createServer((req, res) => {
                 `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT OrderNumber FROM Order WHERE Id = '${orderId}' LIMIT 1`)}`);
               const orderNumber = orderQuery.data?.records?.[0]?.OrderNumber;
 
-              // 7. Accrue loyalty points (1 pt per $1)
+              // 7. Accrue loyalty points via Salesforce Loyalty Management
+              // Earning rate: 10 points per $100 spent (10% back)
+              // Note: This org's TransactionJournal doesn't have LoyaltyProgramMemberId
+              // We create LoyaltyLedger entries directly to credit points
               let pointsEarned = 0;
               if (total > 0) {
-                const pts = Math.floor(total);
-                const memberQuery = await sfFetch(token, 'GET',
-                  `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, PointsBalance__c FROM LoyaltyMember__c WHERE AccountId__c = '${accountId}' LIMIT 1`)}`);
-                const member = memberQuery.data?.records?.[0];
-                if (member) {
-                  const newBalance = (member.PointsBalance__c || 0) + pts;
-                  await sfFetch(token, 'PATCH', `/services/data/v60.0/sobjects/LoyaltyMember__c/${member.Id}`, { PointsBalance__c: newBalance });
-                  pointsEarned = pts;
-                  console.log(`[checkout] Accrued ${pts} loyalty points for account ${accountId}`);
+                const POINTS_RATE = 0.10; // 10% back in points
+                const pts = Math.floor(total * POINTS_RATE);
+                if (pts >= 1) {
+                  try {
+                    // Find loyalty member by Contact
+                    const memberQuery = await sfFetch(token, 'GET',
+                      `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id, ProgramId FROM LoyaltyProgramMember WHERE ContactId IN (SELECT Id FROM Contact WHERE AccountId = '${accountId}') AND MemberStatus = 'Active' LIMIT 1`)}`);
+                    const member = memberQuery.data?.records?.[0];
+
+                    if (member) {
+                      // Get program currency
+                      const currencyQuery = await sfFetch(token, 'GET',
+                        `/services/data/v60.0/query?q=${encodeURIComponent(`SELECT Id FROM LoyaltyProgramCurrency WHERE LoyaltyProgramId = '${member.ProgramId}' AND IsActive = true LIMIT 1`)}`);
+                      const currencyId = currencyQuery.data?.records?.[0]?.Id;
+
+                      if (currencyId) {
+                        // Create LoyaltyLedger entry directly to credit points
+                        const ledgerRes = await sfFetch(token, 'POST', '/services/data/v60.0/sobjects/LoyaltyLedger', {
+                          LoyaltyProgramMemberId: member.Id,
+                          LoyaltyProgramCurrencyId: currencyId,
+                          Points: pts,
+                          EventType: 'Credit',
+                          ActivityDate: new Date().toISOString()
+                        });
+
+                        if (ledgerRes.data?.id) {
+                          pointsEarned = pts;
+                          console.log(`[checkout] Accrued ${pts} loyalty points for order ${orderNumber} via LoyaltyLedger ${ledgerRes.data.id}`);
+                        }
+                      }
+                    }
+                  } catch (loyaltyErr) {
+                    console.log(`[checkout] Loyalty points skipped: ${loyaltyErr.message}`);
+                  }
                 }
               }
 
