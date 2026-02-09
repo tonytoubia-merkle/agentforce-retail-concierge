@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>Journey_Approval__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Journey_Approval__c.Contact__c</members>
+        <members>Journey_Approval__c.Meaningful_Event__c</members>
+        <members>Journey_Approval__c.Event_Summary__c</members>
+        <members>Journey_Approval__c.Event_Type__c</members>
+        <members>Journey_Approval__c.Event_Date__c</members>
+        <members>Journey_Approval__c.Days_Until_Event__c</members>
+        <members>Journey_Approval__c.Urgency__c</members>
+        <members>Journey_Approval__c.Status__c</members>
+        <members>Journey_Approval__c.Suggested_Subject__c</members>
+        <members>Journey_Approval__c.Suggested_Body__c</members>
+        <members>Journey_Approval__c.Approved_Subject__c</members>
+        <members>Journey_Approval__c.Approved_Body__c</members>
+        <members>Journey_Approval__c.Firefly_Prompt__c</members>
+        <members>Journey_Approval__c.Generated_Image_URL__c</members>
+        <members>Journey_Approval__c.Image_Content_Version_Id__c</members>
+        <members>Journey_Approval__c.Reviewed_By__c</members>
+        <members>Journey_Approval__c.Reviewed_At__c</members>
+        <members>Journey_Approval__c.Decline_Reason__c</members>
+        <members>Journey_Approval__c.MC_Journey_Key__c</members>
+        <members>Journey_Approval__c.Sent_At__c</members>
+        <name>CustomField</name>
+    </types>
+    <version>60.0</version>
+</Package>

@@ -57,6 +57,15 @@ interface NavState {
 const SFP_BEACON_URL = (import.meta.env.VITE_SFP_BEACON_URL || '').trim();
 const SFP_DATASET = (import.meta.env.VITE_SFP_DATASET || '').trim();
 
+// Debug: Log env vars at module load time
+console.log('[sfp] Module loaded — env check:', {
+  beaconUrl: SFP_BEACON_URL || '(empty)',
+  beaconUrlLength: SFP_BEACON_URL.length,
+  dataset: SFP_DATASET || '(empty)',
+  datasetLength: SFP_DATASET.length,
+  configured: !!(SFP_BEACON_URL && SFP_DATASET),
+});
+
 let initialized = false;
 let sdkReady: Promise<boolean> | null = null;
 let navState: NavState = { view: '' };
@@ -66,7 +75,9 @@ let sdkType: 'c360a' | 'interactions' | 'unknown' = 'unknown';
 
 /** Check if SF Personalization is configured (env vars present). */
 export function isPersonalizationConfigured(): boolean {
-  return !!(SFP_BEACON_URL && SFP_DATASET);
+  const configured = !!(SFP_BEACON_URL && SFP_DATASET);
+  console.log('[sfp] isPersonalizationConfigured() called:', configured);
+  return configured;
 }
 
 // ── SDK helpers ──────────────────────────────────────────────────────────────
