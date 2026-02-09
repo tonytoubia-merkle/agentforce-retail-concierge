@@ -31,6 +31,11 @@
                 <default>false</default>
                 <label>Future (30+ days)</label>
             </value>
+            <value>
+                <fullName>No Date</fullName>
+                <default>true</default>
+                <label>No Date Specified</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>
