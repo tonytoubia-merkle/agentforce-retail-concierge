@@ -298,6 +298,7 @@ public with sharing class FireflyApexService {
         req.setHeader('Authorization', 'Bearer ' + token);
         req.setHeader('x-api-key', clientId);
         req.setHeader('Content-Type', 'application/json');
+        req.setHeader('Accept', 'application/json');
         req.setTimeout(120000); // 2 minute timeout for image generation
 
         Map<String, Object> requestBody = new Map<String, Object>{
