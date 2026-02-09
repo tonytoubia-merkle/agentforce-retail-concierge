@@ -180,7 +180,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvis
 
               {/* Product images — 5 scattered products with minimal overlap */}
               <motion.img
-                src="/assets/products/moisturizer-sensitive.png"
+                src="/assets/products/ff-moisturizer-daily.png"
                 alt="Featured moisturizer"
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 object-contain drop-shadow-2xl"
                 animate={{ y: [0, -8, 0] }}
