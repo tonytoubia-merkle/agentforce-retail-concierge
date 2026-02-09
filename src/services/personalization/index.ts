@@ -85,9 +85,16 @@ export function isPersonalizationConfigured(): boolean {
 function getSdk(): any {
   const w = window as any;
   // Check for different SDK global names (varies by SDK version/configuration):
-  // - SalesforceDataCloud / c360a: Data Cloud Web SDK (c360a.min.js beacon)
-  // - SalesforceInteractions / Evergage: Interaction Studio / MC Personalization SDK (web-sdk.min.js)
-  // - getSalesforceInteractions: Factory function pattern used by newer SDK versions
+  // - DataCloudInteractions: Data Cloud Web SDK (c360a.min.js beacon) — CURRENT
+  // - SalesforceDataCloud / c360a: Older Data Cloud SDK naming
+  // - SalesforceInteractions / Evergage: Interaction Studio / MC Personalization SDK
+
+  // Data Cloud Web SDK (c360a beacon) — primary detection
+  if (w.DataCloudInteractions) {
+    sdkType = 'c360a';
+    return w.DataCloudInteractions;
+  }
+  // Legacy Data Cloud naming
   if (w.SalesforceDataCloud) {
     sdkType = 'c360a';
     return w.SalesforceDataCloud;
@@ -96,6 +103,11 @@ function getSdk(): any {
     sdkType = 'c360a';
     return w.c360a;
   }
+  if (w.SalesforceCloudData) {
+    sdkType = 'c360a';
+    return w.SalesforceCloudData;
+  }
+  // Interaction Studio / MC Personalization SDK
   if (w.SalesforceInteractions) {
     sdkType = 'interactions';
     return w.SalesforceInteractions;
@@ -110,10 +122,6 @@ function getSdk(): any {
   if (w.Evergage) {
     sdkType = 'interactions';
     return w.Evergage;
-  }
-  if (w.SalesforceCloudData) {
-    sdkType = 'c360a';
-    return w.SalesforceCloudData;
   }
   return null;
 }
@@ -133,6 +141,7 @@ export function diagnoseSdk(): void {
     sdkType,
   });
   console.log('SDK Globals:', {
+    DataCloudInteractions: !!w.DataCloudInteractions,
     SalesforceDataCloud: !!w.SalesforceDataCloud,
     c360a: !!w.c360a,
     SalesforceInteractions: !!w.SalesforceInteractions,
@@ -189,15 +198,16 @@ function loadSdk(): Promise<boolean> {
           // Log available globals for debugging
           const w = window as any;
           console.warn('[sfp] SDK not found after', maxAttempts, 'attempts. Checking globals:', {
+            DataCloudInteractions: !!w.DataCloudInteractions,
             SalesforceDataCloud: !!w.SalesforceDataCloud,
             c360a: !!w.c360a,
             SalesforceInteractions: !!w.SalesforceInteractions,
             Evergage: !!w.Evergage,
-            SalesforceCloudData: !!w.SalesforceCloudData,
           });
           // Also list all window properties that look like Salesforce SDKs
           const sfGlobals = Object.keys(w).filter(k =>
             k.toLowerCase().includes('salesforce') ||
+            k.toLowerCase().includes('datacloud') ||
             k.toLowerCase().includes('c360') ||
             k.toLowerCase().includes('evergage')
           );
@@ -329,60 +339,19 @@ function resolveInteraction(interaction: any): any {
 // ── SDK-agnostic event sending ───────────────────────────────────────────────
 
 /**
- * Send an event using the appropriate SDK method.
- * - Interactions SDK: sendEvent()
- * - c360a SDK: track() with flattened payload
+ * Send an event using the SDK's sendEvent() method.
+ * Both Data Cloud SDK (DataCloudInteractions) and Interactions SDK use the same API.
  */
 function sendSdkEvent(sfp: any, payload: any): void {
   if (!sfp) return;
 
   try {
-    if (sdkType === 'c360a') {
-      // Data Cloud c360a SDK uses track() with a different payload structure
-      // Convert from Interactions format to c360a format
-      const eventData: any = {
-        category: payload.interaction?.eventType || 'Engagement',
-        interactionName: payload.interaction?.name || 'Unknown',
-      };
-
-      // Add catalog object data if present
-      if (payload.interaction?.catalogObject) {
-        eventData.catalogObjectType = payload.interaction.catalogObject.type;
-        eventData.catalogObjectId = typeof payload.interaction.catalogObject.id === 'function'
-          ? payload.interaction.catalogObject.id()
-          : payload.interaction.catalogObject.id;
-      }
-
-      // Add line item data for cart events
-      if (payload.interaction?.lineItem) {
-        eventData.catalogObjectType = payload.interaction.lineItem.catalogObjectType;
-        eventData.catalogObjectId = payload.interaction.lineItem.catalogObjectId;
-        eventData.price = payload.interaction.lineItem.price;
-        eventData.quantity = payload.interaction.lineItem.quantity;
-      }
-
-      // Add user identities
-      if (payload.user?.identities) {
-        Object.assign(eventData, payload.user.identities);
-      }
-
-      // Use track() if available, otherwise try sendEvent()
-      if (sfp.track) {
-        sfp.track(eventData);
-        console.log('[sfp] c360a track():', eventData);
-      } else if (sfp.sendEvent) {
-        sfp.sendEvent(payload);
-        console.log('[sfp] c360a sendEvent():', payload);
-      } else {
-        console.warn('[sfp] No track() or sendEvent() method found on c360a SDK');
-      }
+    if (sfp.sendEvent) {
+      sfp.sendEvent(payload);
+      console.log('[sfp] sendEvent():', payload);
     } else {
-      // Interactions SDK uses sendEvent() directly
-      if (sfp.sendEvent) {
-        sfp.sendEvent(payload);
-      } else {
-        console.warn('[sfp] No sendEvent() method found on Interactions SDK');
-      }
+      console.warn('[sfp] No sendEvent() method found on SDK. Available methods:',
+        Object.keys(sfp).filter(k => typeof sfp[k] === 'function'));
     }
   } catch (err) {
     console.error('[sfp] Event send error:', err);
@@ -415,28 +384,24 @@ export function initPersonalization(userId?: string): void {
     });
 
     try {
-      // Initialize based on SDK type
-      if (sdkType === 'c360a') {
-        // Data Cloud Web SDK (c360a) initialization
-        // The c360a SDK auto-initializes from the beacon URL - just verify it's ready
-        if (sfp.isInitialized && !sfp.isInitialized()) {
-          console.log('[sfp] c360a SDK not yet initialized, waiting...');
-        }
-        console.log('[sfp] Using Data Cloud c360a SDK');
-      } else {
-        // Interaction Studio / MC Personalization SDK initialization
-        sfp.init({
-          consents: [{ provider: 'BeauteDemo', purpose: 'Personalization', status: 'OptIn' }],
-        });
+      // Both Data Cloud SDK (c360a/DataCloudInteractions) and Interactions SDK
+      // use the same API pattern: init(), sendEvent(), initSitemap()
 
-        // Register sitemap for centralized page-type tracking (Interactions SDK only)
-        const config = buildSitemapConfig();
-        if (sfp.initSitemap) {
-          sfp.initSitemap(config);
-          console.log('[sfp] Sitemap registered with', config.pageTypes.length, 'page types');
-        } else {
-          console.warn('[sfp] initSitemap not available — using sendEvent fallback');
-        }
+      // Initialize with consent (required for both SDK types)
+      if (sfp.init) {
+        sfp.init({
+          consents: [{ provider: 'BeauteDemo', purpose: 'Tracking', status: 'Opt In' }],
+        });
+        console.log('[sfp] SDK init() called with consent');
+      }
+
+      // Register sitemap for centralized page-type tracking
+      const config = buildSitemapConfig();
+      if (sfp.initSitemap) {
+        sfp.initSitemap(config);
+        console.log('[sfp] Sitemap registered with', config.pageTypes.length, 'page types');
+      } else {
+        console.warn('[sfp] initSitemap not available — using sendEvent fallback');
       }
 
       // Send initial identity if available
@@ -482,25 +447,18 @@ export function notifyNavigation(view: string, data?: {
   if (!sfp) return;
 
   try {
-    if (sdkType === 'c360a') {
-      // c360a SDK: send navigation event directly
-      const config = buildSitemapConfig();
-      const match = config.pageTypes.find((pt: any) => pt.isMatch());
-      if (match?.interaction) {
-        sendSdkEvent(sfp, { interaction: resolveInteraction(match.interaction) });
-      }
-    } else {
-      // Interactions SDK: use reinit() if available
-      if (sfp.reinit) {
-        sfp.reinit();
-        return;
-      }
-      // Fallback: manually match page type and send its interaction as an event
-      const config = buildSitemapConfig();
-      const match = config.pageTypes.find((pt: any) => pt.isMatch());
-      if (match?.interaction) {
-        sendSdkEvent(sfp, { interaction: resolveInteraction(match.interaction) });
-      }
+    // Both SDKs support reinit() to re-evaluate sitemap after nav state changes
+    if (sfp.reinit) {
+      sfp.reinit();
+      console.log('[sfp] reinit() called for view:', view);
+      return;
+    }
+
+    // Fallback: manually match page type and send its interaction as an event
+    const config = buildSitemapConfig();
+    const match = config.pageTypes.find((pt: any) => pt.isMatch());
+    if (match?.interaction) {
+      sendSdkEvent(sfp, { interaction: resolveInteraction(match.interaction) });
     }
   } catch (err) {
     console.error('[sfp] Navigation notification error:', err);
