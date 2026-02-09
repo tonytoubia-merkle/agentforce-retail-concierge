@@ -247,10 +247,11 @@ async function softProductEdges(imageBuffer, _size) {
  * Get positions for products in a horizontal row with depth hierarchy.
  *
  * Layout strategy:
- * - Products arranged horizontally in a single row
+ * - Products arranged horizontally in lower portion of canvas
  * - Center product(s) are largest (hero position, highest z-index)
  * - Edge products are progressively smaller (lower z-index, appear behind)
- * - Slight overlap creates visual depth
+ * - Tight overlap creates visual depth and cohesion
+ * - Lower positioning leaves upper area clear for text overlay
  *
  * Returns array of { x, y, size, zIndex, originalIndex } for each product.
  */
@@ -260,16 +261,20 @@ function getProductPositions(count) {
   const cw = COMPOSITE_SIZE;
   const ch = COMPOSITE_SIZE;
 
-  // Size configuration
-  const heroSize = Math.floor(cw * 0.42);      // Center/hero product size
-  const minSize = Math.floor(cw * 0.25);       // Edge product size
-  const overlapFactor = 0.15;                   // How much products overlap (0-1)
+  // Size configuration - BIGGER products
+  const heroSize = Math.floor(cw * 0.55);      // Center/hero product size (was 0.42)
+  const minSize = Math.floor(cw * 0.35);       // Edge product size (was 0.25)
+  const overlapFactor = 0.35;                   // Tighter overlap (was 0.15)
 
-  // For single product, just center it
+  // Vertical positioning: place products in lower 60% of canvas
+  // This leaves upper 40% clear for text overlay
+  const verticalCenter = Math.floor(ch * 0.6); // Products centered at 60% down
+
+  // For single product, center horizontally but in lower portion
   if (count === 1) {
     return [{
       x: Math.floor((cw - heroSize) / 2),
-      y: Math.floor((ch - heroSize) / 2),
+      y: Math.floor(verticalCenter - heroSize / 2),
       size: heroSize,
       zIndex: 1,
       originalIndex: 0
@@ -302,7 +307,6 @@ function getProductPositions(count) {
   }
 
   // Calculate X positions with overlap
-  // Start from center and work outward to ensure proper overlap
   const centerX = cw / 2;
 
   // Calculate total width needed (accounting for overlap)
@@ -323,11 +327,11 @@ function getProductPositions(count) {
     const pos = positions[i];
     pos.x = Math.round(currentX);
 
-    // Center vertically, with slight upward shift for smaller products (depth illusion)
+    // Position in lower portion, with slight upward shift for smaller products (depth illusion)
     const distanceFromCenter = Math.abs(i - centerIndex);
     const normalizedDistance = maxDistance > 0 ? distanceFromCenter / maxDistance : 0;
-    const verticalOffset = Math.floor(normalizedDistance * 15); // Smaller products slightly higher
-    pos.y = Math.round((ch - pos.size) / 2 - verticalOffset);
+    const verticalOffset = Math.floor(normalizedDistance * 20); // Smaller products slightly higher
+    pos.y = Math.round(verticalCenter - pos.size / 2 - verticalOffset);
 
     // Move X for next product (with overlap)
     if (i < count - 1) {
@@ -407,6 +411,7 @@ function sleep(ms) {
 async function expandImage(uploadId, prompt, token, clientId) {
   // Firefly Expand API requires alignment as object: { horizontal: 'left'|'center'|'right', vertical: 'top'|'center'|'bottom' }
   // NOT a string like 'center' - that causes 400 validation error
+  // Place products in lower portion (vertical: 'bottom') to leave top clear for text
   const requestBody = JSON.stringify({
     numVariations: 1,
     size: {
@@ -422,7 +427,7 @@ async function expandImage(uploadId, prompt, token, clientId) {
     placement: {
       alignment: {
         horizontal: 'center',
-        vertical: 'center',
+        vertical: 'bottom',
       },
     },
   });
@@ -547,8 +552,8 @@ function buildEnhancedPrompt(basePrompt, eventType) {
     ? basePrompt.substring(0, maxBaseLength)
     : basePrompt;
 
-  // Concise brand/style context (~200 chars)
-  const style = 'Luxury beauty aesthetic, soft natural light, muted pastels, rose gold accents, editorial photography, clean upper area for text overlay';
+  // Concise brand/style context - products in lower portion, upper area clear for text
+  const style = 'Luxury beauty editorial, soft natural light, muted pastels, products in lower half, clean minimal upper area for text';
 
   // Event-specific context (~50-80 chars)
   let eventHint = '';
