@@ -2,178 +2,142 @@ import { LightningElement, track, wire } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import getPortfolios from '@salesforce/apex/PortfolioController.getPortfolios';
-import getPortfolioMetrics from '@salesforce/apex/PortfolioController.getPortfolioMetrics';
-import getRecentActivity from '@salesforce/apex/PortfolioController.getRecentActivity';
-import updateAutonomyLevel from '@salesforce/apex/PortfolioController.updateAutonomyLevel';
+import getMarketingUsers from '@salesforce/apex/PortfolioController.getMarketingUsers';
+import getAdminStats from '@salesforce/apex/PortfolioController.getAdminStats';
+import updatePortfolioMarketer from '@salesforce/apex/PortfolioController.updatePortfolioMarketer';
+import updatePortfolioSettings from '@salesforce/apex/PortfolioController.updatePortfolioSettings';
 
 export default class PortfolioManagement extends LightningElement {
     @track portfolios = [];
-    @track selectedPortfolio = null;
-    @track portfolioMetrics = null;
-    @track recentActivity = [];
+    @track marketingUsers = [];
+    @track adminStats = {};
     @track isLoading = true;
+    @track selectedPortfolio = null;
+    @track showEditModal = false;
+
+    // Edit form values
+    @track editPrimaryMarketer = null;
+    @track editSecondaryMarketer = null;
+    @track editAutoApproval = false;
+    @track editConfidenceThreshold = 80;
 
     wiredPortfoliosResult;
-    wiredMetricsResult;
-    wiredActivityResult;
-
-    autonomyOptions = [
-        { label: 'Full Auto', value: 'Full Auto' },
-        { label: 'Supervised', value: 'Supervised' },
-        { label: 'Assisted', value: 'Assisted' },
-        { label: 'Manual', value: 'Manual' }
-    ];
+    wiredStatsResult;
 
     @wire(getPortfolios)
     wiredPortfolios(result) {
-        console.log('=== Portfolio Wire Result ===');
-        console.log('Full result:', JSON.stringify(result));
-        console.log('Data:', result.data);
-        console.log('Error:', result.error);
-
         this.wiredPortfoliosResult = result;
         this.isLoading = false;
 
         if (result.data) {
-            console.log('Portfolio count:', result.data.length);
-            this.portfolios = result.data.map(p => {
-                console.log('Processing portfolio:', p.name, p.id);
-                return {
-                    ...p,
-                    itemClass: this.selectedPortfolio?.id === p.id
-                        ? 'slds-item slds-is-active portfolio-item portfolio-item--selected'
-                        : 'slds-item portfolio-item'
-                };
-            });
-
-            // Auto-select first portfolio if none selected
-            if (!this.selectedPortfolio && this.portfolios.length > 0) {
-                console.log('Auto-selecting first portfolio');
-                this.selectPortfolio(this.portfolios[0].id);
-            }
+            this.portfolios = result.data.map(p => ({
+                ...p,
+                workloadPercent: p.workloadCapacity > 0
+                    ? Math.round((p.currentWorkload / p.workloadCapacity) * 100)
+                    : 0,
+                workloadClass: this.getWorkloadClass(p.currentWorkload, p.workloadCapacity)
+            }));
         } else if (result.error) {
-            console.error('Wire error details:', JSON.stringify(result.error));
             this.showToast('Error', 'Failed to load portfolios', 'error');
             console.error('Error loading portfolios:', result.error);
-        } else {
-            console.log('No data and no error - wire still pending?');
         }
     }
 
-    handlePortfolioSelect(event) {
+    @wire(getMarketingUsers)
+    wiredUsers({ data, error }) {
+        if (data) {
+            this.marketingUsers = [
+                { label: '-- None --', value: '' },
+                ...data.map(u => ({ label: u.label, value: u.value }))
+            ];
+        } else if (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+
+    @wire(getAdminStats)
+    wiredStats(result) {
+        this.wiredStatsResult = result;
+        if (result.data) {
+            this.adminStats = result.data;
+        }
+    }
+
+    getWorkloadClass(current, capacity) {
+        if (!capacity || capacity === 0) return 'slds-progress-bar__value slds-progress-bar__value_success';
+        const percent = (current / capacity) * 100;
+        if (percent >= 90) return 'slds-progress-bar__value_error';
+        if (percent >= 70) return 'slds-progress-bar__value_warning';
+        return 'slds-progress-bar__value_success';
+    }
+
+    handleEditPortfolio(event) {
         const portfolioId = event.currentTarget.dataset.id;
-        this.selectPortfolio(portfolioId);
-    }
+        this.selectedPortfolio = this.portfolios.find(p => p.id === portfolioId);
 
-    selectPortfolio(portfolioId) {
-        const portfolio = this.portfolios.find(p => p.id === portfolioId);
-        if (portfolio) {
-            this.selectedPortfolio = portfolio;
-
-            // Update selection styling
-            this.portfolios = this.portfolios.map(p => ({
-                ...p,
-                itemClass: p.id === portfolioId
-                    ? 'slds-item slds-is-active portfolio-item portfolio-item--selected'
-                    : 'slds-item portfolio-item'
-            }));
-
-            // Load metrics and activity
-            this.loadPortfolioData(portfolioId);
+        if (this.selectedPortfolio) {
+            this.editPrimaryMarketer = this.selectedPortfolio.primaryMarketerId || '';
+            this.editSecondaryMarketer = this.selectedPortfolio.secondaryMarketerId || '';
+            this.editAutoApproval = this.selectedPortfolio.autoApprovalEnabled || false;
+            this.editConfidenceThreshold = this.selectedPortfolio.autoApprovalThreshold || 80;
+            this.showEditModal = true;
         }
     }
 
-    loadPortfolioData(portfolioId) {
-        // Load metrics
-        getPortfolioMetrics({ portfolioId })
-            .then(result => {
-                this.portfolioMetrics = result;
-            })
-            .catch(error => {
-                console.error('Error loading metrics:', error);
+    handleCloseModal() {
+        this.showEditModal = false;
+        this.selectedPortfolio = null;
+    }
+
+    handlePrimaryMarketerChange(event) {
+        this.editPrimaryMarketer = event.detail.value;
+    }
+
+    handleSecondaryMarketerChange(event) {
+        this.editSecondaryMarketer = event.detail.value;
+    }
+
+    handleAutoApprovalChange(event) {
+        this.editAutoApproval = event.target.checked;
+    }
+
+    handleThresholdChange(event) {
+        this.editConfidenceThreshold = event.detail.value;
+    }
+
+    async handleSavePortfolio() {
+        try {
+            // Update marketer assignment
+            await updatePortfolioMarketer({
+                portfolioId: this.selectedPortfolio.id,
+                primaryMarketerId: this.editPrimaryMarketer || null,
+                secondaryMarketerId: this.editSecondaryMarketer || null
             });
 
-        // Load recent activity
-        getRecentActivity({ portfolioId, limitCount: 20 })
-            .then(result => {
-                this.recentActivity = result.map(activity => ({
-                    ...activity,
-                    iconName: this.getActivityIcon(activity.Status__c),
-                    iconVariant: this.getActivityIconVariant(activity.Status__c),
-                    formattedDate: this.formatDate(activity.Activity_Date__c)
-                }));
-            })
-            .catch(error => {
-                console.error('Error loading activity:', error);
+            // Update settings
+            await updatePortfolioSettings({
+                portfolioId: this.selectedPortfolio.id,
+                autoApprovalEnabled: this.editAutoApproval,
+                confidenceThreshold: this.editConfidenceThreshold
             });
-    }
 
-    getActivityIcon(status) {
-        const icons = {
-            'Sent': 'utility:success',
-            'Pending Approval': 'utility:clock',
-            'Paused': 'utility:pause',
-            'Failed': 'utility:error',
-            'Approved': 'utility:check',
-            'Rejected': 'utility:close'
-        };
-        return icons[status] || 'utility:activity';
-    }
-
-    getActivityIconVariant(status) {
-        if (status === 'Sent' || status === 'Approved') return 'success';
-        if (status === 'Failed' || status === 'Rejected') return 'error';
-        if (status === 'Pending Approval') return 'warning';
-        return '';
-    }
-
-    formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        return date.toLocaleDateString();
-    }
-
-    handleAutonomyChange(event) {
-        const newLevel = event.detail.value;
-
-        updateAutonomyLevel({
-            portfolioId: this.selectedPortfolio.id,
-            autonomyLevel: newLevel
-        })
-        .then(() => {
-            this.selectedPortfolio = { ...this.selectedPortfolio, autonomyLevel: newLevel };
-            this.showToast('Success', `Autonomy level updated to ${newLevel}`, 'success');
-        })
-        .catch(error => {
-            this.showToast('Error', 'Failed to update autonomy level', 'error');
-            console.error('Error updating autonomy:', error);
-        });
+            this.showToast('Success', 'Portfolio updated successfully', 'success');
+            this.handleCloseModal();
+            await refreshApex(this.wiredPortfoliosResult);
+        } catch (error) {
+            this.showToast('Error', 'Failed to update portfolio', 'error');
+            console.error('Error updating portfolio:', error);
+        }
     }
 
     handleRefresh() {
         this.isLoading = true;
-        refreshApex(this.wiredPortfoliosResult)
-            .then(() => {
-                if (this.selectedPortfolio) {
-                    this.loadPortfolioData(this.selectedPortfolio.id);
-                }
-            })
-            .finally(() => {
-                this.isLoading = false;
-            });
-    }
-
-    handleActionComplete() {
-        // Refresh data after an action is completed
-        this.handleRefresh();
+        Promise.all([
+            refreshApex(this.wiredPortfoliosResult),
+            refreshApex(this.wiredStatsResult)
+        ]).finally(() => {
+            this.isLoading = false;
+        });
     }
 
     showToast(title, message, variant) {
@@ -182,5 +146,9 @@ export default class PortfolioManagement extends LightningElement {
             message,
             variant
         }));
+    }
+
+    get hasPortfolios() {
+        return this.portfolios && this.portfolios.length > 0;
     }
 }
