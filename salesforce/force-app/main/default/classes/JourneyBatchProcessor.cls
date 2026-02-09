@@ -46,12 +46,19 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
         List<Journey_Approval__c> approvalsToInsert = new List<Journey_Approval__c>();
         List<Meaningful_Event__c> eventsToUpdate = new List<Meaningful_Event__c>();
 
+        // Get an active portfolio to assign new approvals to
+        // Uses round-robin by selecting portfolio with fewest pending approvals
+        Id assignedPortfolioId = getPortfolioForAssignment();
+
         for (Meaningful_Event__c event : events) {
             try {
                 // Create the journey approval record
                 Journey_Approval__c approval = processEvent(event);
 
                 if (approval != null) {
+                    // Assign to a portfolio so it appears in marketer inbox
+                    approval.Assigned_Portfolio__c = assignedPortfolioId;
+
                     approvalsToInsert.add(approval);
 
                     // Mark the event as processed
@@ -140,7 +147,7 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
                 approval.Suggested_Subject__c = agentResult.suggestedSubject;
                 approval.Suggested_Body__c = agentResult.suggestedBody;
 
-                // Store the Firefly prompt suggestion
+                // Store the Firefly prompt suggestion (marketer will click button to generate image)
                 if (String.isNotBlank(agentResult.fireflyPromptSuggestion)) {
                     approval.Firefly_Prompt__c = agentResult.fireflyPromptSuggestion;
                 } else if (String.isNotBlank(event.Suggested_Firefly_Prompt__c)) {
@@ -157,26 +164,75 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             approval.Firefly_Prompt__c = buildDefaultFireflyPrompt(event);
         }
 
-        // Generate Firefly image
-        try {
-            FireflyApexService.ImageGenerationRequest fireflyReq = new FireflyApexService.ImageGenerationRequest();
-            fireflyReq.prompt = approval.Firefly_Prompt__c;
-            fireflyReq.eventType = event.Event_Type__c;
-            fireflyReq.saveToFiles = true;
-
-            List<FireflyApexService.ImageGenerationResult> fireflyResults =
-                FireflyApexService.generateImages(new List<FireflyApexService.ImageGenerationRequest>{fireflyReq});
-
-            if (!fireflyResults.isEmpty() && fireflyResults[0].success) {
-                approval.Generated_Image_URL__c = fireflyResults[0].imageUrl;
-                approval.Image_Content_Version_Id__c = fireflyResults[0].contentVersionId;
-            }
-        } catch (Exception e) {
-            System.debug(LoggingLevel.WARN, 'Firefly generation failed: ' + e.getMessage());
-            // Continue without image - marketer can regenerate
-        }
+        // NOTE: Image generation is NOT automatic - marketer clicks "Generate Image" button
+        // The Firefly_Prompt__c is pre-populated so they can review/edit before generating
 
         return approval;
+    }
+
+    /**
+     * Get a portfolio to assign new approvals to.
+     * Uses simple load balancing: selects the active portfolio with fewest pending approvals.
+     * Falls back to first active portfolio if aggregation fails.
+     */
+    private Id getPortfolioForAssignment() {
+        try {
+            // Get active portfolios with their pending approval counts
+            List<AggregateResult> portfolioCounts = [
+                SELECT Assigned_Portfolio__c portfolioId, COUNT(Id) pendingCount
+                FROM Journey_Approval__c
+                WHERE Status__c = 'Pending'
+                  AND Assigned_Portfolio__c != null
+                GROUP BY Assigned_Portfolio__c
+            ];
+
+            // Build a map of portfolio -> pending count
+            Map<Id, Integer> countByPortfolio = new Map<Id, Integer>();
+            for (AggregateResult ar : portfolioCounts) {
+                countByPortfolio.put((Id)ar.get('portfolioId'), (Integer)ar.get('pendingCount'));
+            }
+
+            // Get all active portfolios
+            List<Marketer_Portfolio__c> activePortfolios = [
+                SELECT Id, Name
+                FROM Marketer_Portfolio__c
+                WHERE Is_Active__c = true
+                ORDER BY Name
+            ];
+
+            if (activePortfolios.isEmpty()) {
+                System.debug(LoggingLevel.WARN, 'No active portfolios found for assignment');
+                return null;
+            }
+
+            // Find portfolio with lowest workload (or zero if no pending approvals)
+            Id bestPortfolio = activePortfolios[0].Id;
+            Integer lowestCount = countByPortfolio.get(bestPortfolio);
+            if (lowestCount == null) lowestCount = 0;
+
+            for (Marketer_Portfolio__c portfolio : activePortfolios) {
+                Integer count = countByPortfolio.get(portfolio.Id);
+                if (count == null) {
+                    // This portfolio has zero pending - best choice
+                    bestPortfolio = portfolio.Id;
+                    break;
+                } else if (count < lowestCount) {
+                    lowestCount = count;
+                    bestPortfolio = portfolio.Id;
+                }
+            }
+
+            System.debug('Assigning new approvals to portfolio: ' + bestPortfolio);
+            return bestPortfolio;
+
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, 'Portfolio assignment failed: ' + e.getMessage());
+            // Fallback: just get the first active portfolio
+            List<Marketer_Portfolio__c> fallback = [
+                SELECT Id FROM Marketer_Portfolio__c WHERE Is_Active__c = true LIMIT 1
+            ];
+            return fallback.isEmpty() ? null : fallback[0].Id;
+        }
     }
 
     // ─── Content Building Helpers ─────────────────────────────────────
