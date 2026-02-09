@@ -261,10 +261,11 @@ function getProductPositions(count) {
   const cw = COMPOSITE_SIZE;
   const ch = COMPOSITE_SIZE;
 
-  // Size configuration - BIGGER products
-  const heroSize = Math.floor(cw * 0.55);      // Center/hero product size (was 0.42)
-  const minSize = Math.floor(cw * 0.35);       // Edge product size (was 0.25)
-  const overlapFactor = 0.35;                   // Tighter overlap (was 0.15)
+  // Size configuration - MUCH BIGGER products with heavy overlap
+  // Product images have transparent padding, so they can overlap significantly
+  const heroSize = Math.floor(cw * 1.0);       // Center/hero product = full canvas width
+  const minSize = Math.floor(cw * 0.70);       // Edge products = 70% of canvas
+  const overlapFactor = 0.55;                   // Heavy overlap (products have transparent edges)
 
   // Vertical positioning: place products in lower 60% of canvas
   // This leaves upper 40% clear for text overlay
