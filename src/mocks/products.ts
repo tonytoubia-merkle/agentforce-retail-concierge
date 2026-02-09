@@ -104,8 +104,8 @@ export const MOCK_PRODUCTS: Product[] = [
     currency: 'USD',
     description: 'A creamy, sulfate-free cleanser that melts away makeup and impurities while maintaining your skin barrier. Leaves skin soft, never stripped.',
     shortDescription: 'Gentle cream cleanser for all skin types',
-    imageUrl: '/assets/products/cleanser-gentle.png',
-    images: ['/assets/products/cleanser-gentle.png'],
+    imageUrl: '/assets/products/no-image.png',
+    images: ['/assets/products/no-image.png'],
     attributes: {
       skinType: ['sensitive', 'dry', 'normal'],
       concerns: ['cleansing', 'hydration', 'barrier repair'],
@@ -378,8 +378,8 @@ export const MOCK_PRODUCTS: Product[] = [
     currency: 'USD',
     description: 'A 10% niacinamide serum with zinc PCA that visibly minimizes pores, regulates oil production, and strengthens the skin barrier.',
     shortDescription: 'Pore-minimizing niacinamide serum',
-    imageUrl: '/assets/products/serum-niacinamide.png',
-    images: ['/assets/products/serum-niacinamide.png'],
+    imageUrl: '/assets/products/no-image.png',
+    images: ['/assets/products/no-image.png'],
     attributes: {
       skinType: ['oily', 'combination', 'normal'],
       concerns: ['pores', 'oil control', 'texture'],
