@@ -363,7 +363,8 @@ function sleep(ms) {
  * Products are placed in the lower center to leave the top clear for text overlay.
  */
 async function expandImage(uploadId, prompt, token, clientId) {
-  // Firefly Expand API requires alignment to be an object with horizontal/vertical
+  // Firefly Expand API requires alignment as object: { horizontal: 'left'|'center'|'right', vertical: 'top'|'center'|'bottom' }
+  // NOT a string like 'center' - that causes 400 validation error
   const requestBody = JSON.stringify({
     numVariations: 1,
     size: {
