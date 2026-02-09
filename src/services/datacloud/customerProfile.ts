@@ -376,9 +376,9 @@ export class DataCloudCustomerService {
     // 2. Get tier from LoyaltyMemberTier (two-step: get tier ID, then tier name)
     let tier: LoyaltyData['tier'] = 'bronze';
     try {
-      // First get the LoyaltyTierId from LoyaltyMemberTier
+      // First get the LoyaltyTierId from LoyaltyMemberTier (order by TierSequenceNumber DESC to get current tier)
       const memberTierData = await this.fetchJson(
-        `/services/data/v60.0/query/?q=SELECT+LoyaltyTierId+FROM+LoyaltyMemberTier+WHERE+LoyaltyMemberId='${memberId}'+AND+Status='Active'+LIMIT+1`
+        `/services/data/v60.0/query/?q=SELECT+LoyaltyTierId+FROM+LoyaltyMemberTier+WHERE+LoyaltyMemberId='${memberId}'+ORDER+BY+TierSequenceNumber+DESC+LIMIT+1`
       );
       const memberTierRecords = memberTierData.records || [];
       if (memberTierRecords.length > 0 && memberTierRecords[0].LoyaltyTierId) {
