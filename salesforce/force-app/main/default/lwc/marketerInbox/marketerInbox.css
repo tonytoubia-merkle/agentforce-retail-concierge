@@ -292,22 +292,42 @@
     max-width: 900px;
 }
 
+/* Modal Header - Prevent white background behind close button */
+.slds-modal__header {
+    position: relative;
+    overflow: visible;
+}
+
 /* Modal Close Button - Fix background square issue */
-.slds-modal__close {
-    background: transparent !important;
+.slds-modal__close,
+.slds-modal__close.slds-button,
+.slds-modal__close.slds-button_icon,
+button.slds-modal__close {
+    position: absolute !important;
+    right: 0.75rem !important;
+    top: 0.75rem !important;
+    background: none !important;
+    background-color: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 1 !important;
 }
 
 .slds-modal__close:hover,
 .slds-modal__close:focus {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 4px !important;
 }
 
-.slds-modal__close lightning-icon,
-.slds-modal__close svg {
-    fill: white;
+.slds-modal__close lightning-icon {
+    --slds-c-icon-color-foreground-default: #706e6b;
 }
 
 /* Journey Group Styles */

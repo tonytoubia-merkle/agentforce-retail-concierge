@@ -460,7 +460,11 @@ public with sharing class JourneyApprovalService {
                    // Multi-step journey fields
                    Journey_Id__c, Step_Number__c, Total_Steps__c,
                    Channel__c, Send_Delay_Days__c, Scheduled_Send_Date__c,
-                   SMS_Body__c, Journey_Guardrails__c
+                   SMS_Body__c, Journey_Guardrails__c,
+                   // Marketing Flow and Content links
+                   Marketing_Flow__c, Marketing_Flow__r.Name,
+                   Email_Content_Version_Id__c, Image_Content_Version_Id__c,
+                   Auto_Send_Deadline__c, Approval_Tier__c
             FROM Journey_Approval__c
             WHERE Status__c = 'Pending'
             ORDER BY Journey_Id__c NULLS LAST, Step_Number__c ASC, Days_Until_Event__c ASC NULLS LAST, CreatedDate DESC

@@ -76,6 +76,9 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
         // Insert approvals
         if (!approvalsToInsert.isEmpty()) {
             insert approvalsToInsert;
+
+            // Save email content to MC Content Workspace
+            saveEmailContentToWorkspace(approvalsToInsert);
         }
 
         // Update events
@@ -89,6 +92,87 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
     global void finish(Database.BatchableContext bc) {
         // Send notification to marketing team
         sendNotificationEmail();
+    }
+
+    // ─── Content Workspace Integration ─────────────────────────────────
+
+    /**
+     * Save email content to the MC Content Workspace for each email step.
+     * Updates Journey_Approval__c records with the ContentVersion ID.
+     *
+     * @param approvals List of newly inserted Journey_Approval__c records
+     */
+    private void saveEmailContentToWorkspace(List<Journey_Approval__c> approvals) {
+        List<Journey_Approval__c> approvalsToUpdate = new List<Journey_Approval__c>();
+
+        for (Journey_Approval__c approval : approvals) {
+            // Only process email channels with content
+            if (approval.Channel__c != 'Email' || String.isBlank(approval.Suggested_Body__c)) {
+                continue;
+            }
+
+            try {
+                // Build a title for the content
+                String title = buildContentTitle(approval);
+
+                // Save to Content Workspace
+                ContentWorkspaceService.SaveContentResult result =
+                    ContentWorkspaceService.saveEmailContent(
+                        title,
+                        approval.Suggested_Body__c,
+                        approval.Contact__c,
+                        approval.Event_Type__c
+                    );
+
+                if (result.success && result.contentVersionId != null) {
+                    // Update approval with ContentVersion ID
+                    Journey_Approval__c updateApproval = new Journey_Approval__c(
+                        Id = approval.Id,
+                        Email_Content_Version_Id__c = result.contentVersionId
+                    );
+                    approvalsToUpdate.add(updateApproval);
+
+                    System.debug(LoggingLevel.INFO, 'Saved email content to workspace: ' + result.contentVersionId);
+                } else {
+                    System.debug(LoggingLevel.WARN, 'Failed to save email content: ' + result.errorMessage);
+                }
+
+            } catch (Exception e) {
+                System.debug(LoggingLevel.ERROR, 'Error saving email content for approval ' + approval.Id + ': ' + e.getMessage());
+            }
+        }
+
+        // Update approvals with ContentVersion IDs
+        if (!approvalsToUpdate.isEmpty()) {
+            update approvalsToUpdate;
+            System.debug('Updated ' + approvalsToUpdate.size() + ' approvals with Content Version IDs');
+        }
+    }
+
+    /**
+     * Build a descriptive title for the email content.
+     */
+    private String buildContentTitle(Journey_Approval__c approval) {
+        String title = '';
+
+        // Add event type
+        if (String.isNotBlank(approval.Event_Type__c)) {
+            title += approval.Event_Type__c.replaceAll('-', ' ').capitalize();
+        } else {
+            title += 'Journey';
+        }
+
+        title += ' Email';
+
+        // Add step info for multi-step journeys
+        if (approval.Total_Steps__c != null && approval.Total_Steps__c > 1) {
+            title += ' - Step ' + Integer.valueOf(approval.Step_Number__c);
+        }
+
+        // Add timestamp
+        title += ' - ' + DateTime.now().format('yyyy-MM-dd');
+
+        return title;
     }
 
     // ─── Event Processing ─────────────────────────────────────────────

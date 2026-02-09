@@ -112,6 +112,30 @@ export default class JourneyApprovalCard extends LightningElement {
         return null;
     }
 
+    // ─── Email Content (MC Workspace) Getters ─────────────────────────
+
+    get hasEmailContent() {
+        return !!this.approval?.Email_Content_Version_Id__c || !!this.approval?.hasEmailContent;
+    }
+
+    get emailContentRecordUrl() {
+        // Navigate to the ContentVersion record in Salesforce
+        if (this.approval?.Email_Content_Version_Id__c) {
+            // Link to the Content file preview
+            return `/sfc/servlet.shepherd/version/renditionDownload?rendition=ORIGINAL_Html&versionId=${this.approval.Email_Content_Version_Id__c}`;
+        }
+        return null;
+    }
+
+    get emailContentDocumentUrl() {
+        // Navigate to the ContentDocument (Files view)
+        if (this.approval?.Email_Content_Version_Id__c) {
+            // Use the version ID with rendition download for preview
+            return `/lightning/r/ContentVersion/${this.approval.Email_Content_Version_Id__c}/view`;
+        }
+        return null;
+    }
+
     // ─── Multi-Step Journey Getters ────────────────────────────────────
 
     get isMultiStepJourney() {

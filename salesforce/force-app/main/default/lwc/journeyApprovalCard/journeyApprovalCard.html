@@ -85,6 +85,28 @@
                 </div>
             </template>
 
+            <!-- Email Content Link (if saved to MC Content Workspace) -->
+            <template if:true={hasEmailContent}>
+                <div class="slds-box slds-m-bottom_small email-content-link">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-icon icon-name="utility:file" size="small" class="slds-m-right_small"></lightning-icon>
+                        <div>
+                            <p class="slds-text-title_caps slds-m-bottom_xx-small">Email Content</p>
+                            <div class="slds-grid slds-grid_vertical-align-center">
+                                <a href={emailContentRecordUrl} class="slds-text-link slds-m-right_medium" target="_blank">
+                                    Preview HTML
+                                    <lightning-icon icon-name="utility:preview" size="xx-small" class="slds-m-left_xx-small"></lightning-icon>
+                                </a>
+                                <a href={emailContentDocumentUrl} class="slds-text-link" target="_blank">
+                                    View in Files
+                                    <lightning-icon icon-name="utility:new_window" size="xx-small" class="slds-m-left_xx-small"></lightning-icon>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
             <!-- Journey Guardrails (if present) -->
             <template if:true={hasGuardrails}>
                 <div class="guardrails-section slds-m-bottom_small">

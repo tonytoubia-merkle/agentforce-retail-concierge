@@ -84,6 +84,29 @@
     --slds-c-icon-color-foreground-default: white;
 }
 
+/* ─── Email Content Link ──────────────────────────────────────────────── */
+
+.email-content-link {
+    background: linear-gradient(135deg, #f3f2f2 0%, #e8e8e8 100%);
+    border: 1px solid #d8dde6;
+}
+
+.email-content-link lightning-icon {
+    --slds-c-icon-color-foreground-default: #706e6b;
+}
+
+.email-content-link .slds-text-link {
+    color: #0176d3;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+}
+
+.email-content-link .slds-text-link:hover {
+    color: #014486;
+    text-decoration: underline;
+}
+
 /* ─── Guardrails Section ──────────────────────────────────────────────── */
 
 .guardrails-list {
