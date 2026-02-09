@@ -182,7 +182,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvis
               <motion.img
                 src="/assets/products/ff-moisturizer-daily.png"
                 alt="Featured moisturizer"
-                className="absolute inset-0 m-auto w-80 h-80 object-contain drop-shadow-2xl"
+                className="absolute inset-0 m-auto w-56 h-56 object-contain drop-shadow-2xl z-10"
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
