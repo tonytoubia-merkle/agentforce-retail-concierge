@@ -390,7 +390,12 @@ public with sharing class JourneyStepService {
     public static String generateJourneyId(Id contactId, String eventType) {
         String timestamp = String.valueOf(DateTime.now().getTime());
         String contactPrefix = String.valueOf(contactId).substring(0, 10);
-        String eventCode = eventType != null ? eventType.replaceAll('[^a-zA-Z0-9]', '').substring(0, Math.min(eventType.length(), 10)) : 'UNKNOWN';
+
+        String eventCode = 'UNKNOWN';
+        if (eventType != null) {
+            String cleaned = eventType.replaceAll('[^a-zA-Z0-9]', '');
+            eventCode = cleaned.substring(0, Math.min(cleaned.length(), 10));
+        }
 
         return 'JRN-' + contactPrefix + '-' + eventCode + '-' + timestamp.right(8);
     }
