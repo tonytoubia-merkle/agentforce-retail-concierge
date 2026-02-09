@@ -17,7 +17,7 @@ public with sharing class PortfolioController {
             SELECT Id, Name, Portfolio_Type__c, Region__c,
                    Primary_Marketer__c, Primary_Marketer__r.Name,
                    Secondary_Marketer__c, Secondary_Marketer__r.Name,
-                   Workload_Capacity__c, Current_Workload__c,
+                   Workload_Capacity__c,
                    Auto_Approval_Enabled__c, Auto_Approval_Confidence_Threshold__c,
                    Specialty_Events__c, Loyalty_Tiers__c, Is_Active__c
             FROM Marketer_Portfolio__c
@@ -54,6 +54,8 @@ public with sharing class PortfolioController {
             pw.pendingApprovals = pendingCounts.get(mp.Id) != null ? pendingCounts.get(mp.Id) : 0;
             pw.approvedNotSent = approvedCounts.get(mp.Id) != null ? approvedCounts.get(mp.Id) : 0;
             pw.sentJourneys = sentCounts.get(mp.Id) != null ? sentCounts.get(mp.Id) : 0;
+            // Calculate workload as pending + approved (active items)
+            pw.currentWorkload = pw.pendingApprovals + pw.approvedNotSent;
             portfolios.add(pw);
         }
 
@@ -189,7 +191,7 @@ public with sharing class PortfolioController {
             this.secondaryMarketerId = mp.Secondary_Marketer__c;
             this.secondaryMarketerName = mp.Secondary_Marketer__r?.Name;
             this.workloadCapacity = mp.Workload_Capacity__c;
-            this.currentWorkload = mp.Current_Workload__c;
+            this.currentWorkload = 0; // Calculated from pending + approved counts
             this.autoApprovalEnabled = mp.Auto_Approval_Enabled__c;
             this.autoApprovalThreshold = mp.Auto_Approval_Confidence_Threshold__c;
             this.specialtyEvents = mp.Specialty_Events__c;
