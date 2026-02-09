@@ -361,21 +361,55 @@ export class DataCloudCustomerService {
   }
 
   async getCustomerLoyalty(customerId: string): Promise<LoyaltyData | null> {
-    // Query standard Salesforce Loyalty Management object
-    // Note: Points fields (TotalPointsAccrued, etc.) not available in this org
-    const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,MembershipNumber,EnrollmentDate,MemberStatus+FROM+LoyaltyProgramMember+WHERE+ContactId='${customerId}'+LIMIT+1`
+    // Query standard Salesforce Loyalty Management objects
+    // 1. Get member info
+    const memberData = await this.fetchJson(
+      `/services/data/v60.0/query/?q=SELECT+Id,MembershipNumber,EnrollmentDate,MemberStatus+FROM+LoyaltyProgramMember+WHERE+ContactId='${customerId}'+AND+MemberStatus='Active'+LIMIT+1`
     );
 
-    const records = data.records || [];
-    if (records.length === 0) return null;
+    const memberRecords = memberData.records || [];
+    if (memberRecords.length === 0) return null;
 
-    const member = records[0];
+    const member = memberRecords[0];
+    const memberId = member.Id;
+
+    // 2. Get tier from LoyaltyMemberTier
+    let tier: LoyaltyData['tier'] = 'bronze';
+    try {
+      const tierData = await this.fetchJson(
+        `/services/data/v60.0/query/?q=SELECT+LoyaltyTier.Name+FROM+LoyaltyMemberTier+WHERE+LoyaltyMemberId='${memberId}'+AND+Status='Active'+LIMIT+1`
+      );
+      const tierRecords = tierData.records || [];
+      if (tierRecords.length > 0 && tierRecords[0].LoyaltyTier?.Name) {
+        const tierName = tierRecords[0].LoyaltyTier.Name.toLowerCase();
+        if (['bronze', 'silver', 'gold', 'platinum'].includes(tierName)) {
+          tier = tierName as LoyaltyData['tier'];
+        }
+      }
+    } catch (e) {
+      console.warn('[datacloud] Could not fetch tier:', e);
+    }
+
+    // 3. Get points balance from LoyaltyMemberCurrency
+    let pointsBalance = 0;
+    let lifetimePoints = 0;
+    try {
+      const currencyData = await this.fetchJson(
+        `/services/data/v60.0/query/?q=SELECT+PointsBalance,TotalPointsAccrued+FROM+LoyaltyMemberCurrency+WHERE+LoyaltyMemberId='${memberId}'+LIMIT+1`
+      );
+      const currencyRecords = currencyData.records || [];
+      if (currencyRecords.length > 0) {
+        pointsBalance = currencyRecords[0].PointsBalance || 0;
+        lifetimePoints = currencyRecords[0].TotalPointsAccrued || pointsBalance;
+      }
+    } catch (e) {
+      console.warn('[datacloud] Could not fetch points balance:', e);
+    }
 
     return {
-      tier: 'bronze' as LoyaltyData['tier'], // Tier stored in separate LoyaltyMemberTier object
-      pointsBalance: 0, // Points tracked in LoyaltyMemberCurrency object
-      lifetimePoints: 0,
+      tier,
+      pointsBalance,
+      lifetimePoints,
       memberSince: member.EnrollmentDate,
       tierExpiryDate: undefined,
       rewardsAvailable: [],

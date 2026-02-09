@@ -96,6 +96,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Appended-tier: Merkury resolved identity via 3P data only.
       // These people are NOT in Data Cloud — don't look them up there.
       // Build a minimal anonymous-like profile with only appended signals attached.
+      // Name stays "Guest" — we only have 3P signals, not their actual identity.
       if (resolution.identityTier === 'appended') {
         const appendedProfile: CustomerProfile = {
           id: resolution.merkuryId || `appended-${personaId}`,

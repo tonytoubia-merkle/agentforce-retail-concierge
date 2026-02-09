@@ -334,7 +334,7 @@ export const ProfileDropdown: React.FC = () => {
                               );
                             })
                           ) : (
-                            /* Real mode: grouped CRM contacts */
+                            /* Real mode: grouped CRM contacts + static Merkury appended */
                             <>
                               {seededContacts.length > 0 && (
                                 <>
@@ -342,12 +342,49 @@ export const ProfileDropdown: React.FC = () => {
                                   {seededContacts.map((c) => renderContactItem(c))}
                                 </>
                               )}
-                              {merkuryContacts.length > 0 && (
-                                <>
-                                  {renderGroupLabel('Merkury Profiles', merkuryContacts.length)}
-                                  {merkuryContacts.map((c) => renderContactItem(c))}
-                                </>
-                              )}
+                              {/* Merkury Appended profiles (not in CRM — static from PERSONA_STUBS) */}
+                              {(() => {
+                                const appendedStubs = PERSONA_STUBS.filter((s) => s.identityTier === 'appended');
+                                const totalMerkury = merkuryContacts.length + appendedStubs.length;
+                                if (totalMerkury === 0) return null;
+                                return (
+                                  <>
+                                    {renderGroupLabel('Merkury Profiles', totalMerkury)}
+                                    {merkuryContacts.map((c) => renderContactItem(c))}
+                                    {appendedStubs.map((stub) => {
+                                      const isActive = stub.id === selectedPersonaId;
+                                      const stubFirstName = stub.defaultLabel.split(' ')[0];
+                                      return (
+                                        <button
+                                          key={stub.id}
+                                          onClick={() => handleSelect(stub.id)}
+                                          disabled={isResolving || isLoading}
+                                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                                            isActive
+                                              ? 'bg-white border border-rose-200 shadow-sm'
+                                              : 'hover:bg-stone-100 border border-transparent'
+                                          } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 bg-gradient-to-br from-amber-400 to-orange-400">
+                                            {stubFirstName.charAt(0)}
+                                          </div>
+                                          <div className="flex-1 text-left min-w-0">
+                                            <div className="text-sm font-medium text-stone-900 truncate">
+                                              {stub.defaultLabel}
+                                            </div>
+                                            <div className="text-xs text-stone-500 truncate">
+                                              3rd party data only
+                                            </div>
+                                          </div>
+                                          {isActive && (
+                                            <span className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />
+                                          )}
+                                        </button>
+                                      );
+                                    })}
+                                  </>
+                                );
+                              })()}
                               {createdContacts.length > 0 && (
                                 <>
                                   {renderGroupLabel('Created Accounts', createdContacts.length)}
