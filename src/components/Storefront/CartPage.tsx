@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
+import { ProductImage } from './ProductImage';
 
 interface CartPageProps {
   onContinueShopping: () => void;
@@ -56,7 +57,7 @@ export const CartPage: React.FC<CartPageProps> = ({ onContinueShopping }) => {
                         onClick={() => navigateToProduct(item.product)}
                         className="w-24 h-24 sm:w-32 sm:h-32 bg-stone-50 rounded-xl flex-shrink-0 flex items-center justify-center hover:bg-stone-100 transition-colors"
                       >
-                        <img
+                        <ProductImage
                           src={item.product.imageUrl}
                           alt={item.product.name}
                           className="max-w-full max-h-full object-contain p-2"

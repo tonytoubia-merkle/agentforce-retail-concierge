@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
+import { ProductImage } from './ProductImage';
 import { isPersonalizationConfigured, trackAddToCart } from '@/services/personalization';
 import type { Product } from '@/types/product';
 
@@ -51,7 +52,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
             className="relative"
           >
             <div className="sticky top-24 bg-gradient-to-br from-stone-50 to-rose-50/50 rounded-3xl p-8 aspect-square flex items-center justify-center">
-              <img
+              <ProductImage
                 src={product.imageUrl}
                 alt={product.name}
                 className="max-w-full max-h-full object-contain drop-shadow-xl"

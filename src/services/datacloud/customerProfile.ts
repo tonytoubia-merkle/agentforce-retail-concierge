@@ -373,17 +373,26 @@ export class DataCloudCustomerService {
     const member = memberRecords[0];
     const memberId = member.Id;
 
-    // 2. Get tier from LoyaltyMemberTier
+    // 2. Get tier from LoyaltyMemberTier (two-step: get tier ID, then tier name)
     let tier: LoyaltyData['tier'] = 'bronze';
     try {
-      const tierData = await this.fetchJson(
-        `/services/data/v60.0/query/?q=SELECT+LoyaltyTier.Name+FROM+LoyaltyMemberTier+WHERE+LoyaltyMemberId='${memberId}'+AND+Status='Active'+LIMIT+1`
+      // First get the LoyaltyTierId from LoyaltyMemberTier
+      const memberTierData = await this.fetchJson(
+        `/services/data/v60.0/query/?q=SELECT+LoyaltyTierId+FROM+LoyaltyMemberTier+WHERE+LoyaltyMemberId='${memberId}'+AND+Status='Active'+LIMIT+1`
       );
-      const tierRecords = tierData.records || [];
-      if (tierRecords.length > 0 && tierRecords[0].LoyaltyTier?.Name) {
-        const tierName = tierRecords[0].LoyaltyTier.Name.toLowerCase();
-        if (['bronze', 'silver', 'gold', 'platinum'].includes(tierName)) {
-          tier = tierName as LoyaltyData['tier'];
+      const memberTierRecords = memberTierData.records || [];
+      if (memberTierRecords.length > 0 && memberTierRecords[0].LoyaltyTierId) {
+        const tierId = memberTierRecords[0].LoyaltyTierId;
+        // Then get the tier name from LoyaltyTier
+        const tierData = await this.fetchJson(
+          `/services/data/v60.0/query/?q=SELECT+Name+FROM+LoyaltyTier+WHERE+Id='${tierId}'+LIMIT+1`
+        );
+        const tierRecords = tierData.records || [];
+        if (tierRecords.length > 0 && tierRecords[0].Name) {
+          const tierName = tierRecords[0].Name.toLowerCase();
+          if (['bronze', 'silver', 'gold', 'platinum'].includes(tierName)) {
+            tier = tierName as LoyaltyData['tier'];
+          }
         }
       }
     } catch (e) {

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { ProductImage } from './ProductImage';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 
 const API_BASE = '';
@@ -548,7 +549,7 @@ export const CheckoutPage: React.FC = () => {
                   {items.map((item) => (
                     <div key={item.product.id} className="flex gap-3">
                       <div className="w-16 h-16 bg-stone-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <img
+                        <ProductImage
                           src={item.product.imageUrl}
                           alt={item.product.name}
                           className="max-w-full max-h-full object-contain p-1"

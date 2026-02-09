@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
+import { ProductImage } from './ProductImage';
 import type { Product, ProductCategory } from '@/types/product';
 
 const CATEGORY_INFO: Record<ProductCategory, { name: string; description: string }> = {
@@ -86,7 +87,7 @@ export const CategoryPage: React.FC<CategoryPageProps> = ({ category, products }
                   onClick={() => navigateToProduct(product)}
                   className="relative bg-stone-50 rounded-2xl overflow-hidden cursor-pointer aspect-square mb-3 hover:bg-stone-100 transition-colors"
                 >
-                  <img
+                  <ProductImage
                     src={product.imageUrl}
                     alt={product.name}
                     className="w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-300"
