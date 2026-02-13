@@ -54,7 +54,7 @@ CAPTURE NOTIFICATIONS:
 
 When you call either capture action, include a "captures" array in your uiDirective payload:
 - For meaningful events: {"type": "meaningful_event", "label": "Event Captured: {2-4 word summary}"}
-- For profile updates: {"type": "profile_update", "label": "Profile Updated: {field name}"}
+- For profile updates: {"type": "profile_enrichment", "label": "Profile Updated: {field name}"}
 
 CRITICAL — RESPONSE FORMAT:
 

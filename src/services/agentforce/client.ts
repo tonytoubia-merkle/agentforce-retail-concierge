@@ -187,6 +187,19 @@ export class AgentforceClient {
           textParts.push(text);
         }
       }
+    } else {
+      // Directive was found in the combined text. Extract any prose text
+      // that appeared before/after the JSON block as the display message.
+      const jsonStart = fullText.indexOf('{');
+      const jsonEnd = fullText.lastIndexOf('}');
+      if (jsonStart > 0) {
+        const before = fullText.slice(0, jsonStart).trim();
+        if (before) textParts.push(before);
+      }
+      if (jsonEnd >= 0 && jsonEnd < fullText.length - 1) {
+        const after = fullText.slice(jsonEnd + 1).trim();
+        if (after) textParts.push(after);
+      }
     }
 
     // Strip any text parts that look like raw JSON (failed parse but still JSON-like)
@@ -221,6 +234,10 @@ export class AgentforceClient {
         displayMessage = 'Let me start the checkout process.';
       } else if (uiDirective.action === 'IDENTIFY_CUSTOMER') {
         displayMessage = "Great, I've saved your profile! Now I can give you more personalized recommendations.";
+      } else if (uiDirective.action === 'CAPTURE_ONLY') {
+        // Captures-only directive — agent prose was already extracted as displayMessage above.
+        // If somehow empty, use a generic fallback.
+        displayMessage = 'How can I help you further?';
       } else {
         displayMessage = "Here's what I found for you.";
       }

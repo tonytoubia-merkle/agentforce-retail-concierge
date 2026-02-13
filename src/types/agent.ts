@@ -22,7 +22,8 @@ export type UIAction =
   | 'INITIATE_CHECKOUT'
   | 'CONFIRM_ORDER'
   | 'RESET_SCENE'
-  | 'IDENTIFY_CUSTOMER';
+  | 'IDENTIFY_CUSTOMER'
+  | 'CAPTURE_ONLY';
 
 export interface UIDirectivePayload {
   products?: Product[];
