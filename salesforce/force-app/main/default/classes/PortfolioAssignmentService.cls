@@ -209,14 +209,18 @@ public with sharing class PortfolioAssignmentService {
 
         return [
             SELECT Id, Name, Status__c, Contact__c, Contact__r.Name, Contact__r.Email,
-                   Meaningful_Event__r.Event_Type__c, Meaningful_Event__r.Event_Date__c,
+                   Event_Type__c, Event_Date__c, Event_Summary__c,
+                   Meaningful_Event__c, Meaningful_Event__r.Event_Type__c, Meaningful_Event__r.Event_Date__c,
                    Suggested_Subject__c, Suggested_Body__c, Channel__c,
-                   Generated_Image_URL__c, Recommended_Products__c,
+                   Generated_Image_URL__c, Recommended_Products__c, Firefly_Prompt__c,
                    Confidence_Score__c, Approval_Tier__c, Priority_Score__c,
                    Customer_Value_Score__c, Auto_Send_Deadline__c,
                    Assigned_Portfolio__c, Assigned_Portfolio__r.Name,
-                   Journey_Id__c, Step_Number__c, Total_Steps__c,
-                   Urgency__c, Days_Until_Event__c, CreatedDate
+                   Journey_Id__c, Step_Number__c, Total_Steps__c, Send_Delay_Days__c,
+                   Journey_Guardrails__c, SMS_Body__c,
+                   Urgency__c, Days_Until_Event__c, CreatedDate,
+                   Marketing_Flow__c, Marketing_Flow__r.Name, Marketing_Flow__r.Flow_URL__c,
+                   Marketing_Flow__r.Status__c
             FROM Journey_Approval__c
             WHERE Assigned_Portfolio__c IN :portfolioIds
             AND Status__c = 'Pending'
@@ -723,7 +727,8 @@ public with sharing class PortfolioAssignmentService {
 
         return [
             SELECT Id, Name, Status__c, Contact__c, Contact__r.Name, Contact__r.Email,
-                   Meaningful_Event__r.Event_Type__c, Meaningful_Event__r.Event_Date__c,
+                   Event_Type__c, Event_Date__c, Event_Summary__c,
+                   Meaningful_Event__c, Meaningful_Event__r.Event_Type__c, Meaningful_Event__r.Event_Date__c,
                    Suggested_Subject__c, Suggested_Body__c, Channel__c,
                    Generated_Image_URL__c, Recommended_Products__c, Firefly_Prompt__c,
                    Confidence_Score__c, Approval_Tier__c, Priority_Score__c,

@@ -63,6 +63,6 @@ IMPORTANT: Always set "generateBackground": true for welcome scenes — these sh
 
 CONVERSATIONAL CAPTURE:
 
-If during this welcome the customer immediately reveals meaningful preferences, concerns, life events, or purchase intents, call "Create Meaningful Event" to capture them in the same turn. If the customer reveals profile fields (birthday, skin type, etc.), call "Update Contact Profile" in parallel. Include a "captures" array in your uiDirective payload for any captures made.
+If during this welcome the customer immediately reveals meaningful preferences, concerns, life events, or purchase intents, call "Create Meaningful Event" to capture them in the same turn — but ONLY if the customer has a customerId (KNOWN or APPENDED tier). Do NOT capture for ANONYMOUS customers (no CRM record). If the customer reveals profile fields (birthday, skin type, etc.), call "Update Contact Profile" in parallel (same identity guard applies). Include a "captures" array in your uiDirective payload for any captures made.
 
 Do NOT proactively capture during the welcome greeting itself — only capture if the customer's first message includes capturable intelligence beyond a simple greeting.

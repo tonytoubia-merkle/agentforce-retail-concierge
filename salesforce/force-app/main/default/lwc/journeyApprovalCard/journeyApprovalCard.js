@@ -351,7 +351,8 @@ export default class JourneyApprovalCard extends LightningElement {
     // ─── Existing Getters ──────────────────────────────────────────────
 
     get formattedEventType() {
-        const type = this.approval?.Event_Type__c || 'Event';
+        // Try direct field first, then enriched property from parent
+        const type = this.approval?.Event_Type__c || this.approval?.eventType || 'Event';
         // Format "life-event" → "Life Event"
         return type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
@@ -365,19 +366,28 @@ export default class JourneyApprovalCard extends LightningElement {
                 return match[1].trim();
             }
         }
-        // Fallback to event type
-        return this.formattedEventType;
+        // Fallback to event type (but only if it's meaningful, not the generic fallback)
+        const type = this.approval?.Event_Type__c || this.approval?.eventType;
+        if (type && type !== 'Event') {
+            return this.formattedEventType;
+        }
+        return 'Meaningful event captured';
     }
 
     get formattedEventDate() {
-        if (!this.approval?.Event_Date__c) return '';
-        const date = new Date(this.approval.Event_Date__c);
+        const dateVal = this.approval?.Event_Date__c || this.approval?.eventDate;
+        if (!dateVal) return '';
+        const date = new Date(dateVal);
         return date.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
+    }
+
+    get hasEventDate() {
+        return !!(this.approval?.Event_Date__c || this.approval?.eventDate);
     }
 
     get recommendedProducts() {

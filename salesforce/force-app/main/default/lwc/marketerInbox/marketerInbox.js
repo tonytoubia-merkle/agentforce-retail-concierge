@@ -123,9 +123,10 @@ export default class MarketerInbox extends LightningElement {
             _refreshTimestamp: Date.now(),
             contactName: approval.Contact__r?.Name || 'Unknown',
             contactEmail: approval.Contact__r?.Email || '',
-            eventType: approval.Meaningful_Event__r?.Event_Type__c || 'General',
-            eventDate: approval.Meaningful_Event__r?.Event_Date__c,
+            eventType: approval.Event_Type__c || approval.Meaningful_Event__r?.Event_Type__c || 'General',
+            eventDate: approval.Event_Date__c || approval.Meaningful_Event__r?.Event_Date__c,
             portfolioName: approval.Assigned_Portfolio__r?.Name || 'Unassigned',
+            daysDisplay: this.getDaysDisplay(approval.Days_Until_Event__c),
             itemClass: isPastDue ? 'inbox-item slds-box past-due-item' : 'inbox-item slds-box',
             tierClass: isPastDue ? 'tier-past-due' : this.getTierClass(approval.Approval_Tier__c),
             tierIcon: isPastDue ? 'utility:ban' : this.getTierIcon(approval.Approval_Tier__c),
@@ -144,6 +145,14 @@ export default class MarketerInbox extends LightningElement {
             marketingFlowName: approval.Marketing_Flow__r?.Name,
             marketingFlowUrl: approval.Marketing_Flow__r?.Flow_URL__c
         };
+    }
+
+    getDaysDisplay(days) {
+        if (days === null || days === undefined) return 'No date';
+        if (days === 0) return 'Today!';
+        if (days === 1) return 'Tomorrow';
+        if (days < 0) return `${Math.abs(days)} days ago`;
+        return `${days} days`;
     }
 
     // Filter getters

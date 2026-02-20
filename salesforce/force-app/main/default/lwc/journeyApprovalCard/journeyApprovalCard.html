@@ -60,13 +60,22 @@
         <div class="slds-card__body slds-card__body_inner">
             <!-- Event Info -->
             <div class="slds-box slds-theme_shade slds-m-bottom_small">
-                <p class="slds-text-title_caps slds-m-bottom_xx-small">Event</p>
-                <p class="slds-text-body_regular">{approval.Event_Type__c}</p>
-                <template if:true={approval.Event_Date__c}>
-                    <p class="slds-text-body_small slds-text-color_weak">
-                        Date: {formattedEventDate}
-                    </p>
-                </template>
+                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-start">
+                    <div>
+                        <p class="slds-text-title_caps slds-m-bottom_xx-small">{formattedEventType}</p>
+                        <p class="slds-text-body_regular">{eventDescription}</p>
+                    </div>
+                    <template if:true={hasEventDate}>
+                        <div class="slds-text-align_right slds-shrink-none slds-m-left_small">
+                            <p class="slds-text-body_small slds-text-color_weak">{formattedEventDate}</p>
+                            <template if:true={approval.daysDisplay}>
+                                <p class="slds-text-body_small">
+                                    <strong>{approval.daysDisplay}</strong>
+                                </p>
+                            </template>
+                        </div>
+                    </template>
+                </div>
             </div>
 
             <!-- Marketing Flow Link (if exists) -->
