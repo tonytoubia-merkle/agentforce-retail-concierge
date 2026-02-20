@@ -11,6 +11,7 @@ import regenerateImageFromLWC from '@salesforce/apex/JourneyApprovalService.rege
 import updateProductsFromLWC from '@salesforce/apex/JourneyApprovalService.updateProductsFromLWC';
 import approveAllJourneySteps from '@salesforce/apex/JourneyApprovalService.approveAllJourneySteps';
 import sendJourneyToMarketingFlow from '@salesforce/apex/JourneyApprovalService.sendJourneyToMarketingFlow';
+import processEventsNow from '@salesforce/apex/JourneyApprovalService.processEventsNow';
 import Id from '@salesforce/user/Id';
 
 /**
@@ -37,6 +38,7 @@ export default class MarketerInbox extends LightningElement {
     @track toastMessage = '';
     @track toastVariant = 'success';
     @track expandedJourneys = new Set(); // Track which journey groups are expanded
+    @track isProcessingEvents = false;
 
     // Portfolio filter state
     @track portfolioOptions = [];
@@ -433,6 +435,27 @@ export default class MarketerInbox extends LightningElement {
         }
     }
 
+    async handleProcessEvents() {
+        this.isProcessingEvents = true;
+        try {
+            const result = await processEventsNow();
+            if (result.success) {
+                this.showToastMessage(result.message || 'Events processed successfully', 'success');
+                // Refresh inbox after processing
+                await Promise.all([
+                    refreshApex(this.wiredApprovalsResult),
+                    refreshApex(this.wiredStatsResult)
+                ]);
+            } else {
+                this.showToastMessage(result.errorMessage || 'Failed to process events', 'error');
+            }
+        } catch (error) {
+            this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');
+        } finally {
+            this.isProcessingEvents = false;
+        }
+    }
+
     handleRefresh() {
         this.isLoading = true;
         Promise.all([
@@ -659,7 +682,8 @@ export default class MarketerInbox extends LightningElement {
                 case 'regenerate':
                     result = await regenerateImageFromLWC({
                         approvalId: approvalId,
-                        newPrompt: data.prompt
+                        newPrompt: data.prompt,
+                        productsJson: data.products
                     });
                     break;
 

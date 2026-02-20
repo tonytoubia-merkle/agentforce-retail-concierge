@@ -350,6 +350,25 @@ export default class JourneyApprovalCard extends LightningElement {
 
     // ─── Existing Getters ──────────────────────────────────────────────
 
+    get formattedEventType() {
+        const type = this.approval?.Event_Type__c || 'Event';
+        // Format "life-event" → "Life Event"
+        return type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+
+    get eventDescription() {
+        // Extract the DESCRIPTION line from Event_Summary__c for a concise display
+        const summary = this.approval?.Event_Summary__c;
+        if (summary) {
+            const match = summary.match(/DESCRIPTION:\s*(.+)/);
+            if (match) {
+                return match[1].trim();
+            }
+        }
+        // Fallback to event type
+        return this.formattedEventType;
+    }
+
     get formattedEventDate() {
         if (!this.approval?.Event_Date__c) return '';
         const date = new Date(this.approval.Event_Date__c);
@@ -687,7 +706,8 @@ export default class JourneyApprovalCard extends LightningElement {
                 action: 'regenerate',
                 approvalId: this.approval.Id,
                 data: {
-                    prompt: this.newPrompt
+                    prompt: this.newPrompt,
+                    products: JSON.stringify(this.displayProducts)
                 }
             }
         }));

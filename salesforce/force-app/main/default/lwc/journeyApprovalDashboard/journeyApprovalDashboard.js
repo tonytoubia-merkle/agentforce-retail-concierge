@@ -8,6 +8,7 @@ import updateProductsFromLWC from '@salesforce/apex/JourneyApprovalService.updat
 import approveAllJourneySteps from '@salesforce/apex/JourneyApprovalService.approveAllJourneySteps';
 import declineAllJourneySteps from '@salesforce/apex/JourneyStepService.declineAllSteps';
 import sendJourneyToMarketingFlow from '@salesforce/apex/JourneyApprovalService.sendJourneyToMarketingFlow';
+import processEventsNow from '@salesforce/apex/JourneyApprovalService.processEventsNow';
 import { refreshApex } from '@salesforce/apex';
 
 export default class JourneyApprovalDashboard extends LightningElement {
@@ -19,6 +20,7 @@ export default class JourneyApprovalDashboard extends LightningElement {
     @track toastVariant = 'success';
     @track showEditModal = false;
     @track selectedStep = null;
+    @track isProcessing = false;
 
     wiredApprovalsResult;
 
@@ -182,6 +184,27 @@ export default class JourneyApprovalDashboard extends LightningElement {
         return `${days} days`;
     }
 
+    async handleProcessEvents() {
+        this.isProcessing = true;
+        try {
+            const result = await processEventsNow();
+            if (result.success) {
+                this.showToastMessage(result.message, 'success');
+                // Wait a few seconds for batch to start processing, then refresh
+                setTimeout(async () => {
+                    await refreshApex(this.wiredApprovalsResult);
+                    this.isProcessing = false;
+                }, 5000);
+            } else {
+                this.showToastMessage(result.errorMessage || 'Failed to process events', 'error');
+                this.isProcessing = false;
+            }
+        } catch (error) {
+            this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');
+            this.isProcessing = false;
+        }
+    }
+
     handleRefresh() {
         this.isLoading = true;
         refreshApex(this.wiredApprovalsResult).then(() => {
@@ -251,7 +274,8 @@ export default class JourneyApprovalDashboard extends LightningElement {
                 case 'regenerate':
                     result = await regenerateImageFromLWC({
                         approvalId: approvalId,
-                        newPrompt: data.prompt
+                        newPrompt: data.prompt,
+                        productsJson: data.products
                     });
                     break;
 

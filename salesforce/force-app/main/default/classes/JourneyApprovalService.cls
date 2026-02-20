@@ -169,13 +169,18 @@ public with sharing class JourneyApprovalService {
         String prompt = String.isNotBlank(req.newFireflyPrompt)
             ? req.newFireflyPrompt : approval.Firefly_Prompt__c;
 
+        // Use products passed from LWC (current display state) if available,
+        // otherwise fall back to DB value
+        String productsJson = String.isNotBlank(req.productsJson)
+            ? req.productsJson : approval.Recommended_Products__c;
+
         FireflyApexService.ImageGenerationResult fireflyResult;
 
         // Check if we have products to composite
-        if (String.isNotBlank(approval.Recommended_Products__c)) {
+        if (String.isNotBlank(productsJson)) {
             // Use product composite + Firefly Expand
             FireflyApexService.ProductImageRequest productReq = new FireflyApexService.ProductImageRequest();
-            productReq.productsJson = approval.Recommended_Products__c;
+            productReq.productsJson = productsJson;
             productReq.prompt = prompt;
             productReq.eventType = approval.Event_Type__c;
             productReq.saveToFiles = true;
@@ -212,6 +217,10 @@ public with sharing class JourneyApprovalService {
             approval.Generated_Image_URL__c = imageUrl;
             approval.Image_Content_Version_Id__c = fireflyResult.contentVersionId;
             approval.Firefly_Prompt__c = prompt;
+            // Persist the products that were actually used for image generation
+            if (String.isNotBlank(req.productsJson)) {
+                approval.Recommended_Products__c = req.productsJson;
+            }
 
             update approval;
             System.debug(LoggingLevel.INFO, '[regenerateImage] Approval updated with image URL');
@@ -561,11 +570,12 @@ public with sharing class JourneyApprovalService {
     }
 
     @AuraEnabled
-    public static ApprovalActionResult regenerateImageFromLWC(Id approvalId, String newPrompt) {
+    public static ApprovalActionResult regenerateImageFromLWC(Id approvalId, String newPrompt, String productsJson) {
         ApprovalActionRequest req = new ApprovalActionRequest();
         req.approvalId = approvalId;
         req.action = 'regenerate_image';
         req.newFireflyPrompt = newPrompt;
+        req.productsJson = productsJson;
 
         List<ApprovalActionResult> results = processActions(new List<ApprovalActionRequest>{req});
         return results[0];
@@ -579,6 +589,42 @@ public with sharing class JourneyApprovalService {
 
         List<ApprovalActionResult> results = processActions(new List<ApprovalActionRequest>{req});
         return results[0];
+    }
+
+    /**
+     * Trigger the JourneyBatchProcessor to process any pending meaningful events now.
+     * Called from the dashboard "Process Events Now" button.
+     */
+    @AuraEnabled
+    public static ApprovalActionResult processEventsNow() {
+        ApprovalActionResult result = new ApprovalActionResult();
+
+        try {
+            // Count pending events
+            Integer pendingCount = [
+                SELECT COUNT()
+                FROM Meaningful_Event__c
+                WHERE Approval_Status__c = 'Pending Review'
+                  AND Event_Type__c = 'life-event'
+            ];
+
+            if (pendingCount == 0) {
+                result.success = true;
+                result.message = 'No pending events to process.';
+                return result;
+            }
+
+            // Execute the batch processor immediately
+            Database.executeBatch(new JourneyBatchProcessor(), 10);
+
+            result.success = true;
+            result.message = 'Processing ' + pendingCount + ' pending event(s). Journeys will appear shortly.';
+        } catch (Exception e) {
+            result.success = false;
+            result.errorMessage = 'Failed to start batch: ' + e.getMessage();
+        }
+
+        return result;
     }
 
     @AuraEnabled
