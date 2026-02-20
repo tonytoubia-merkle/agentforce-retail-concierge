@@ -9,6 +9,7 @@
         <value><stringValue>LightningFlowBuilder</stringValue></value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
     <start>
         <locationX>50</locationX>
         <locationY>0</locationY>

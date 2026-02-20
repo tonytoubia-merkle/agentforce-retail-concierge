@@ -476,6 +476,20 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             console.error('Failed to init session:', err);
           }
         }
+
+        // Appended-tier customers: session is initialized with 3P signals
+        // (so subsequent messages can use them for curation), but the welcome
+        // screen looks identical to anonymous — no personalized greeting.
+        if (sessionCtx.identityTier === 'appended') {
+          setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
+          setSuggestedActions([
+            'Show me moisturizers',
+            'I need travel products',
+            'What do you recommend?',
+          ]);
+          return;
+        }
+
         const response = await getAgentResponse(welcomeMsg);
 
         // The real Agentforce agent may return CHANGE_SCENE, SHOW_PRODUCTS,
