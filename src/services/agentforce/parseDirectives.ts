@@ -31,9 +31,15 @@ function inferAction(d: Record<string, unknown>): UIAction | undefined {
   if (d.action && typeof d.action === 'string') return d.action as UIAction;
 
   const payload = (d.payload || {}) as Record<string, unknown>;
+  const carousel = d.productCarousel as Record<string, unknown> | undefined;
 
-  // Has products (or items mapped to products) → SHOW_PRODUCTS
-  if (Array.isArray(payload.products) || Array.isArray(d.products) || Array.isArray(d.items)) {
+  // Has products (or items mapped to products, or productCarousel.products) → SHOW_PRODUCTS
+  if (
+    Array.isArray(payload.products) ||
+    Array.isArray(d.products) ||
+    Array.isArray(d.items) ||
+    (carousel && Array.isArray(carousel.products))
+  ) {
     return 'SHOW_PRODUCTS' as UIAction;
   }
 
@@ -43,8 +49,8 @@ function inferAction(d: Record<string, unknown>): UIAction | undefined {
   // Has a single product → SHOW_PRODUCT
   if (payload.product || d.product) return 'SHOW_PRODUCT' as UIAction;
 
-  // Has sceneContext but no products → CHANGE_SCENE
-  if (payload.sceneContext || d.sceneContext || d.setting || d.backgroundPrompt) {
+  // Has sceneContext/scene but no products → CHANGE_SCENE
+  if (payload.sceneContext || d.sceneContext || d.scene || d.setting || d.backgroundPrompt) {
     return 'CHANGE_SCENE' as UIAction;
   }
 
@@ -79,6 +85,19 @@ function normalizePayload(
   if (!existing.products && d.products) {
     existing.products = d.products;
     console.warn('[parseDirectives] Moved root-level "products" into payload');
+  }
+
+  // Map `d.productCarousel.products` → `products` (agent sometimes nests in carousel)
+  const carousel = d.productCarousel as Record<string, unknown> | undefined;
+  if (!existing.products && carousel && Array.isArray(carousel.products)) {
+    existing.products = carousel.products;
+    console.warn('[parseDirectives] Normalized "productCarousel.products" → "products"');
+  }
+
+  // Map `d.scene` → `sceneContext` (agent sometimes uses "scene" instead of "sceneContext")
+  if (!existing.sceneContext && d.scene) {
+    existing.sceneContext = d.scene;
+    console.warn('[parseDirectives] Normalized "scene" → "sceneContext"');
   }
 
   // Map welcome fields from root into payload
