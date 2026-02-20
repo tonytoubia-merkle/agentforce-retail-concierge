@@ -60,7 +60,8 @@ export class FireflyClient {
       headers: {
         'Authorization': `Bearer ${token}`,
         'x-api-key': this.config.clientId,
-        'x-model-version': 'image4_ultra',
+        // Switch to 'image4_ultra' once API credentials are provisioned for Image Model 4
+        // 'x-model-version': 'image4_ultra',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -101,7 +102,8 @@ export class FireflyClient {
       headers: {
         'Authorization': `Bearer ${token}`,
         'x-api-key': this.config.clientId,
-        'x-model-version': 'image4_ultra',
+        // Switch to 'image4_ultra' once API credentials are provisioned for Image Model 4
+        // 'x-model-version': 'image4_ultra',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

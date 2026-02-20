@@ -448,7 +448,8 @@ async function expandImage(uploadId, prompt, token, clientId) {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-api-key': clientId,
-          'x-model-version': 'image4_ultra',
+          // Switch to 'image4_ultra' once API credentials are provisioned for Image Model 4
+          // 'x-model-version': 'image4_ultra',
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Content-Length': Buffer.byteLength(requestBody),
@@ -521,7 +522,8 @@ async function generateImageFallback(prompt, token, clientId) {
     headers: {
       'Authorization': `Bearer ${token}`,
       'x-api-key': clientId,
-      'x-model-version': 'image4_ultra',
+      // Switch to 'image4_ultra' once API credentials are provisioned for Image Model 4
+      // 'x-model-version': 'image4_ultra',
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Content-Length': Buffer.byteLength(requestBody),
