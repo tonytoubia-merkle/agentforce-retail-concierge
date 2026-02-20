@@ -19,7 +19,9 @@
                     <lightning-icon icon-name={channelIcon} size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
                     {channel}
                 </span>
-                <span class={approval.urgencyClass}>{approval.Urgency__c}</span>
+                <template if:true={showUrgencyBadge}>
+                    <span class={approval.urgencyClass}>{approval.Urgency__c}</span>
+                </template>
                 <span class="slds-badge slds-m-left_x-small">{approval.daysDisplay}</span>
             </div>
         </div>

@@ -390,6 +390,11 @@ export default class JourneyApprovalCard extends LightningElement {
         return !!(this.approval?.Event_Date__c || this.approval?.eventDate);
     }
 
+    get showUrgencyBadge() {
+        const urgency = this.approval?.Urgency__c;
+        return urgency && urgency !== 'No Date';
+    }
+
     get recommendedProducts() {
         if (!this.approval?.Recommended_Products__c) return [];
         try {
@@ -711,13 +716,17 @@ export default class JourneyApprovalCard extends LightningElement {
         this.isGeneratingImage = true;
         this.imageLoadError = false; // Reset error state
 
+        const productsPayload = JSON.stringify(this.displayProducts);
+        console.log('[JourneyApprovalCard] Regenerating with', this.displayProducts.length, 'products:', this.displayProducts.map(p => p.name));
+        console.log('[JourneyApprovalCard] productsModified:', this.productsModified);
+
         this.dispatchEvent(new CustomEvent('action', {
             detail: {
                 action: 'regenerate',
                 approvalId: this.approval.Id,
                 data: {
                     prompt: this.newPrompt,
-                    products: JSON.stringify(this.displayProducts)
+                    products: productsPayload
                 }
             }
         }));
