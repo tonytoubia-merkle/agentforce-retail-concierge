@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Clientelling_Tier__c</fullName>
+    <externalId>false</externalId>
+    <label>Clientelling Tier</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>New</fullName><default>true</default><label>New</label></value>
+            <value><fullName>Active</fullName><default>false</default><label>Active</label></value>
+            <value><fullName>VIP</fullName><default>false</default><label>VIP</label></value>
+            <value><fullName>Lapsed</fullName><default>false</default><label>Lapsed</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

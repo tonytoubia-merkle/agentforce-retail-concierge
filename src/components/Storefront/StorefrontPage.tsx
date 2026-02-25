@@ -8,6 +8,7 @@ import { CartPage } from './CartPage';
 import { CheckoutPage } from './CheckoutPage';
 import { OrderConfirmationPage } from './OrderConfirmationPage';
 import { AccountPage } from './AccountPage';
+import { AppointmentBooking } from './AppointmentBooking';
 import { EmailSignup } from './EmailSignup';
 import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
@@ -103,6 +104,9 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
 
       case 'account':
         return <AccountPage />;
+
+      case 'appointment':
+        return <AppointmentBooking />;
 
       case 'home':
       default:

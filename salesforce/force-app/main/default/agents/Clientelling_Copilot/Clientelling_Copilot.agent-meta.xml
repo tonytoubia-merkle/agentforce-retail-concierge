@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Agent xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Clientelling Copilot</masterLabel>
+    <description>AI co-pilot for in-store beauty reps providing provenance-aware product recommendations, consultation support, and customer profile management during face-to-face consultations.</description>
+    <agentType>ExternalClientAgent</agentType>
+    <isActive>true</isActive>
+</Agent>

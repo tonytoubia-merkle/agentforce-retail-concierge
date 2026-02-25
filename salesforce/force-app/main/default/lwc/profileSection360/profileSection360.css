@@ -1,0 +1,299 @@
+.section-card {
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e5e5e5;
+    padding: 0;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    padding: 7px 10px;
+    cursor: pointer;
+    background: #fafafa;
+    border-bottom: 1px solid #e5e5e5;
+    transition: background 0.15s;
+}
+
+.section-header:hover {
+    background: #f0f0f0;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.section-count {
+    font-size: 11px;
+    color: #888;
+    margin-left: 6px;
+}
+
+.expand-icon {
+    margin-left: auto;
+}
+
+.section-body {
+    padding: 8px 10px;
+}
+
+/* Field items */
+.field-item {
+    padding: 4px 0;
+}
+
+.field-label {
+    display: block;
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.field-value {
+    font-size: 13px;
+    color: #333;
+}
+
+.alert-text {
+    color: #d32f2f;
+    font-weight: 500;
+}
+
+/* Orders */
+.order-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.order-id {
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.order-date {
+    font-size: 12px;
+    color: #888;
+}
+
+.order-amount {
+    margin-left: auto;
+    font-weight: 600;
+    color: #333;
+}
+
+.line-item {
+    display: inline-block;
+    font-size: 11px;
+    color: #666;
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin: 2px 4px 2px 0;
+}
+
+/* Loyalty */
+.loyalty-grid {
+    display: flex;
+    gap: 24px;
+}
+
+.loyalty-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.tier-value {
+    text-transform: capitalize;
+}
+
+/* Events */
+.event-item {
+    padding: 6px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.event-item:last-child {
+    border-bottom: none;
+}
+
+.event-type {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1565c0;
+    background: #e3f2fd;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-right: 6px;
+}
+
+.event-desc {
+    font-size: 13px;
+    color: #333;
+}
+
+.event-note {
+    display: block;
+    font-size: 11px;
+    color: #888;
+    font-style: italic;
+    margin-top: 2px;
+}
+
+/* Chat */
+.chat-item {
+    padding: 6px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.chat-date {
+    font-size: 11px;
+    color: #888;
+    margin-right: 8px;
+}
+
+.chat-summary {
+    font-size: 13px;
+    color: #333;
+}
+
+/* Browse */
+.browse-item {
+    padding: 6px 0;
+}
+
+.browse-date {
+    font-size: 11px;
+    color: #888;
+    display: block;
+}
+
+/* Tags */
+.tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin: 2px 4px 2px 0;
+    background: #f0f0f0;
+    color: #555;
+}
+
+.brand-tag {
+    background: #e8eaf6;
+    color: #283593;
+    font-weight: 500;
+}
+
+.cat-tag {
+    background: #fce4ec;
+    color: #c62828;
+}
+
+/* Captured */
+.captured-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+/* Staff Picks */
+.staff-picks {
+    border-color: #e8eaf6;
+    background: #fafbff;
+}
+
+.staff-picks .section-header {
+    background: #e8eaf6;
+}
+
+.staff-label {
+    font-size: 11px;
+    color: #5c6bc0;
+    margin-left: auto;
+}
+
+.rec-group {
+    margin-bottom: 8px;
+}
+
+.rec-label {
+    font-size: 11px;
+    color: #888;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.lifestyle-text {
+    font-size: 13px;
+    color: #333;
+    font-style: italic;
+}
+
+/* Notes */
+.note-item {
+    padding: 6px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.note-type {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #7b1fa2;
+    background: #f3e5f5;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-right: 6px;
+}
+
+.note-text {
+    font-size: 13px;
+    color: #333;
+}
+
+.note-date {
+    display: block;
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
+}
+
+/* Empty state */
+.empty-state {
+    color: #aaa;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px 0;
+}
+
+.empty-profile {
+    padding: 40px;
+    color: #aaa;
+}

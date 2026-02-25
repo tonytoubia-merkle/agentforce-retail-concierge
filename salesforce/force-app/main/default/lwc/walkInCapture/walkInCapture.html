@@ -1,0 +1,152 @@
+<template>
+    <div class="walkin-container">
+        <h3 class="walkin-title">Walk-In Customer</h3>
+
+        <!-- Step 1: Email + Name -->
+        <template if:true={isStepForm}>
+            <div class="walkin-form">
+                <lightning-input
+                    type="email"
+                    label="Email"
+                    placeholder="customer@email.com"
+                    value={email}
+                    onchange={handleEmailChange}
+                    required
+                    class="slds-m-bottom_x-small"
+                ></lightning-input>
+                <div class="name-row">
+                    <lightning-input
+                        type="text"
+                        label="First Name"
+                        placeholder="First"
+                        value={firstName}
+                        onchange={handleFirstNameChange}
+                        class="name-field"
+                    ></lightning-input>
+                    <lightning-input
+                        type="text"
+                        label="Last Name"
+                        placeholder="Last"
+                        value={lastName}
+                        onchange={handleLastNameChange}
+                        class="name-field"
+                    ></lightning-input>
+                </div>
+                <lightning-button
+                    label="Search CRM"
+                    variant="brand"
+                    icon-name="utility:search"
+                    onclick={handleSearchCRM}
+                    disabled={isEmailEmpty}
+                    class="slds-m-top_x-small resolve-btn"
+                ></lightning-button>
+            </div>
+        </template>
+
+        <!-- Step 2: CRM Search Results -->
+        <template if:true={isStepResults}>
+            <div class="results-section">
+                <p class="picker-subtitle">
+                    CRM results for <strong>{email}</strong>
+                </p>
+                <template if:true={hasCrmResults}>
+                    <div class="result-list">
+                        <template for:each={crmResults} for:item="result">
+                            <div key={result.contactId}
+                                 class="result-card"
+                                 data-id={result.contactId}
+                                 onclick={handleSelectCrmResult}>
+                                <div class="result-name">{result.name}</div>
+                                <div class="result-detail">
+                                    {result.email}
+                                    <span class={result.badgeClass}>{result.identityTier}</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                <template if:false={hasCrmResults}>
+                    <div class="no-results">
+                        <p>No existing customer found</p>
+                    </div>
+                </template>
+                <div class="picker-actions slds-m-top_x-small">
+                    <lightning-button
+                        label="Back"
+                        onclick={handleBackToForm}
+                        class="slds-m-right_x-small"
+                    ></lightning-button>
+                    <lightning-button
+                        label="New Customer"
+                        variant="neutral"
+                        icon-name="utility:new"
+                        onclick={handleNewCustomer}
+                    ></lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Step 3: Merkury Profile Picker -->
+        <template if:true={isStepMerkury}>
+            <div class="picker-header">
+                <p class="picker-subtitle">
+                    Simulated Merkury resolution for <strong>{email}</strong>
+                </p>
+            </div>
+
+            <div class="profile-list">
+                <template for:each={archetypes} for:item="arch">
+                    <div key={arch.id}
+                         class={arch.cardClass}
+                         data-id={arch.id}
+                         onclick={handleSelectArchetype}>
+                        <div class="profile-top">
+                            <span class="profile-label">{arch.label}</span>
+                            <span class="profile-archetype">{arch.archetype}</span>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- No Match option -->
+                <div class={noMatchCardClass}
+                     data-id="no-match"
+                     onclick={handleSelectArchetype}>
+                    <div class="profile-top">
+                        <span class="profile-label">No Match (~30%)</span>
+                        <span class="profile-archetype">No identity signal</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="picker-actions">
+                <lightning-button
+                    label="Back"
+                    onclick={handleBackToResults}
+                    class="slds-m-right_x-small"
+                ></lightning-button>
+                <lightning-button
+                    label="Apply & Start"
+                    variant="brand"
+                    onclick={handleResolve}
+                    disabled={isResolveDisabled}
+                ></lightning-button>
+            </div>
+        </template>
+
+        <template if:true={isResolving}>
+            <div class="resolving-overlay">
+                <lightning-spinner alternative-text="Resolving customer" size="small"></lightning-spinner>
+                <span class="resolving-text">
+                    <template if:true={isSearching}>Searching CRM...</template>
+                    <template if:false={isSearching}>Resolving identity...</template>
+                </span>
+            </div>
+        </template>
+
+        <template if:true={error}>
+            <div class="error-msg slds-m-top_x-small">
+                <p>{error}</p>
+            </div>
+        </template>
+    </div>
+</template>

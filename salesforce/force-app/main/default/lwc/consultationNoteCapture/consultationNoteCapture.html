@@ -1,0 +1,38 @@
+<template>
+    <div class="note-capture">
+        <h3 class="capture-title">Quick Note</h3>
+        <div class="capture-form">
+            <lightning-combobox
+                name="noteType"
+                label="Type"
+                value={noteType}
+                options={noteTypeOptions}
+                onchange={handleTypeChange}
+                variant="label-hidden"
+                placeholder="Note type..."
+                class="type-select"
+            ></lightning-combobox>
+            <div class="note-input-row">
+                <lightning-textarea
+                    label="Note"
+                    value={noteText}
+                    onchange={handleTextChange}
+                    variant="label-hidden"
+                    placeholder="Capture consultation note..."
+                    max-length="5000"
+                    class="note-textarea"
+                ></lightning-textarea>
+                <lightning-button
+                    label="Add"
+                    variant="brand"
+                    onclick={handleAddNote}
+                    disabled={isAddDisabled}
+                    class="add-btn"
+                ></lightning-button>
+            </div>
+        </div>
+        <template if:true={isSaving}>
+            <lightning-spinner alternative-text="Saving" size="small" class="saving-spinner"></lightning-spinner>
+        </template>
+    </div>
+</template>

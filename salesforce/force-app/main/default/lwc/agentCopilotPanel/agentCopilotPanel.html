@@ -1,0 +1,159 @@
+<template>
+    <div class="copilot-container">
+        <!-- Header -->
+        <div class="copilot-header">
+            <lightning-icon icon-name="utility:einstein" size="small" class="slds-m-right_x-small"></lightning-icon>
+            <h2 class="copilot-title">AI Co-pilot</h2>
+            <template if:true={isSessionActive}>
+                <span class="session-active">Active</span>
+            </template>
+        </div>
+
+        <!-- Quick Actions -->
+        <template if:true={isSessionActive}>
+            <div class="quick-actions">
+                <template for:each={quickActions} for:item="action">
+                    <button key={action.label} class="action-chip" onclick={handleQuickAction} data-message={action.message}>
+                        {action.label}
+                    </button>
+                </template>
+            </div>
+        </template>
+
+        <!-- Message Thread -->
+        <div class="message-thread">
+            <template if:false={isSessionActive}>
+                <div class="start-prompt slds-align_absolute-center">
+                    <template if:true={hasContactId}>
+                        <lightning-button
+                            label="Start Co-pilot Session"
+                            variant="brand"
+                            onclick={handleStartSession}
+                            disabled={isInitializing}
+                        ></lightning-button>
+                    </template>
+                    <template if:false={hasContactId}>
+                        <p class="no-customer-msg">Select a customer to start the co-pilot</p>
+                    </template>
+                </div>
+            </template>
+
+            <template if:true={isInitializing}>
+                <div class="slds-align_absolute-center slds-p-around_medium">
+                    <lightning-spinner alternative-text="Initializing" size="small"></lightning-spinner>
+                    <span class="init-text slds-m-left_small">Starting session...</span>
+                </div>
+            </template>
+
+            <template for:each={messages} for:item="msg">
+                <div key={msg.id} class={msg.containerClass}>
+                    <div class={msg.bubbleClass}>
+                        <p class="msg-text">{msg.text}</p>
+
+                        <!-- Inline Product Cards -->
+                        <template if:true={msg.hasProducts}>
+                            <div class="product-cards">
+                                <template for:each={msg.products} for:item="product">
+                                    <div key={product.productId} class="product-card">
+                                        <template if:true={product.imageUrl}>
+                                            <img src={product.imageUrl} alt={product.name} class="product-img" />
+                                        </template>
+                                        <div class="product-info">
+                                            <span class="product-name">{product.name}</span>
+                                            <template if:true={product.brand}>
+                                                <span class="product-brand">{product.brand}</span>
+                                            </template>
+                                            <template if:true={product.price}>
+                                                <span class="product-price">${product.price}</span>
+                                            </template>
+                                        </div>
+                                        <lightning-button
+                                            label="Add to Consult"
+                                            variant="neutral"
+                                            onclick={handleAddToConsult}
+                                            data-product-id={product.productId}
+                                            data-product-name={product.name}
+                                            class="add-consult-btn"
+                                            size="small"
+                                        ></lightning-button>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Capture Notifications -->
+                        <template if:true={msg.hasCaptures}>
+                            <div class="capture-notifications">
+                                <template for:each={msg.captures} for:item="capture">
+                                    <div key={capture.label} class="capture-item">
+                                        <lightning-icon icon-name="utility:check" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                        {capture.label}
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Suggested Actions -->
+                        <template if:true={msg.hasSuggestions}>
+                            <div class="suggestion-chips">
+                                <template for:each={msg.suggestedActions} for:item="suggestion">
+                                    <button key={suggestion} class="suggestion-chip" onclick={handleSuggestionClick} data-message={suggestion}>
+                                        {suggestion}
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Typing indicator -->
+            <template if:true={isWaitingForResponse}>
+                <div class="msg-container msg-agent">
+                    <div class="msg-bubble bubble-agent typing-indicator">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Input -->
+        <template if:true={isSessionActive}>
+            <div class="input-area">
+                <lightning-input
+                    type="text"
+                    placeholder="Ask the co-pilot..."
+                    value={inputText}
+                    onchange={handleInputChange}
+                    onkeyup={handleKeyUp}
+                    variant="label-hidden"
+                    class="chat-input"
+                    disabled={isWaitingForResponse}
+                ></lightning-input>
+                <lightning-button-icon
+                    icon-name="utility:send"
+                    alternative-text="Send"
+                    onclick={handleSend}
+                    disabled={isSendDisabled}
+                    variant="brand"
+                    class="send-btn"
+                ></lightning-button-icon>
+            </div>
+        </template>
+
+        <!-- Error -->
+        <template if:true={error}>
+            <div class="error-bar">
+                <span>{error}</span>
+                <lightning-button-icon
+                    icon-name="utility:close"
+                    alternative-text="Dismiss"
+                    onclick={dismissError}
+                    size="small"
+                ></lightning-button-icon>
+            </div>
+        </template>
+    </div>
+</template>

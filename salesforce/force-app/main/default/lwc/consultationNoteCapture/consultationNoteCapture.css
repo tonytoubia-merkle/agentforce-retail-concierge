@@ -1,0 +1,40 @@
+.note-capture {
+    position: relative;
+}
+
+.capture-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+.capture-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.type-select {
+    max-width: 180px;
+}
+
+.note-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.note-textarea {
+    flex: 1;
+}
+
+.add-btn {
+    flex-shrink: 0;
+}
+
+.saving-spinner {
+    position: absolute;
+    top: 0;
+    right: 0;
+}

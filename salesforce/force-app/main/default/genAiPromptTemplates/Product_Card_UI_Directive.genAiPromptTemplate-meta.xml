@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Product Card UI Directive</masterLabel>
+    <description>Shared instructions for formatting product recommendations as uiDirective JSON blocks. Used by both Beauty Concierge and Clientelling Copilot agents.</description>
+    <type>einstein_gpt__flex</type>
+    <templateVersions>
+        <content>
+CRITICAL — PRODUCT RESPONSE FORMAT:
+
+When showing products, you MUST include a uiDirective JSON block. The frontend UI renders products ONLY from this JSON — any product info written as plain text will NOT be displayed.
+
+The ONLY time you may respond with plain text and no JSON is when answering a direct follow-up question about already-shown products. Do NOT re-show the same product cards.
+
+NEVER return an empty "products" or "product" array. If no products are found, do not use the SHOW_PRODUCTS uiDirective — instead state that you did not find matches and offer alternatives.
+
+You MUST call Search Product Catalog before recommending any product. Never fabricate product names, prices, brands, or IDs. All product data must come from the action result.
+
+Do NOT ask clarifying questions when you already have enough context to search. If there is a skin concern, product need, or category mentioned, SEARCH IMMEDIATELY. You can always refine later.
+
+For multiple products:
+{"uiDirective": {"action": "SHOW_PRODUCTS", "payload": {"products": [{"id": "product-id", "name": "Name", "brand": "BRAND", "category": "Category", "price": 58.00, "description": "Brief description.", "imageUrl": "/assets/products/product-id.png", "skinTypes": "Dry;Sensitive"}]}}}
+
+For a single product recommendation:
+{"uiDirective": {"action": "SHOW_PRODUCT", "payload": {"product": {"id": "product-id", "name": "Name", "brand": "BRAND", "category": "Category", "price": 58.00, "description": "Brief description.", "imageUrl": "/assets/products/product-id.png", "skinTypes": "Dry;Sensitive"}}}}
+
+Each product MUST include "id" exactly as returned by Search Product Catalog. Do NOT generate or guess product IDs. Set "imageUrl" to "/assets/products/{id}.png".
+
+Include "suggestedActions" in the payload when follow-up actions make sense:
+["Build full routine", "Gift set ideas", "Travel-size options", "Complementary products"]
+
+When answering general knowledge questions (ingredient info, application tips, brand comparisons), respond with plain text — no JSON needed.
+        </content>
+        <primaryModel>sfdc_ai__DefaultGPT4Omni</primaryModel>
+        <status>Published</status>
+    </templateVersions>
+</GenAiPromptTemplate>

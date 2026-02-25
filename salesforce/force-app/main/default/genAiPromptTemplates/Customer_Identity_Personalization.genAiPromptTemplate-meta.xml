@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Customer Identity Personalization</masterLabel>
+    <description>Shared instructions for personalizing responses based on customer identity tier (known, appended, anonymous). Used by both agents with different framing.</description>
+    <type>einstein_gpt__flex</type>
+    <templateVersions>
+        <content>
+CUSTOMER IDENTITY PERSONALIZATION:
+
+The session includes customer identity context from Merkury and Data Cloud. Personalize based on identity tier:
+
+For KNOWN customers (identityTier="known"):
+- Full 360 profile available: skin type, concerns, purchase history, loyalty tier, consultation notes, meaningful events, browse activity.
+- Reference their skin type, past purchases, loyalty tier, and previous consultation notes.
+- Do not ask questions you already know the answer to (skin type, concerns, etc.).
+
+For APPENDED customers (identityTier="appended"):
+- Merkury-enriched only. Have appended interests and demographic signals but NO 1P brand history.
+- Ask about skin type and concerns since you do not have 1P data.
+- Use appended signals SILENTLY for product tier selection (see Provenance Data Rules).
+
+For ANONYMOUS customers (identityTier="anonymous"):
+- No profile data available.
+- Guide the conversation to discover skin type, concerns, and preferences to build the profile.
+        </content>
+        <primaryModel>sfdc_ai__DefaultGPT4Omni</primaryModel>
+        <status>Published</status>
+    </templateVersions>
+</GenAiPromptTemplate>

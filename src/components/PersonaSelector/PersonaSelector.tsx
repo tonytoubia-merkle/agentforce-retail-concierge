@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PERSONA_STUBS } from '@/mocks/customerPersonas';
 import type { PersonaStub } from '@/mocks/customerPersonas';
-import type { CustomerProfile } from '@/types/customer';
+import type { CustomerProfile, DemoContact } from '@/types/customer';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { fetchDemoContacts } from '@/services/demo/contacts';
+
+const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
 function buildSubtitle(profile: CustomerProfile): string {
   const tier = profile.merkuryIdentity?.identityTier || 'anonymous';
@@ -63,7 +66,14 @@ function buildTraits(profile: CustomerProfile): string[] {
 
 export const PersonaSelector: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [crmContacts, setCrmContacts] = useState<DemoContact[]>([]);
   const { selectPersona, customer, isResolving, isLoading } = useCustomer();
+
+  // Fetch CRM contacts when drawer opens (real mode only)
+  useEffect(() => {
+    if (!isOpen || useMockData) return;
+    fetchDemoContacts().then(setCrmContacts);
+  }, [isOpen]);
 
   const activeStub = PERSONA_STUBS.find((s) =>
     customer?.id === `persona-${s.id}` || customer?.merkuryIdentity?.merkuryId === s.merkuryId
@@ -197,6 +207,59 @@ export const PersonaSelector: React.FC = () => {
                     );
                   })}
                 </div>
+
+                {/* CRM Contacts (real mode only) */}
+                {!useMockData && crmContacts.length > 0 && (() => {
+                  const seeded = crmContacts.filter((c) => c.demoProfile === 'Seeded');
+                  const created = crmContacts.filter((c) => c.demoProfile === 'Created');
+                  const renderGroup = (label: string, contacts: DemoContact[], gradient: string) =>
+                    contacts.length > 0 && (
+                      <>
+                        <div className="text-[10px] font-medium text-white/30 uppercase tracking-wider mt-4 mb-1">
+                          {label} ({contacts.length})
+                        </div>
+                        {contacts.map((c) => {
+                          const isActive = c.id === customer?.id;
+                          return (
+                            <button
+                              key={c.id}
+                              onClick={() => handleSelect(c.id)}
+                              disabled={isResolving || isLoading}
+                              className={`w-full text-left rounded-xl p-3 transition-all ${
+                                isActive
+                                  ? 'bg-white/15 border border-white/30 ring-1 ring-white/20'
+                                  : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                              } ${isResolving || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-gradient-to-br ${gradient}`}>
+                                  {(c.firstName || '?').charAt(0)}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-white font-medium text-sm truncate">
+                                    {c.firstName} {c.lastName}
+                                  </div>
+                                  <div className="text-white/50 text-[10px] truncate">
+                                    {c.demoProfile === 'Seeded' ? 'Known · CRM match' : 'Demo-created'}
+                                  </div>
+                                </div>
+                                {isActive && (
+                                  <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0 ml-auto" />
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </>
+                    );
+                  return (
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      <div className="text-white/60 text-xs font-semibold mb-1">CRM Contacts</div>
+                      {renderGroup('Seeded', seeded, 'from-rose-400 to-purple-500')}
+                      {renderGroup('Created', created, 'from-emerald-400 to-teal-500')}
+                    </div>
+                  );
+                })()}
 
                 <div className="mt-6 pt-4 border-t border-white/10">
                   <p className="text-white/30 text-[10px] leading-relaxed">

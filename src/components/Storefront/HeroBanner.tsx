@@ -50,23 +50,8 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
     };
   }
 
-  // Pseudonymous known customer (not signed in)
-  if (tier === 'known' && firstName) {
-    const skinType = customer?.beautyProfile?.skinType;
-    const subtitleParts: string[] = [];
-    if (skinType && skinType !== 'normal') {
-      subtitleParts.push(`Picks for your ${skinType} skin.`);
-    }
-    subtitleParts.push('Sign in for the full personalized experience.');
-    return {
-      badge: 'Picked for You',
-      headlineTop: `Welcome back,`,
-      headlineBottom: firstName,
-      subtitle: subtitleParts.join(' '),
-      heroImage: HERO_IMAGES.pseudonymous,
-      imageAlt: 'Fresh morning skincare routine',
-    };
-  }
+  // Pseudonymous known customer (not signed in) — fall through to appended/default.
+  // Greeting is subtle, shown in the top promo banner instead of the hero.
 
   // Appended (3P Merkury data)
   if (tier === 'appended' && customer?.appendedProfile?.interests) {

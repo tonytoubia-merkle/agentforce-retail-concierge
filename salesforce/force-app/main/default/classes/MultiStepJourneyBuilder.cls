@@ -148,9 +148,15 @@ public with sharing class MultiStepJourneyBuilder {
      * Select the appropriate journey pattern based on timing and preferences.
      */
     private static JourneyPattern selectPattern(Integer daysUntilEvent, String eventType, ChannelPreferences channels) {
-        // If no event date, use immediate single
-        if (daysUntilEvent == null || daysUntilEvent < 0) {
+        // If event date is in the past, use immediate single
+        if (daysUntilEvent != null && daysUntilEvent < 0) {
             return JourneyPattern.IMMEDIATE_SINGLE;
+        }
+
+        // If no event date available, default to 14 days to enable multi-step journeys
+        // rather than always falling back to single-step
+        if (daysUntilEvent == null) {
+            daysUntilEvent = 14;
         }
 
         // Calculate available channels
@@ -579,27 +585,15 @@ public with sharing class MultiStepJourneyBuilder {
     }
 
     private static String buildFireflyPrompt(JourneyConfig config, Integer stepNum) {
-        String eventDesc = config.eventDescription != null ? config.eventDescription.toLowerCase() : '';
-
-        String prompt = 'Elegant ';
-
-        if (eventDesc.contains('wedding')) {
-            prompt += 'bridal preparation scene, luxury beauty products on marble vanity, ';
-            prompt += 'white roses and champagne, romantic soft lighting, ';
-        } else if (eventDesc.contains('travel') || eventDesc.contains('trip')) {
-            prompt += 'travel lifestyle scene, beauty products in designer travel case, ';
-            prompt += 'passport and boarding pass visible, luxury hotel setting, ';
-        } else if (eventDesc.contains('birthday')) {
-            prompt += 'birthday celebration, beauty products wrapped with silk ribbon, ';
-            prompt += 'elegant gift arrangement, festive but sophisticated atmosphere, ';
-        } else {
-            prompt += 'lifestyle beauty scene, products artfully arranged, ';
-            prompt += 'natural lighting, sophisticated editorial photography, ';
-        }
-
-        prompt += 'rose gold accents, premium product photography, email banner composition';
-
-        return prompt;
+        // Delegate to JourneyPromptBuilder's pre-built step templates
+        // This ensures consistent, optimized prompts per event type + step position
+        return JourneyPromptBuilder.getStepPrompt(
+            config.eventType,
+            config.eventDescription,
+            stepNum,
+            null, // totalSteps set later in generateSteps
+            null  // product names injected later during batch processing
+        );
     }
 
     // ─── Guardrails ────────────────────────────────────────────────────

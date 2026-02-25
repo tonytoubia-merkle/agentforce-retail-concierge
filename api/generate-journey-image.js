@@ -169,7 +169,7 @@ async function compositeProducts(products) {
     console.log(`  [${i}] z:${p.zIndex} size:${p.size}px pos:(${p.left},${p.top}) "${p.productName}"`);
   });
 
-  return compositeBuffer;
+  return { buffer: compositeBuffer, compositedCount: productData.length };
 }
 
 /**
@@ -641,8 +641,8 @@ export default async function handler(req, res) {
 
     // Create the product composite
     console.log('[generate-journey-image] Compositing products...');
-    const compositeBuffer = await compositeProducts(products);
-    console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes`);
+    const { buffer: compositeBuffer, compositedCount } = await compositeProducts(products);
+    console.log(`[generate-journey-image] Composite created: ${compositeBuffer.length} bytes, ${compositedCount}/${products.length} products`);
 
     // Debug mode: return the composite as base64 without calling Firefly
     if (debugComposite) {
@@ -652,7 +652,7 @@ export default async function handler(req, res) {
         success: true,
         debug: true,
         compositeDataUrl: `data:image/png;base64,${compositeBase64}`,
-        productCount: products.length,
+        productCount: compositedCount,
       });
       res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
       return res.end(result);
@@ -682,7 +682,7 @@ export default async function handler(req, res) {
     const result = JSON.stringify({
       success: true,
       imageUrl: imageUrl,
-      productCount: products.length,
+      productCount: compositedCount,
       usedFallback: usedFallback,
     });
 

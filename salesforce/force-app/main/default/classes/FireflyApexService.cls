@@ -53,6 +53,9 @@ public with sharing class FireflyApexService {
 
         @InvocableVariable
         public String errorMessage;
+
+        @AuraEnabled public Boolean usedFallback { get; set; }
+        @AuraEnabled public Integer productCount { get; set; }
     }
 
     // ─── Invocable Method ─────────────────────────────────────────────
@@ -132,13 +135,15 @@ public with sharing class FireflyApexService {
                 }
 
                 // Call Vercel API to composite and expand
-                String imageUrl = callVercelImageApi(productList, req.prompt, req.eventType);
-                result.imageUrl = imageUrl;
+                VercelImageResult vResult = callVercelImageApi(productList, req.prompt, req.eventType);
+                result.imageUrl = vResult.imageUrl;
+                result.usedFallback = vResult.usedFallback;
+                result.productCount = vResult.productCount;
 
                 // Optionally save to Salesforce Files
-                if (req.saveToFiles == true && String.isNotBlank(imageUrl)) {
+                if (req.saveToFiles == true && String.isNotBlank(vResult.imageUrl)) {
                     String fileName = 'journey-image-' + System.currentTimeMillis() + '.png';
-                    String cvId = downloadAndSaveImage(imageUrl, fileName);
+                    String cvId = downloadAndSaveImage(vResult.imageUrl, fileName);
                     result.contentVersionId = cvId;
                 }
 
@@ -170,9 +175,18 @@ public with sharing class FireflyApexService {
     }
 
     /**
+     * Intermediate result from Vercel API call carrying fallback metadata.
+     */
+    private class VercelImageResult {
+        String imageUrl;
+        Boolean usedFallback = false;
+        Integer productCount = 0;
+    }
+
+    /**
      * Call the Vercel API to composite products and generate expanded image.
      */
-    private static String callVercelImageApi(List<Map<String, Object>> products, String prompt, String eventType) {
+    private static VercelImageResult callVercelImageApi(List<Map<String, Object>> products, String prompt, String eventType) {
         System.debug(LoggingLevel.INFO, '[callVercelImageApi] Starting with ' + products.size() + ' products');
         for (Integer i = 0; i < products.size(); i++) {
             Map<String, Object> p = products[i];
@@ -231,7 +245,11 @@ public with sharing class FireflyApexService {
             throw new FireflyException('No image URL in response');
         }
 
-        return imageUrl;
+        VercelImageResult vResult = new VercelImageResult();
+        vResult.imageUrl = imageUrl;
+        vResult.usedFallback = usedFallback;
+        vResult.productCount = productCount;
+        return vResult;
     }
 
     // ─── Core API Methods ─────────────────────────────────────────────

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Scene Background Directive</masterLabel>
+    <description>Generates dynamic scene backgrounds for the Beauty Concierge storefront. NOT used by Clientelling Copilot.</description>
+    <type>einstein_gpt__flex</type>
+    <templateVersions>
+        <content>
+You generate a sceneContext JSON object for a beauty storefront background image.
+
+CONVERSATION CONTEXT:
+{!$Input:ConversationContext}
+
+PRODUCT IDs BEING DISPLAYED:
+{!$Input:ProductIds}
+
+CUSTOMER CONTEXT TAGS:
+{!$Input:CustomerContextTags}
+
+---
+
+YOUR TASK: Return ONLY a JSON sceneContext object. Do NOT return a full uiDirective, do NOT include product data, do NOT include action fields. The calling agent will embed your sceneContext into its own uiDirective response.
+
+SETTING: Pick the closest match from: &quot;neutral&quot;, &quot;bathroom&quot;, &quot;travel&quot;, &quot;outdoor&quot;, &quot;lifestyle&quot;, &quot;bedroom&quot;, &quot;vanity&quot;, &quot;gym&quot;, &quot;office&quot;. This is a fallback category for caching. If nothing fits, use &quot;neutral&quot;.
+
+BACKGROUND PROMPT: Write a vivid 1-2 sentence scene description that matches the conversation context. Be creative and specific. Examples:
+- &quot;Elegant marble bathroom counter with morning light streaming through frosted glass, fresh eucalyptus and white towels&quot;
+- &quot;Busy New York City street at golden hour, urban chic, glass storefronts reflecting sunset&quot;
+- &quot;Tropical beachside cabana at sunset, ocean breeze, palm fronds and coconut&quot;
+- &quot;Cozy candlelit bedroom vanity with soft pink lighting and rose petals&quot;
+
+GENERATE BACKGROUND: Set to true when the conversation implies a specific visual setting (destination, emotional mood, life event). Set to false for generic browsing or follow-up questions.
+
+OUTPUT FORMAT — return exactly this JSON structure and nothing else:
+{
+  &quot;setting&quot;: &quot;travel&quot;,
+  &quot;backgroundPrompt&quot;: &quot;Your vivid scene description here&quot;,
+  &quot;generateBackground&quot;: true,
+  &quot;customerContext&quot;: &quot;tags from input if available&quot;
+}
+        </content>
+        <inputs>
+            <apiName>ConversationContext</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Conversation Context</masterLabel>
+            <referenceName>Input:ConversationContext</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>ProductIds</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Product IDs</masterLabel>
+            <referenceName>Input:ProductIds</referenceName>
+            <required>false</required>
+        </inputs>
+        <inputs>
+            <apiName>CustomerContextTags</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Customer Context Tags</masterLabel>
+            <referenceName>Input:CustomerContextTags</referenceName>
+            <required>false</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT4Omni</primaryModel>
+        <status>Published</status>
+    </templateVersions>
+</GenAiPromptTemplate>

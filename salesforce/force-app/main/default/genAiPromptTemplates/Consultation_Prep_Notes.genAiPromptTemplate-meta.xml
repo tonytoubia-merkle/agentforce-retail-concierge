@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Consultation Prep Notes</masterLabel>
+    <description>Generates structured consultation prep notes from a customer 360 profile. Used by Clientelling Copilot.</description>
+    <type>einstein_gpt__flex</type>
+    <templateVersions>
+        <content>
+You are generating structured consultation preparation notes for an in-store beauty rep about to start a face-to-face consultation.
+
+CUSTOMER 360 PROFILE:
+{!$Input:CustomerProfile}
+
+APPOINTMENT TYPE:
+{!$Input:AppointmentType}
+
+STORE LOCATION:
+{!$Input:StoreLocation}
+
+---
+
+Generate structured talking points organized by priority. Each point should be actionable — something the rep can say or reference during the consultation.
+
+1. LOYALTY AND RELATIONSHIP STATUS
+   - Tier, points balance, available rewards or vouchers
+   - How long they have been a member
+   - Example: &quot;Gold-tier member with 2,400 points — mention the new rewards catalog&quot;
+
+2. RECENT PURCHASES AND RESTOCK OPPORTUNITIES
+   - Products purchased in the last 90 days
+   - Estimate restock timing based on product category (serums about 2 months, moisturizers about 3 months, sunscreen about 2 months)
+   - Example: &quot;Last purchase: LUMIERE Night Serum (3 weeks ago) — ask how it is working&quot;
+
+3. PREVIOUS CONSULTATION NOTES
+   - Key observations from past consultations
+   - Unresolved concerns or interests
+   - Example: &quot;Previous consultation noted interest in anti-aging — the new Renewal Collection just launched&quot;
+
+4. MEANINGFUL EVENTS AND LIFE CONTEXT
+   - Upcoming events (weddings, travel, milestones)
+   - Recent life changes that affect product needs
+   - Example: &quot;Mentioned trip to Bali coming up — suggest travel-size SPF options&quot;
+
+5. BROWSE AND ENGAGEMENT SIGNALS
+   - Recent browsing categories (soft reference only — this is inferred data)
+   - Example: &quot;Has been browsing anti-aging serums online recently&quot;
+
+6. BEAUTY PROFILE AND PREFERENCES
+   - Skin type, concerns, allergies
+   - Brand preferences, sustainability preferences
+   - Example: &quot;Sensitive skin, prefers clean beauty — lead with SERENE and BOTANICA&quot;
+
+7. PRODUCT RECOMMENDATIONS (provenance-aware)
+   - 3-5 specific products to discuss, aligned to their profile
+   - For 3P-informed tier selections, frame as &quot;Staff picks&quot; not &quot;Based on profile&quot;
+   - NEVER surface raw 3P appended data (household income, demographics)
+
+OUTPUT:
+Return a concise bulleted list of up to 10 actionable talking points. Start each with the section category in brackets, e.g. [Loyalty], [Restock], [Event], [Beauty Profile], [Staff Picks].
+        </content>
+        <inputs>
+            <apiName>CustomerProfile</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Customer Profile</masterLabel>
+            <referenceName>Input:CustomerProfile</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>AppointmentType</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Appointment Type</masterLabel>
+            <referenceName>Input:AppointmentType</referenceName>
+            <required>false</required>
+        </inputs>
+        <inputs>
+            <apiName>StoreLocation</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Store Location</masterLabel>
+            <referenceName>Input:StoreLocation</referenceName>
+            <required>false</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT4Omni</primaryModel>
+        <status>Published</status>
+    </templateVersions>
+</GenAiPromptTemplate>

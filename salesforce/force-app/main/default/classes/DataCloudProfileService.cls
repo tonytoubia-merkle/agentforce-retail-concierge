@@ -31,6 +31,8 @@ global with sharing class DataCloudProfileService {
         profile.put('browseSessions', getBrowseSessions(customerId));
         profile.put('loyalty', getLoyalty(customerId));
         profile.put('agentCapturedProfile', getCapturedProfileFields(customerId));
+        profile.put('appointments', getAppointments(customerId));
+        profile.put('consultationNotes', getConsultationNotes(customerId));
 
         return JSON.serialize(profile);
     }
@@ -242,6 +244,77 @@ global with sharing class DataCloudProfileService {
         }
 
         return profile;
+    }
+
+    // ─── Appointment & Consultation Queries ─────────────────────────
+
+    private static List<Map<String, Object>> getAppointments(String customerId) {
+        List<Map<String, Object>> appointments = new List<Map<String, Object>>();
+
+        try {
+            List<Store_Appointment__c> records = [
+                SELECT Id, Name, Appointment_DateTime__c, Type__c, Status__c,
+                       Store_Location__c, Channel__c, Identity_Tier__c,
+                       Customer_Notes__c, Rep_Prep_Notes__c, Duration_Minutes__c,
+                       Satisfaction_Rating__c
+                FROM Store_Appointment__c
+                WHERE Contact__c = :customerId
+                ORDER BY Appointment_DateTime__c DESC
+                LIMIT 10
+            ];
+
+            for (Store_Appointment__c r : records) {
+                Map<String, Object> m = new Map<String, Object>();
+                m.put('appointmentId', r.Id);
+                m.put('name', r.Name);
+                m.put('appointmentDateTime', String.valueOf(r.Appointment_DateTime__c));
+                m.put('type', r.Type__c);
+                m.put('status', r.Status__c);
+                m.put('storeLocation', r.Store_Location__c);
+                m.put('channel', r.Channel__c);
+                m.put('identityTier', r.Identity_Tier__c);
+                m.put('customerNotes', r.Customer_Notes__c);
+                m.put('durationMinutes', r.Duration_Minutes__c);
+                m.put('satisfactionRating', r.Satisfaction_Rating__c);
+                appointments.add(m);
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, 'Failed to query appointments: ' + e.getMessage());
+        }
+
+        return appointments;
+    }
+
+    private static List<Map<String, Object>> getConsultationNotes(String customerId) {
+        List<Map<String, Object>> notes = new List<Map<String, Object>>();
+
+        try {
+            List<Consultation_Note__c> records = [
+                SELECT Id, Note_Type__c, Note_Text__c, Captured_At__c,
+                       Captured_By__r.Name, Products_Referenced__c,
+                       Store_Appointment__r.Name
+                FROM Consultation_Note__c
+                WHERE Contact__c = :customerId
+                ORDER BY Captured_At__c DESC
+                LIMIT 20
+            ];
+
+            for (Consultation_Note__c r : records) {
+                Map<String, Object> m = new Map<String, Object>();
+                m.put('noteId', r.Id);
+                m.put('noteType', r.Note_Type__c);
+                m.put('noteText', r.Note_Text__c);
+                m.put('capturedAt', String.valueOf(r.Captured_At__c));
+                m.put('capturedBy', r.Captured_By__r != null ? r.Captured_By__r.Name : null);
+                m.put('productsReferenced', r.Products_Referenced__c);
+                m.put('appointmentName', r.Store_Appointment__r != null ? r.Store_Appointment__r.Name : null);
+                notes.add(m);
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, 'Failed to query consultation notes: ' + e.getMessage());
+        }
+
+        return notes;
     }
 
     // ─── WRITE Operations ───────────────────────────────────────────

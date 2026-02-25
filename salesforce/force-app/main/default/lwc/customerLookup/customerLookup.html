@@ -1,0 +1,51 @@
+<template>
+    <div class="lookup-container">
+        <div class="search-input-wrapper">
+            <lightning-input
+                type="search"
+                label="Find Customer"
+                placeholder="Search by name, email, phone, or loyalty #"
+                value={searchTerm}
+                onchange={handleSearchChange}
+                variant="label-hidden"
+                class="search-input"
+            ></lightning-input>
+        </div>
+
+        <template if:true={isSearching}>
+            <div class="slds-align_absolute-center slds-p-around_small">
+                <lightning-spinner alternative-text="Searching" size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:true={hasResults}>
+            <div class="results-list">
+                <template for:each={searchResults} for:item="result">
+                    <div key={result.contactId} class="result-item" onclick={handleSelectCustomer} data-id={result.contactId}>
+                        <div class="result-main">
+                            <span class="result-name">{result.name}</span>
+                            <span class={identityBadgeClass} data-tier={result.identityTier}>{result.identityTier}</span>
+                        </div>
+                        <div class="result-details">
+                            <template if:true={result.email}>
+                                <span class="result-email">{result.email}</span>
+                            </template>
+                            <template if:true={result.phone}>
+                                <span class="result-phone">{result.phone}</span>
+                            </template>
+                        </div>
+                        <template if:true={result.clientellingTier}>
+                            <span class="result-tier">{result.clientellingTier}</span>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <template if:true={noResults}>
+            <div class="no-results slds-p-around_small">
+                <p>No customers found for "{searchTerm}"</p>
+            </div>
+        </template>
+    </div>
+</template>

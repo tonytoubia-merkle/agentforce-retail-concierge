@@ -1,0 +1,86 @@
+<template>
+    <div class="sidebar-container">
+        <!-- Header -->
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Today's Appointments</h2>
+            <lightning-button-icon
+                icon-name="utility:refresh"
+                alternative-text="Refresh"
+                onclick={handleRefresh}
+                size="small"
+            ></lightning-button-icon>
+        </div>
+
+        <!-- Store Location Filter -->
+        <div class="store-filter slds-p-horizontal_small slds-p-bottom_small">
+            <lightning-combobox
+                name="store"
+                label="Store"
+                value={storeLocation}
+                options={storeOptions}
+                onchange={handleStoreChange}
+                variant="label-hidden"
+                placeholder="Select store..."
+            ></lightning-combobox>
+        </div>
+
+        <!-- Loading -->
+        <template if:true={isLoading}>
+            <div class="slds-align_absolute-center slds-p-around_medium">
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Appointments List -->
+        <template if:false={isLoading}>
+            <template if:true={hasAppointments}>
+                <div class="appointment-list">
+                    <template for:each={appointments} for:item="appt">
+                        <div key={appt.appointmentId}
+                             class={appt.itemClass}
+                             onclick={handleSelectAppointment}
+                             data-id={appt.appointmentId}
+                             data-contact={appt.contactId}>
+                            <div class="appt-top-row">
+                                <span class="appt-time">{appt.timeDisplay}</span>
+                                <span class={appt.statusClass}>{appt.status}</span>
+                            </div>
+                            <div class="appt-customer">
+                                <span class="appt-name">{appt.contactName}</span>
+                                <span class={appt.identityClass}>{appt.identityTier}</span>
+                            </div>
+                            <div class="appt-meta">
+                                <span class="appt-type">{appt.type_x}</span>
+                                <template if:true={appt.channel}>
+                                    <span class="appt-channel">{appt.channel}</span>
+                                </template>
+                            </div>
+                            <template if:true={isBookedOrConfirmed}>
+                                <lightning-button
+                                    label="Check In"
+                                    variant="success"
+                                    onclick={handleCheckIn}
+                                    data-id={appt.appointmentId}
+                                    class="checkin-btn slds-m-top_xx-small"
+                                    size="small"
+                                ></lightning-button>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={hasAppointments}>
+                <div class="empty-state slds-p-around_medium">
+                    <lightning-icon icon-name="utility:event" size="small" class="slds-m-bottom_small"></lightning-icon>
+                    <p>No appointments for today</p>
+                </div>
+            </template>
+        </template>
+
+        <!-- Walk-In Section -->
+        <div class="walkin-section">
+            <c-walk-in-capture onwalkinresolved={handleWalkInResolved}></c-walk-in-capture>
+        </div>
+    </div>
+</template>

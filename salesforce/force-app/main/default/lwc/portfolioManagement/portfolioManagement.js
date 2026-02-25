@@ -6,6 +6,7 @@ import getMarketingUsers from '@salesforce/apex/PortfolioController.getMarketing
 import getAdminStats from '@salesforce/apex/PortfolioController.getAdminStats';
 import updatePortfolioMarketer from '@salesforce/apex/PortfolioController.updatePortfolioMarketer';
 import updatePortfolioSettings from '@salesforce/apex/PortfolioController.updatePortfolioSettings';
+import processEventsNow from '@salesforce/apex/JourneyApprovalService.processEventsNow';
 
 export default class PortfolioManagement extends LightningElement {
     @track portfolios = [];
@@ -14,6 +15,7 @@ export default class PortfolioManagement extends LightningElement {
     @track isLoading = true;
     @track selectedPortfolio = null;
     @track showEditModal = false;
+    @track isProcessingEvents = false;
 
     // Edit form values
     @track editPrimaryMarketer = null;
@@ -127,6 +129,26 @@ export default class PortfolioManagement extends LightningElement {
         } catch (error) {
             this.showToast('Error', 'Failed to update portfolio', 'error');
             console.error('Error updating portfolio:', error);
+        }
+    }
+
+    async handleProcessEvents() {
+        this.isProcessingEvents = true;
+        try {
+            const result = await processEventsNow();
+            if (result.success) {
+                this.showToast('Success', result.message || 'Events processed successfully', 'success');
+                await Promise.all([
+                    refreshApex(this.wiredPortfoliosResult),
+                    refreshApex(this.wiredStatsResult)
+                ]);
+            } else {
+                this.showToast('Error', result.errorMessage || 'Failed to process events', 'error');
+            }
+        } catch (error) {
+            this.showToast('Error', 'Failed to process events: ' + (error.body?.message || error.message), 'error');
+        } finally {
+            this.isProcessingEvents = false;
         }
     }
 

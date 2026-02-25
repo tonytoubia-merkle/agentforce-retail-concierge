@@ -4,6 +4,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { ProfileDropdown } from './ProfileDropdown';
+import { DemoPanel } from './DemoPanel';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 import type { ProductCategory } from '@/types/product';
 
@@ -42,6 +43,9 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
       {/* Top bar - promo */}
       <div className="bg-stone-900 text-white text-center py-2 text-xs tracking-wide">
+        {isPseudonymous && isKnown && customer?.name && (
+          <span className="hidden sm:inline">Welcome back, {customer.name.split(' ')[0]} · </span>
+        )}
         <span className="hidden sm:inline">Complimentary shipping on orders over $50 | </span>
         <button
           onClick={onBeautyAdvisorClick}
@@ -237,6 +241,9 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }
       isOpen={showRegister}
       onClose={() => setShowRegister(false)}
     />
+
+    {/* Demo panel — bottom-right bubble for switching identities */}
+    <DemoPanel />
     </>
   );
 };

@@ -209,6 +209,24 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             }
         }
 
+        // Derive event date if missing — enables multi-step journeys
+        if (event.Event_Date__c == null) {
+            Date derivedDate = null;
+
+            // Try parsing from relative time text (e.g., "in two weeks", "next month")
+            if (String.isNotBlank(event.Relative_Time_Text__c)) {
+                derivedDate = deriveEventDateFromText(event.Relative_Time_Text__c);
+            }
+
+            // Default to 14 days out for life-events
+            if (derivedDate == null) {
+                derivedDate = Date.today().addDays(14);
+            }
+
+            event.Event_Date__c = derivedDate;
+            System.debug('Derived event date ' + derivedDate + ' for event: ' + event.Description__c);
+        }
+
         // Build journey configuration
         MultiStepJourneyBuilder.JourneyConfig config = new MultiStepJourneyBuilder.JourneyConfig();
         config.contactId = contactId;
@@ -256,6 +274,34 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             System.debug(LoggingLevel.WARN, 'Campaign Agent failed: ' + e.getMessage());
         }
 
+        // Pre-attach product recommendations to all steps (enables product composite path)
+        JourneyPromptBuilder.PromptResult promptResult = JourneyPromptBuilder.buildEnrichedPrompt(
+            contactId, event.Description__c, event.Event_Type__c
+        );
+        String productsJson = promptResult.recommendedProductsJson;
+
+        // If no personalized products, try event-suggested products
+        if (String.isBlank(productsJson) && String.isNotBlank(event.Suggested_Products__c)) {
+            productsJson = event.Suggested_Products__c;
+        }
+
+        // Extract product names for prompt templates
+        List<String> productNames = new List<String>();
+        if (String.isNotBlank(productsJson)) {
+            try {
+                List<Object> parsed = (List<Object>) JSON.deserializeUntyped(productsJson);
+                for (Object obj : parsed) {
+                    Map<String, Object> prodMap = (Map<String, Object>) obj;
+                    String name = (String) prodMap.get('name');
+                    if (String.isNotBlank(name)) productNames.add(name);
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.WARN, 'Failed to parse products: ' + e.getMessage());
+            }
+        }
+
+        Integer totalSteps = journeyResult.steps.size();
+
         // Create Journey_Approval__c records for each step
         for (MultiStepJourneyBuilder.JourneyStep step : journeyResult.steps) {
             Journey_Approval__c approval = new Journey_Approval__c();
@@ -290,18 +336,33 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
                 } else if (String.isNotBlank(event.Suggested_Firefly_Prompt__c)) {
                     approval.Firefly_Prompt__c = event.Suggested_Firefly_Prompt__c;
                 } else {
-                    approval.Firefly_Prompt__c = step.fireflyPrompt;
+                    // Use step-aware prompt template with product names
+                    approval.Firefly_Prompt__c = JourneyPromptBuilder.getStepPrompt(
+                        event.Event_Type__c, event.Description__c,
+                        step.stepNumber, totalSteps, productNames
+                    );
                 }
             } else {
                 // Subsequent steps use builder-generated templates
                 approval.Suggested_Subject__c = step.subject;
                 approval.Suggested_Body__c = step.body;
                 approval.SMS_Body__c = step.smsBody;
-                approval.Firefly_Prompt__c = step.fireflyPrompt;
+
+                // Use step-aware prompt template for richer, context-specific prompts
+                if (step.channel == 'Email') {
+                    approval.Firefly_Prompt__c = JourneyPromptBuilder.getStepPrompt(
+                        event.Event_Type__c, event.Description__c,
+                        step.stepNumber, totalSteps, productNames
+                    );
+                } else {
+                    approval.Firefly_Prompt__c = step.fireflyPrompt;
+                }
             }
 
-            // Products JSON (if available)
-            if (String.isNotBlank(step.productsJson)) {
+            // Attach products to ALL email steps (enables product composite image path)
+            if (step.channel == 'Email' && String.isNotBlank(productsJson)) {
+                approval.Recommended_Products__c = productsJson;
+            } else if (String.isNotBlank(step.productsJson)) {
                 approval.Recommended_Products__c = step.productsJson;
             }
 
@@ -532,6 +593,76 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
         html += '<p style="color: #B76E79; font-weight: 600; font-size: 16px;">The BEAUTÉ Team</p>';
         html += '</div>';
         return html;
+    }
+
+    // ─── Date Derivation ─────────────────────────────────────────────
+
+    /**
+     * Parse relative time text into an actual date.
+     * Handles patterns like "in two weeks", "next month", "in 3 days", "tomorrow".
+     */
+    private Date deriveEventDateFromText(String text) {
+        if (String.isBlank(text)) return null;
+
+        String lower = text.toLowerCase().trim();
+
+        // "tomorrow"
+        if (lower.contains('tomorrow')) {
+            return Date.today().addDays(1);
+        }
+
+        // "next week"
+        if (lower.contains('next week')) {
+            return Date.today().addDays(7);
+        }
+
+        // "next month"
+        if (lower.contains('next month')) {
+            return Date.today().addMonths(1);
+        }
+
+        // "next year"
+        if (lower.contains('next year')) {
+            return Date.today().addMonths(12);
+        }
+
+        // Word-based: "in two weeks", "in three days", etc.
+        Map<String, Integer> wordNumbers = new Map<String, Integer>{
+            'one' => 1, 'two' => 2, 'three' => 3, 'four' => 4, 'five' => 5,
+            'six' => 6, 'seven' => 7, 'eight' => 8, 'nine' => 9, 'ten' => 10,
+            'a couple' => 2, 'a few' => 3, 'several' => 5, 'a' => 1
+        };
+
+        // Pattern: "in X day(s)/week(s)/month(s)"
+        Pattern p = Pattern.compile('in\\s+(\\w+(?:\\s+\\w+)?)\\s+(day|week|month)s?');
+        Matcher m = p.matcher(lower);
+        if (m.find()) {
+            String numText = m.group(1);
+            String unit = m.group(2);
+
+            Integer num = wordNumbers.get(numText);
+            if (num == null) {
+                try { num = Integer.valueOf(numText); } catch (Exception e) { return null; }
+            }
+
+            if (unit == 'day') return Date.today().addDays(num);
+            if (unit == 'week') return Date.today().addDays(num * 7);
+            if (unit == 'month') return Date.today().addMonths(num);
+        }
+
+        // Pattern: just a number + unit without "in" prefix, e.g. "2 weeks"
+        Pattern p2 = Pattern.compile('(\\d+)\\s+(day|week|month)s?');
+        Matcher m2 = p2.matcher(lower);
+        if (m2.find()) {
+            Integer num = Integer.valueOf(m2.group(1));
+            String unit = m2.group(2);
+
+            if (unit == 'day') return Date.today().addDays(num);
+            if (unit == 'week') return Date.today().addDays(num * 7);
+            if (unit == 'month') return Date.today().addMonths(num);
+        }
+
+        return null;
     }
 
     // ─── Notification ─────────────────────────────────────────────────

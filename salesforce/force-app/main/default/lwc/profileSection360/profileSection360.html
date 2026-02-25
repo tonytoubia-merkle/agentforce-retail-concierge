@@ -1,0 +1,375 @@
+<template>
+    <template if:true={hasProfile}>
+        <!-- Beauty Profile (declared) -->
+        <div class="section-card slds-m-bottom_xx-small">
+            <div class="section-header" onclick={toggleSection} data-section="beauty">
+                <lightning-icon icon-name="utility:heart" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                <span class="section-title">Beauty Profile</span>
+                <c-provenance-badge provenance="declared" class="slds-m-left_x-small"></c-provenance-badge>
+                <template if:false={isEditingBeauty}>
+                    <lightning-button-icon
+                        icon-name="utility:edit"
+                        alternative-text="Edit"
+                        size="small"
+                        variant="bare"
+                        class="edit-btn slds-m-left_x-small"
+                        onclick={handleEditBeauty}
+                    ></lightning-button-icon>
+                </template>
+                <lightning-icon icon-name={beautyExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
+            </div>
+            <template if:true={beautyExpanded}>
+                <div class="section-body">
+                    <!-- View Mode -->
+                    <template if:false={isEditingBeauty}>
+                        <template if:true={profile.beautyProfile}>
+                            <div class="slds-grid slds-wrap">
+                                <template if:true={profile.beautyProfile.skinType}>
+                                    <div class="slds-col slds-size_1-of-2 field-item">
+                                        <span class="field-label">Skin Type</span>
+                                        <span class="field-value">{profile.beautyProfile.skinType}</span>
+                                    </div>
+                                </template>
+                                <template if:true={profile.beautyProfile.skinConcerns}>
+                                    <div class="slds-col slds-size_1-of-2 field-item">
+                                        <span class="field-label">Concerns</span>
+                                        <span class="field-value">{profile.beautyProfile.skinConcerns}</span>
+                                    </div>
+                                </template>
+                                <template if:true={profile.beautyProfile.allergies}>
+                                    <div class="slds-col slds-size_1-of-2 field-item">
+                                        <span class="field-label">Allergies</span>
+                                        <span class="field-value alert-text">{profile.beautyProfile.allergies}</span>
+                                    </div>
+                                </template>
+                                <template if:true={profile.beautyProfile.beautyPriority}>
+                                    <div class="slds-col slds-size_1-of-2 field-item">
+                                        <span class="field-label">Beauty Priority</span>
+                                        <span class="field-value">{profile.beautyProfile.beautyPriority}</span>
+                                    </div>
+                                </template>
+                                <template if:true={profile.beautyProfile.preferredBrands}>
+                                    <div class="slds-col slds-size_1-of-2 field-item">
+                                        <span class="field-label">Preferred Brands</span>
+                                        <span class="field-value">{profile.beautyProfile.preferredBrands}</span>
+                                    </div>
+                                </template>
+                                <template if:true={profile.beautyProfile.sustainabilityPreference}>
+                                    <div class="slds-col slds-size_1-of-2 field-item">
+                                        <span class="field-label">Sustainability</span>
+                                        <span class="field-value">{profile.beautyProfile.sustainabilityPreference}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:false={profile.beautyProfile}>
+                            <p class="empty-state">No beauty profile data available —
+                                <a onclick={handleEditBeauty}>add one</a>
+                            </p>
+                        </template>
+                    </template>
+
+                    <!-- Edit Mode -->
+                    <template if:true={isEditingBeauty}>
+                        <div class="edit-form">
+                            <div class="slds-grid slds-wrap slds-gutters_x-small">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-combobox
+                                        label="Skin Type"
+                                        value={editFields.skinType}
+                                        options={skinTypeOptions}
+                                        data-field="skinType"
+                                        onchange={handleEditFieldChange}
+                                        variant="label-stacked"
+                                    ></lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input
+                                        label="Concerns"
+                                        value={editFields.skinConcerns}
+                                        data-field="skinConcerns"
+                                        placeholder="e.g. hydration;brightening"
+                                        onchange={handleEditFieldChange}
+                                        variant="label-stacked"
+                                    ></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input
+                                        label="Allergies"
+                                        value={editFields.allergies}
+                                        data-field="allergies"
+                                        placeholder="e.g. fragrance, retinol"
+                                        onchange={handleEditFieldChange}
+                                        variant="label-stacked"
+                                    ></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input
+                                        label="Beauty Priority"
+                                        value={editFields.beautyPriority}
+                                        data-field="beautyPriority"
+                                        placeholder="e.g. Anti-aging"
+                                        onchange={handleEditFieldChange}
+                                        variant="label-stacked"
+                                    ></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input
+                                        label="Preferred Brands"
+                                        value={editFields.preferredBrands}
+                                        data-field="preferredBrands"
+                                        placeholder="e.g. LUMIERE;BOTANICA"
+                                        onchange={handleEditFieldChange}
+                                        variant="label-stacked"
+                                    ></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input
+                                        label="Sustainability"
+                                        value={editFields.sustainabilityPreference}
+                                        data-field="sustainabilityPreference"
+                                        placeholder="e.g. Eco-conscious"
+                                        onchange={handleEditFieldChange}
+                                        variant="label-stacked"
+                                    ></lightning-input>
+                                </div>
+                            </div>
+                            <div class="edit-actions slds-m-top_small">
+                                <lightning-button label="Cancel" onclick={handleCancelEdit} class="slds-m-right_x-small"></lightning-button>
+                                <lightning-button label="Save" variant="brand" onclick={handleSaveBeauty}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <!-- Order History (observed) -->
+        <div class="section-card slds-m-bottom_xx-small">
+            <div class="section-header" onclick={toggleSection} data-section="orders">
+                <lightning-icon icon-name="utility:cart" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                <span class="section-title">Recent Orders</span>
+                <c-provenance-badge provenance="observed" class="slds-m-left_x-small"></c-provenance-badge>
+                <span class="section-count" if:true={hasOrders}>({orderCount})</span>
+                <lightning-icon icon-name={ordersExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
+            </div>
+            <template if:true={ordersExpanded}>
+                <div class="section-body">
+                    <template if:true={hasOrders}>
+                        <template for:each={profile.recentOrders} for:item="order">
+                            <div key={order.orderId} class="order-item">
+                                <div class="order-header">
+                                    <span class="order-id">#{order.orderId}</span>
+                                    <span class="order-date">{order.orderDate}</span>
+                                    <span class="order-amount">${order.totalAmount}</span>
+                                </div>
+                                <template if:true={order.lineItems}>
+                                    <template for:each={order.lineItems} for:item="item">
+                                        <span key={item.productId} class="line-item">{item.productName}</span>
+                                    </template>
+                                </template>
+                            </div>
+                        </template>
+                    </template>
+                    <template if:false={hasOrders}>
+                        <p class="empty-state">No order history</p>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <!-- Loyalty (observed) -->
+        <template if:true={profile.loyalty}>
+            <div class="section-card slds-m-bottom_xx-small">
+                <div class="section-header" onclick={toggleSection} data-section="loyalty">
+                    <lightning-icon icon-name="utility:ribbon" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span class="section-title">Loyalty</span>
+                    <c-provenance-badge provenance="observed" class="slds-m-left_x-small"></c-provenance-badge>
+                    <lightning-icon icon-name={loyaltyExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
+                </div>
+                <template if:true={loyaltyExpanded}>
+                    <div class="section-body">
+                        <div class="loyalty-grid">
+                            <div class="loyalty-stat">
+                                <span class="stat-label">Tier</span>
+                                <span class="stat-value tier-value">{profile.loyalty.tier}</span>
+                            </div>
+                            <div class="loyalty-stat">
+                                <span class="stat-label">Points</span>
+                                <span class="stat-value">{profile.loyalty.pointsBalance}</span>
+                            </div>
+                            <div class="loyalty-stat">
+                                <span class="stat-label">Member Since</span>
+                                <span class="stat-value">{profile.loyalty.memberSince}</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Meaningful Events (stated) -->
+        <template if:true={hasEvents}>
+            <div class="section-card slds-m-bottom_xx-small">
+                <div class="section-header" onclick={toggleSection} data-section="events">
+                    <lightning-icon icon-name="utility:event" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span class="section-title">Life Events</span>
+                    <c-provenance-badge provenance="stated" class="slds-m-left_x-small"></c-provenance-badge>
+                    <span class="section-count">({eventCount})</span>
+                    <lightning-icon icon-name={eventsExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
+                </div>
+                <template if:true={eventsExpanded}>
+                    <div class="section-body">
+                        <template for:each={profile.meaningfulEvents} for:item="event">
+                            <div key={event.capturedAt} class="event-item">
+                                <span class="event-type">{event.eventType}</span>
+                                <span class="event-desc">{event.description}</span>
+                                <template if:true={event.agentNote}>
+                                    <span class="event-note">{event.agentNote}</span>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Chat History (observed) -->
+        <template if:true={hasChats}>
+            <div class="section-card slds-m-bottom_xx-small">
+                <div class="section-header" onclick={toggleSection} data-section="chats">
+                    <lightning-icon icon-name="utility:chat" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span class="section-title">Chat History</span>
+                    <c-provenance-badge provenance="observed" class="slds-m-left_x-small"></c-provenance-badge>
+                    <span class="section-count">({chatCount})</span>
+                    <lightning-icon icon-name={chatsExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
+                </div>
+                <template if:true={chatsExpanded}>
+                    <div class="section-body">
+                        <template for:each={profile.chatHistory} for:item="chat">
+                            <div key={chat.sessionDate} class="chat-item">
+                                <span class="chat-date">{chat.sessionDate}</span>
+                                <span class="chat-summary">{chat.summary}</span>
+                                <template if:true={chat.sentiment}>
+                                    <span class={chatSentimentClass}>{chat.sentiment}</span>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Browse Activity (inferred) -->
+        <template if:true={hasBrowse}>
+            <div class="section-card slds-m-bottom_xx-small">
+                <div class="section-header" onclick={toggleSection} data-section="browse">
+                    <lightning-icon icon-name="utility:search" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span class="section-title">Browse Activity</span>
+                    <c-provenance-badge provenance="inferred" class="slds-m-left_x-small"></c-provenance-badge>
+                    <lightning-icon icon-name={browseExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
+                </div>
+                <template if:true={browseExpanded}>
+                    <div class="section-body">
+                        <template for:each={profile.browseActivity} for:item="session">
+                            <div key={session.sessionDate} class="browse-item">
+                                <span class="browse-date">{session.sessionDate}</span>
+                                <span class="browse-categories">
+                                    <template for:each={session.categoriesBrowsed} for:item="cat">
+                                        <span key={cat} class="tag">{cat}</span>
+                                    </template>
+                                </span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Agent-Captured Profile (agent_inferred) -->
+        <template if:true={hasCaptured}>
+            <div class="section-card slds-m-bottom_xx-small">
+                <div class="section-header" onclick={toggleSection} data-section="captured">
+                    <lightning-icon icon-name="utility:einstein" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span class="section-title">Agent-Captured</span>
+                    <c-provenance-badge provenance="agent_inferred" class="slds-m-left_x-small"></c-provenance-badge>
+                    <lightning-icon icon-name={capturedExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
+                </div>
+                <template if:true={capturedExpanded}>
+                    <div class="section-body">
+                        <template for:each={profile.capturedProfile} for:item="field">
+                            <div key={field.fieldName} class="captured-item">
+                                <span class="field-label">{field.fieldName}</span>
+                                <span class="field-value">{field.value}</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Staff Picks / Recommendations (translated 3P → NEVER raw appended data) -->
+        <template if:true={hasRecommendations}>
+            <div class="section-card slds-m-bottom_xx-small staff-picks">
+                <div class="section-header">
+                    <lightning-icon icon-name="utility:like" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span class="section-title">Staff Picks</span>
+                    <span class="staff-label">Curated suggestions</span>
+                </div>
+                <div class="section-body">
+                    <template if:true={profile.recommendedBrandTiers}>
+                        <div class="rec-group">
+                            <span class="rec-label">Recommended brands:</span>
+                            <template for:each={profile.recommendedBrandTiers} for:item="brand">
+                                <span key={brand} class="tag brand-tag">{brand}</span>
+                            </template>
+                        </div>
+                    </template>
+                    <template if:true={profile.recommendedCategories}>
+                        <div class="rec-group">
+                            <span class="rec-label">Focus areas:</span>
+                            <template for:each={profile.recommendedCategories} for:item="cat">
+                                <span key={cat} class="tag cat-tag">{cat}</span>
+                            </template>
+                        </div>
+                    </template>
+                    <template if:true={profile.lifestyleContext}>
+                        <div class="rec-group">
+                            <span class="rec-label">Context:</span>
+                            <span class="lifestyle-text">{profile.lifestyleContext}</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <!-- Consultation Notes -->
+        <template if:true={hasConsultationNotes}>
+            <div class="section-card slds-m-bottom_xx-small">
+                <div class="section-header" onclick={toggleSection} data-section="notes">
+                    <lightning-icon icon-name="utility:note" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span class="section-title">Consultation Notes</span>
+                    <span class="section-count">({noteCount})</span>
+                    <lightning-icon icon-name={notesExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
+                </div>
+                <template if:true={notesExpanded}>
+                    <div class="section-body">
+                        <template for:each={profile.consultationNotes} for:item="note">
+                            <div key={note.capturedAt} class="note-item">
+                                <span class="note-type">{note.noteType}</span>
+                                <span class="note-text">{note.noteText}</span>
+                                <span class="note-date">{note.capturedAt}</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </template>
+
+    <template if:false={hasProfile}>
+        <div class="empty-profile slds-align_absolute-center">
+            <p>Select a customer to view their 360 profile</p>
+        </div>
+    </template>
+</template>

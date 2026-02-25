@@ -72,6 +72,108 @@ global with sharing class ProductCatalogService {
         return allResults;
     }
 
+    // ─── Stock Check ───────────────────────────────────────────────
+
+    public class StockCheckRequest {
+        @InvocableVariable(required=true)
+        public String storeLocation;
+
+        @InvocableVariable(required=false)
+        public String productIds; // Semicolon-delimited Product2 IDs
+    }
+
+    public class StockCheckResult {
+        @InvocableVariable
+        public String productId;
+
+        @InvocableVariable
+        public String productName;
+
+        @InvocableVariable
+        public String brand;
+
+        @InvocableVariable
+        public Decimal price;
+
+        @InvocableVariable
+        public Integer stockLevel;
+
+        @InvocableVariable
+        public String stockStatus; // In Stock, Low Stock, Out of Stock
+
+        @InvocableVariable
+        public String imageUrl;
+    }
+
+    @InvocableMethod(label='Check Store Stock' description='Checks product stock levels for a given store location')
+    public static List<String> checkStock(List<StockCheckRequest> requests) {
+        List<String> allResults = new List<String>();
+
+        for (StockCheckRequest request : requests) {
+            allResults.add(JSON.serialize(executeStockCheck(request)));
+        }
+
+        return allResults;
+    }
+
+    private static List<StockCheckResult> executeStockCheck(StockCheckRequest request) {
+        List<StockCheckResult> results = new List<StockCheckResult>();
+
+        String soql = 'SELECT Id, Name, Brand__c, Price__c, Image_URL__c, Store_Stock_Level__c'
+            + ' FROM Product2 WHERE IsActive = true';
+
+        if (String.isNotBlank(request.productIds)) {
+            List<String> ids = request.productIds.split(';');
+            List<String> cleanIds = new List<String>();
+            for (String pid : ids) {
+                if (String.isNotBlank(pid.trim())) {
+                    cleanIds.add('\'' + String.escapeSingleQuotes(pid.trim()) + '\'');
+                }
+            }
+            if (!cleanIds.isEmpty()) {
+                soql += ' AND Id IN (' + String.join(cleanIds, ',') + ')';
+            }
+        }
+
+        soql += ' ORDER BY Name ASC LIMIT 50';
+
+        for (Product2 p : Database.query(soql)) {
+            StockCheckResult r = new StockCheckResult();
+            r.productId = p.Id;
+            r.productName = p.Name;
+            r.brand = (String) p.get('Brand__c');
+            r.price = (Decimal) p.get('Price__c');
+            r.imageUrl = (String) p.get('Image_URL__c');
+
+            Decimal level = p.Store_Stock_Level__c != null ? p.Store_Stock_Level__c : 0;
+            r.stockLevel = level.intValue();
+
+            if (level <= 0) {
+                r.stockStatus = 'Out of Stock';
+            } else if (level <= 5) {
+                r.stockStatus = 'Low Stock';
+            } else {
+                r.stockStatus = 'In Stock';
+            }
+
+            results.add(r);
+        }
+
+        return results;
+    }
+
+    // ─── AuraEnabled Stock Check (for LWC) ──────────────────────────
+
+    @AuraEnabled(cacheable=true)
+    public static List<StockCheckResult> checkStoreInventory(String storeLocation, String productIds) {
+        StockCheckRequest req = new StockCheckRequest();
+        req.storeLocation = storeLocation;
+        req.productIds = productIds;
+        return executeStockCheck(req);
+    }
+
+    // ─── Product Search ─────────────────────────────────────────────
+
     private static List<ProductResult> executeSearch(ProductSearchRequest request) {
         String soql = 'SELECT Id, Name, Brand__c, Category__c, Price__c, Description__c, ' +
                        'Image_URL__c, Skin_Types__c, Concerns__c, Rating__c, Is_Travel__c, In_Stock__c ' +

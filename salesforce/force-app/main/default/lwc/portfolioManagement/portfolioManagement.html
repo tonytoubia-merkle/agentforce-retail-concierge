@@ -23,6 +23,14 @@
             </div>
             <div class="slds-page-header__col-actions">
                 <lightning-button
+                    label="Process Events Now"
+                    icon-name="utility:process"
+                    variant="brand"
+                    onclick={handleProcessEvents}
+                    disabled={isProcessingEvents}
+                    class="slds-m-right_x-small">
+                </lightning-button>
+                <lightning-button
                     label="Refresh"
                     icon-name="utility:refresh"
                     onclick={handleRefresh}>

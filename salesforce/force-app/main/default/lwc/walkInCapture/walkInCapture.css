@@ -1,0 +1,176 @@
+.walkin-container {
+    position: relative;
+    padding: 10px;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.walkin-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+.name-row {
+    display: flex;
+    gap: 6px;
+}
+
+.name-field {
+    flex: 1;
+}
+
+.resolve-btn {
+    width: 100%;
+}
+
+.resolving-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 0;
+}
+
+.resolving-text {
+    font-size: 12px;
+    color: #666;
+}
+
+.error-msg {
+    font-size: 12px;
+    color: #d32f2f;
+    background: #fde8e8;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* CRM Search Results */
+.results-section {
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.picker-subtitle {
+    font-size: 11px;
+    color: #666;
+    margin: 0 0 6px 0;
+}
+
+.result-list {
+    margin-bottom: 6px;
+}
+
+.result-card {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.result-card:hover {
+    border-color: #0176d3;
+    background: #f0f7ff;
+}
+
+.result-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.result-detail {
+    font-size: 11px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.no-results {
+    text-align: center;
+    padding: 10px 0;
+    font-size: 12px;
+    color: #999;
+}
+
+/* Identity badges */
+.id-badge {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.id-known { background: #e8f5e9; color: #2e7d32; }
+.id-appended { background: #fff3e0; color: #e65100; }
+.id-anonymous { background: #f5f5f5; color: #888; }
+
+/* Merkury Profile Picker */
+.picker-header {
+    margin-bottom: 6px;
+}
+
+.profile-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 8px;
+}
+
+.profile-card {
+    padding: 5px 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 3px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: #fff;
+}
+
+.profile-card:hover {
+    border-color: #0176d3;
+    background: #f0f7ff;
+}
+
+.profile-card.selected {
+    border-color: #0176d3;
+    background: #e8f2fd;
+    box-shadow: 0 0 0 1px #0176d3;
+}
+
+.profile-top {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.profile-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+}
+
+.profile-archetype {
+    font-size: 10px;
+    color: #999;
+}
+
+.no-match-card {
+    border-style: dashed;
+    background: #f9f9f9;
+}
+
+.no-match-card .profile-label {
+    color: #888;
+}
+
+.picker-actions {
+    display: flex;
+    justify-content: flex-end;
+}

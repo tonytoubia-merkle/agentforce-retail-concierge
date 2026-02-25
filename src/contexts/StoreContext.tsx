@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import type { Product, ProductCategory } from '@/types/product';
 import { isPersonalizationConfigured, notifyNavigation } from '@/services/personalization';
 
-export type StoreView = 'home' | 'category' | 'product' | 'cart' | 'checkout' | 'order-confirmation' | 'account';
+export type StoreView = 'home' | 'category' | 'product' | 'cart' | 'checkout' | 'order-confirmation' | 'account' | 'appointment';
 
 export interface OrderResult {
   success: boolean;
@@ -29,6 +29,7 @@ interface StoreContextValue {
   navigateToCheckout: () => void;
   navigateToOrderConfirmation: (orderId: string, result?: OrderResult) => void;
   navigateToAccount: () => void;
+  navigateToAppointment: () => void;
   setSearchQuery: (query: string) => void;
   goBack: () => void;
 }
@@ -87,6 +88,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     pushView('account');
   }, [pushView]);
 
+  const navigateToAppointment = useCallback(() => {
+    pushView('appointment');
+  }, [pushView]);
+
   const goBack = useCallback(() => {
     if (history.length > 1) {
       const newHistory = history.slice(0, -1);
@@ -132,6 +137,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         navigateToCheckout,
         navigateToOrderConfirmation,
         navigateToAccount,
+        navigateToAppointment,
         setSearchQuery,
         goBack,
       }}

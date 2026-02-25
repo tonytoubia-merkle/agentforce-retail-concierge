@@ -1,0 +1,82 @@
+<template>
+    <div class="console-container">
+        <!-- Top Header -->
+        <div class="console-header">
+            <div class="header-left">
+                <lightning-icon icon-name="utility:retail_execution" size="small" class="slds-m-right_x-small"></lightning-icon>
+                <h1 class="console-title">Beauty Clientelling</h1>
+            </div>
+            <div class="header-center">
+                <template if:true={selectedCustomerName}>
+                    <span class="active-customer">
+                        <lightning-icon icon-name="utility:user" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                        {selectedCustomerName}
+                    </span>
+                </template>
+            </div>
+            <div class="header-right">
+                <c-customer-lookup oncustomerselected={handleGlobalCustomerSearch}></c-customer-lookup>
+            </div>
+        </div>
+
+        <!-- Three-Column Layout -->
+        <div class="console-body">
+            <!-- Left Panel: Appointment Sidebar (25%) -->
+            <div class="panel panel-left">
+                <c-appointment-sidebar
+                    onappointmentselected={handleAppointmentSelected}
+                    oncustomerselected={handleCustomerFromSidebar}
+                ></c-appointment-sidebar>
+            </div>
+
+            <!-- Center Panel: Customer Profile (50%) -->
+            <div class="panel panel-center">
+                <c-customer-profile-panel
+                    selected-contact-id={selectedContactId}
+                    oncustomerselected={handleCustomerFromProfile}
+                    onprofileclosed={handleProfileClosed}
+                    onprofileupdated={handleProfileUpdated}
+                    onnoteadded={handleNoteAdded}
+                ></c-customer-profile-panel>
+            </div>
+
+            <!-- Right Panel: Agent Co-pilot (25%) -->
+            <div class="panel panel-right">
+                <c-agent-copilot-panel
+                    contact-id={selectedContactId}
+                    onaddtoconsult={handleAddToConsult}
+                ></c-agent-copilot-panel>
+            </div>
+        </div>
+
+        <!-- Bottom Action Bar -->
+        <template if:true={hasSelectedCustomer}>
+            <div class="action-bar">
+                <lightning-button
+                    label="Lookup Order"
+                    icon-name="utility:cart"
+                    onclick={handleLookupOrder}
+                    class="slds-m-right_x-small"
+                ></lightning-button>
+                <lightning-button
+                    label="Create Case"
+                    icon-name="utility:new_note"
+                    onclick={handleCreateCase}
+                    class="slds-m-right_x-small"
+                ></lightning-button>
+                <lightning-button
+                    label="Check Stock"
+                    icon-name="utility:package"
+                    onclick={handleCheckStock}
+                    class="slds-m-right_x-small"
+                ></lightning-button>
+                <lightning-button
+                    label="Complete Consult"
+                    icon-name="utility:check"
+                    variant="brand"
+                    onclick={handleCompleteConsult}
+                ></lightning-button>
+            </div>
+        </template>
+    </div>
+</template>

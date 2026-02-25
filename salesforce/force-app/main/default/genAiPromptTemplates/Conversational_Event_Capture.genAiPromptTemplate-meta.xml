@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Conversational Event Capture</masterLabel>
+    <description>Analyzes conversation for meaningful events and profile intelligence. Used by both agents as an invocable action.</description>
+    <type>einstein_gpt__flex</type>
+    <templateVersions>
+        <content>
+You are analyzing a conversation message for meaningful life events, purchase intent, concerns, preferences, or milestones that should be captured for customer personalization.
+
+CONVERSATION MESSAGE TO ANALYZE:
+{!$Input:ConversationMessage}
+
+CUSTOMER NAME:
+{!$Input:CustomerName}
+
+AGENT TYPE:
+{!$Input:AgentType}
+
+---
+
+CAPTURE RULES — ALWAYS capture when the conversation reveals ANY of the following:
+
+- Life events: trips, weddings, birthdays, anniversaries, moves, new jobs, pregnancies, graduations
+- Purchase intent: &quot;I want to buy&quot;, &quot;I am looking for a gift&quot;, &quot;I need to restock&quot;, &quot;planning to try&quot;
+- Concerns or problems: &quot;my skin has been breaking out&quot;, &quot;I am worried about sun damage&quot;, &quot;I had a reaction to...&quot;
+- Routine changes: &quot;I just started retinol&quot;, &quot;I switched to clean beauty&quot;, &quot;I stopped using...&quot;
+- Preferences stated: &quot;I only use fragrance-free&quot;, &quot;I prefer Korean skincare&quot;, &quot;I am vegan&quot;
+- Contextual signals: climate/weather mentions, exercise habits, work environment, lifestyle changes
+
+Do NOT capture:
+- Generic politeness (&quot;that sounds nice&quot;, &quot;interesting&quot;)
+- Restating what the agent already said (&quot;so it has SPF 50?&quot;)
+- Vague browsing (&quot;show me moisturizers&quot;) — this is navigation, not intelligence
+- Information already captured earlier in this session
+
+EVENT TYPE VALUES:
+- &quot;life-event&quot; — trips, weddings, birthdays, moves, milestones
+- &quot;intent&quot; — purchase plans, gift shopping, restock needs
+- &quot;concern&quot; — skin problems, reactions, worries
+- &quot;preference&quot; — stated product/brand/ingredient preferences
+- &quot;milestone&quot; — routine changes, skincare journey milestones
+
+EVENT DESCRIPTION:
+Write a concise summary of what was said, NOT a generic label.
+Good: &quot;Planning trip to Mumbai in two weeks, concerned about humidity and skin oiliness&quot;
+Bad: &quot;Travel event&quot;
+
+METADATA JSON — ALWAYS include structured data:
+- For life events: {&quot;relativeTimeExpression&quot;: &quot;exact words about timing&quot;, &quot;eventDate&quot;: &quot;YYYY-MM-DD if known&quot;}
+- For intent: {&quot;intent&quot;: &quot;what they want&quot;, &quot;recipient&quot;: &quot;self or gift&quot;, &quot;urgency&quot;: &quot;browsing or decided or urgent&quot;}
+- For concerns: {&quot;concern&quot;: &quot;specific concern&quot;, &quot;severity&quot;: &quot;mentioned or emphasized or urgent&quot;}
+- For preferences: {&quot;preference&quot;: &quot;what they prefer&quot;, &quot;category&quot;: &quot;product category if applicable&quot;}
+- For milestones: {&quot;change&quot;: &quot;what changed&quot;, &quot;previousRoutine&quot;: &quot;if mentioned&quot;, &quot;newRoutine&quot;: &quot;if mentioned&quot;}
+
+TIMING — when capturing life events, ALWAYS extract:
+- &quot;relativeTimeExpression&quot;: The exact words about timing (&quot;in two weeks&quot;, &quot;next month&quot;, &quot;this Saturday&quot;)
+- &quot;eventDate&quot;: If a specific date is given, pass as YYYY-MM-DD
+
+AGENT NOTE — ALWAYS include an agentNote explaining why this event matters for personalization.
+Example: &quot;Customer mentioned daughter's wedding in two weeks — opportunity for gift set plus special occasion makeup recommendations&quot;
+
+OUTPUT:
+If a capturable event is detected, return JSON:
+{&quot;captured&quot;: true, &quot;eventType&quot;: &quot;...&quot;, &quot;eventDescription&quot;: &quot;...&quot;, &quot;metadataJson&quot;: {...}, &quot;agentNote&quot;: &quot;...&quot;, &quot;captureNotification&quot;: {&quot;type&quot;: &quot;meaningful_event&quot;, &quot;label&quot;: &quot;Event Captured: 2-4 word summary&quot;}}
+
+If no capturable event is detected, return:
+{&quot;captured&quot;: false}
+        </content>
+        <inputs>
+            <apiName>ConversationMessage</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Conversation Message</masterLabel>
+            <referenceName>Input:ConversationMessage</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>CustomerName</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Customer Name</masterLabel>
+            <referenceName>Input:CustomerName</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>AgentType</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Agent Type</masterLabel>
+            <referenceName>Input:AgentType</referenceName>
+            <required>false</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT4Omni</primaryModel>
+        <status>Published</status>
+    </templateVersions>
+</GenAiPromptTemplate>

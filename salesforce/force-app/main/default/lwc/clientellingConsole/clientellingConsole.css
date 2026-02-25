@@ -1,0 +1,90 @@
+.console-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #f4f6f9;
+}
+
+/* Header */
+.console-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: #1a1a2e;
+    color: white;
+    gap: 16px;
+    z-index: 10;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.console-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+}
+
+.header-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.active-customer {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.15);
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+}
+
+.header-right {
+    flex-shrink: 0;
+    width: 280px;
+}
+
+/* Body */
+.console-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.panel {
+    overflow-y: auto;
+    background: #fff;
+}
+
+.panel-left {
+    width: 25%;
+    min-width: 260px;
+    max-width: 340px;
+}
+
+.panel-center {
+    flex: 1;
+    border-left: 1px solid #e5e5e5;
+    border-right: 1px solid #e5e5e5;
+}
+
+.panel-right {
+    width: 25%;
+    min-width: 280px;
+    max-width: 380px;
+}
+
+/* Action Bar */
+.action-bar {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: #fff;
+    border-top: 2px solid #e5e5e5;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+}

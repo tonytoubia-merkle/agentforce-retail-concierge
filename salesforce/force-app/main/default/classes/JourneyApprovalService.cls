@@ -226,7 +226,14 @@ public with sharing class JourneyApprovalService {
             System.debug(LoggingLevel.INFO, '[regenerateImage] Approval updated with image URL');
 
             result.success = true;
-            result.message = 'Image regenerated successfully';
+            // Build informative message with product/fallback details
+            if (fireflyResult.usedFallback == true) {
+                result.message = 'Image regenerated (text-only — Expand API fell back, products not composited)';
+            } else if (fireflyResult.productCount != null && fireflyResult.productCount > 0) {
+                result.message = 'Image regenerated with ' + fireflyResult.productCount + ' product(s) composited';
+            } else {
+                result.message = 'Image regenerated successfully';
+            }
             result.newImageUrl = imageUrl;
         } else {
             result.success = false;

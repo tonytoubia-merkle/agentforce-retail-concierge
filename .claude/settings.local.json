@@ -94,7 +94,22 @@
       "Bash(node check-images.js:*)",
       "Bash(node:*)",
       "Bash(xargs:*)",
-      "Bash(comm:*)"
+      "Bash(comm:*)",
+      "Bash(for img in serum-brightening.png sunscreen-tinted.png lipstick-satin.png eye-cream-brightening.png)",
+      "Bash(do [ -f \"public/assets/products/$img\" ])",
+      "WebFetch(domain:docs.gearset.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:support.metazoa.com)",
+      "WebFetch(domain:blog.bessereau.eu)",
+      "Bash(sf:*)",
+      "Bash(\"/c/Program Files/sf/bin/sf\" data query -q \"SELECT Id, DeveloperName, TemplateType FROM GenAiPromptTemplate LIMIT 5\" -t)",
+      "Bash(npx sf data query -q \"SELECT DeveloperName, TemplateType FROM GenAiPromptTemplate LIMIT 5\" --use-tooling-api)",
+      "Bash(export PATH=\"/c/Program Files/sf/bin:$PATH\")",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:agentforce-retail-advisor-23jqni1vy-tony-toubias-projects.vercel.app)",
+      "WebFetch(domain:www.adobe.com)",
+      "WebFetch(domain:openwebui.com)",
+      "Bash(grep:*)"
     ]
   }
 }

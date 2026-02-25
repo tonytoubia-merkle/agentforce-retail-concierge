@@ -2,6 +2,14 @@
     <lightning-card title="Personalized Journey Approvals" icon-name="standard:campaign">
         <div slot="actions">
             <lightning-button
+                label="Process Events Now"
+                icon-name="utility:play"
+                variant="brand"
+                onclick={handleProcessEvents}
+                disabled={isProcessing}
+                class="slds-m-right_x-small">
+            </lightning-button>
+            <lightning-button
                 label="Refresh"
                 icon-name="utility:refresh"
                 onclick={handleRefresh}>
