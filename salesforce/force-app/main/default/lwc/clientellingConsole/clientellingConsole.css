@@ -14,6 +14,8 @@
     color: white;
     gap: 16px;
     z-index: 10;
+    position: relative;
+    overflow: visible;
 }
 
 .header-left {
@@ -44,9 +46,27 @@
     font-size: 13px;
 }
 
+.pending-consult {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 4px 8px 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    gap: 4px;
+    border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.pending-name {
+    font-weight: 600;
+    margin-right: 4px;
+}
+
 .header-right {
     flex-shrink: 0;
     width: 280px;
+    position: relative;
+    overflow: visible;
 }
 
 /* Body */

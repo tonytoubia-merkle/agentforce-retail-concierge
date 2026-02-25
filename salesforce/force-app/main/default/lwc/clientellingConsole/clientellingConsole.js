@@ -1,16 +1,20 @@
 import { LightningElement, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
+import createWalkInAppointment from '@salesforce/apex/AppointmentService.createWalkInAppointment';
 
 export default class ClientellingConsole extends NavigationMixin(LightningElement) {
     @track selectedContactId = null;
     @track selectedCustomerName = null;
     @track selectedAppointmentId = null;
     @track productsInConsult = [];
+    @track pendingCustomer = null;
+    @track isBeginningConsult = false;
 
     // ─── Customer Selection Handlers ─────────────────────────────────
 
     handleAppointmentSelected(event) {
         const { contactId, appointmentId } = event.detail;
+        this.pendingCustomer = null;
         this.selectedContactId = contactId;
         this.selectedAppointmentId = appointmentId;
         this.loadCustomer(contactId);
@@ -18,6 +22,7 @@ export default class ClientellingConsole extends NavigationMixin(LightningElemen
 
     handleCustomerFromSidebar(event) {
         const { contactId } = event.detail;
+        this.pendingCustomer = null;
         this.selectedContactId = contactId;
         this.loadCustomer(contactId);
     }
@@ -30,11 +35,42 @@ export default class ClientellingConsole extends NavigationMixin(LightningElemen
 
     handleGlobalCustomerSearch(event) {
         const { contactId, customer } = event.detail;
-        this.selectedContactId = contactId;
-        if (customer) {
-            this.selectedCustomerName = customer.name;
+        this.pendingCustomer = {
+            contactId,
+            name: customer ? customer.name : 'Customer'
+        };
+    }
+
+    async handleBeginConsult() {
+        if (!this.pendingCustomer) return;
+        this.isBeginningConsult = true;
+
+        try {
+            await createWalkInAppointment({
+                contactId: this.pendingCustomer.contactId,
+                storeLocation: null
+            });
+
+            const contactId = this.pendingCustomer.contactId;
+            this.selectedContactId = contactId;
+            this.selectedCustomerName = this.pendingCustomer.name;
+            this.pendingCustomer = null;
+            this.loadCustomer(contactId);
+
+            // Refresh appointment sidebar
+            const sidebar = this.template.querySelector('c-appointment-sidebar');
+            if (sidebar && typeof sidebar.refreshAppointments === 'function') {
+                sidebar.refreshAppointments();
+            }
+        } catch (error) {
+            console.error('Failed to begin consult:', error);
+        } finally {
+            this.isBeginningConsult = false;
         }
-        this.loadCustomer(contactId);
+    }
+
+    handleCancelPending() {
+        this.pendingCustomer = null;
     }
 
     handleProfileClosed() {
@@ -142,5 +178,17 @@ export default class ClientellingConsole extends NavigationMixin(LightningElemen
 
     get hasSelectedCustomer() {
         return !!this.selectedContactId;
+    }
+
+    get hasPendingCustomer() {
+        return !!this.pendingCustomer;
+    }
+
+    get pendingCustomerName() {
+        return this.pendingCustomer ? this.pendingCustomer.name : '';
+    }
+
+    get showActiveCustomer() {
+        return !!this.selectedCustomerName && !this.pendingCustomer;
     }
 }

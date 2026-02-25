@@ -1,4 +1,4 @@
-import { LightningElement, track } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 import getTodaysAppointments from '@salesforce/apex/AppointmentService.getTodaysAppointments';
 import checkInCustomer from '@salesforce/apex/AppointmentService.checkInCustomer';
 import generatePrepNotes from '@salesforce/apex/AppointmentService.generatePrepNotes';
@@ -79,6 +79,11 @@ export default class AppointmentSidebar extends LightningElement {
     }
 
     handleRefresh() {
+        this.loadAppointments();
+    }
+
+    @api
+    refreshAppointments() {
         this.loadAppointments();
     }
 

@@ -5,7 +5,7 @@ import updateCustomerProfile from '@salesforce/apex/ClientellingProfileService.u
 export default class ProfileSection360 extends LightningElement {
     @api profile; // ClientellingProfileWrapper from Apex
 
-    @track expandedSections = new Set(['beauty']);
+    @track expandedSections = new Set();
     @track isEditingBeauty = false;
     @track editFields = {};
 
@@ -42,6 +42,10 @@ export default class ProfileSection360 extends LightningElement {
     // ─── Data presence checks ────────────────────────────────────────
 
     get hasProfile() { return !!this.profile; }
+    get hasBeautyData() {
+        const bp = this.profile?.beautyProfile;
+        return bp && (bp.skinType || bp.skinConcerns || bp.allergies || bp.beautyPriority || bp.preferredBrands || bp.sustainabilityPreference);
+    }
     get hasOrders() { return this.profile?.recentOrders?.length > 0; }
     get hasEvents() { return this.profile?.meaningfulEvents?.length > 0; }
     get hasChats() { return this.profile?.chatHistory?.length > 0; }

@@ -199,7 +199,7 @@ global with sharing class AgentCopilotService {
                 }
             } else {
                 result.errorMessage = 'Session creation failed: HTTP ' + resp.getStatusCode()
-                    + ' - ' + resp.getBody().left(200);
+                    + ' - ' + resp.getBody().left(500);
             }
         } catch (Exception e) {
             result.errorMessage = 'Error: ' + e.getMessage();

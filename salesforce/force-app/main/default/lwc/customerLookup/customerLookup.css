@@ -3,12 +3,18 @@
 }
 
 .results-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
     max-height: 300px;
     overflow-y: auto;
     border: 1px solid #e5e5e5;
     border-radius: 8px;
     margin-top: 4px;
     background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .result-item {
@@ -85,7 +91,17 @@
 }
 
 .no-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
     text-align: center;
     color: #aaa;
     font-size: 13px;
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    margin-top: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
