@@ -46,6 +46,8 @@ export default class JourneyApprovalCard extends LightningElement {
     @track localProducts = [];
     @track productsModified = false;
     @track currentStepIndex = 0; // For multi-step navigation
+    @track isEditingTiming = false;
+    @track editedDelayDays = 0;
 
     // ─── Inline Picker State ──────────────────────────────────────────
     @track pickerCategories = [];
@@ -244,6 +246,22 @@ export default class JourneyApprovalCard extends LightningElement {
         return `Sends ${this.sendDelayDays} days after Step ${this.stepNumber - 1}`;
     }
 
+    get canEditTiming() {
+        return this.stepNumber > 1;
+    }
+
+    get previousStepNumber() {
+        return this.stepNumber - 1;
+    }
+
+    get timingLabelClass() {
+        return this.canEditTiming ? 'timing-editable' : '';
+    }
+
+    get timingEditTitle() {
+        return this.canEditTiming ? 'Click to edit send timing' : '';
+    }
+
     // ─── Guardrails Getters ────────────────────────────────────────────
 
     get hasGuardrails() {
@@ -390,6 +408,17 @@ export default class JourneyApprovalCard extends LightningElement {
         return !!(this.approval?.Event_Date__c || this.approval?.eventDate);
     }
 
+    get agentInsight() {
+        const summary = this.approval?.Event_Summary__c;
+        if (!summary) return null;
+        const match = summary.match(/AGENT INSIGHT:\s*(.+)/);
+        return match ? match[1].trim() : null;
+    }
+
+    get hasAgentInsight() {
+        return !!this.agentInsight;
+    }
+
     get showUrgencyBadge() {
         const urgency = this.approval?.Urgency__c;
         return urgency && urgency !== 'No Date';
@@ -441,6 +470,33 @@ export default class JourneyApprovalCard extends LightningElement {
                 data: { direction: 'next' }
             }
         }));
+    }
+
+    // ─── Timing Edit ────────────────────────────────────────────────────
+
+    handleEditTiming() {
+        if (!this.canEditTiming) return;
+        this.editedDelayDays = this.sendDelayDays;
+        this.isEditingTiming = true;
+    }
+
+    handleDelayDaysChange(event) {
+        this.editedDelayDays = parseInt(event.target.value, 10) || 0;
+    }
+
+    handleTimingSave() {
+        this.isEditingTiming = false;
+        this.dispatchEvent(new CustomEvent('action', {
+            detail: {
+                action: 'updateTiming',
+                approvalId: this.approval.Id,
+                data: { delayDays: this.editedDelayDays }
+            }
+        }));
+    }
+
+    handleTimingCancel() {
+        this.isEditingTiming = false;
     }
 
     // ─── Product Management ────────────────────────────────────────────

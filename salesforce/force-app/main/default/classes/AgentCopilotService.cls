@@ -87,7 +87,8 @@ global with sharing class AgentCopilotService {
                        Skin_Type__c, Skin_Concerns__c, Allergies__c,
                        Beauty_Priority__c, Preferred_Brands__c, Price_Range__c,
                        Sustainability_Preference__c, Climate_Context__c,
-                       Clientelling_Tier__c, Merkury_Id__c, Demo_Profile__c
+                       Clientelling_Tier__c, Merkury_Id__c, Demo_Profile__c,
+                       Email_Opt_In__c, SMS_Opt_In__c, Push_Opt_In__c
                 FROM Contact WHERE Id = :contactId LIMIT 1
             ];
 
@@ -102,43 +103,16 @@ global with sharing class AgentCopilotService {
 
             String customerName = ((c.FirstName != null ? c.FirstName : '') + ' ' + (c.LastName != null ? c.LastName : '')).trim();
 
-            // Build session variables
-            List<Map<String, String>> variables = new List<Map<String, String>>();
-            addVariable(variables, 'customerId', String.valueOf(c.Id));
-            addVariable(variables, 'customerEmail', c.Email);
-            addVariable(variables, 'customerName', customerName);
-
             // Identity tier
             String identityTier = 'anonymous';
             if (c.Demo_Profile__c == 'Merkury') identityTier = 'appended';
             else if (String.isNotBlank(c.Email)) identityTier = 'known';
-            addVariable(variables, 'identityTier', identityTier);
 
-            // Build comprehensive customer context summary
+            // Build comprehensive customer context summary (injected via first message, not variables)
             String contextSummary = buildCustomerContextSummary(c, contactId, customerName, identityTier);
-            addVariable(variables, 'customerContext', contextSummary);
 
-            // Individual fields (for backward compatibility with existing topics)
-            if (String.isNotBlank(c.Skin_Type__c))
-                addVariable(variables, 'skinType', c.Skin_Type__c);
-            if (String.isNotBlank(c.Skin_Concerns__c))
-                addVariable(variables, 'concerns', c.Skin_Concerns__c);
-            if (String.isNotBlank(c.Preferred_Brands__c))
-                addVariable(variables, 'recentPurchases', c.Preferred_Brands__c);
-
-            // Loyalty
-            try {
-                String loyaltyQuery = 'SELECT MemberStatus FROM LoyaltyProgramMember'
-                    + ' WHERE ContactId = \'' + String.escapeSingleQuotes(String.valueOf(c.Id)) + '\''
-                    + ' LIMIT 1';
-                List<SObject> members = Database.query(loyaltyQuery);
-                if (!members.isEmpty()) {
-                    String tierName = String.valueOf(members[0].get('MemberStatus'));
-                    addVariable(variables, 'loyaltyTier', tierName != null ? tierName.toLowerCase() : 'bronze');
-                }
-            } catch (Exception e) { /* Loyalty may not be available */ }
-
-            // Build request body
+            // Build request body — no session variables to avoid InternalVariableMutationAttemptException.
+            // Customer context is sent as the first message after session creation instead.
             Map<String, Object> body = new Map<String, Object>();
             body.put('externalSessionKey', 'lwc-' + String.valueOf(contactId) + '-' + String.valueOf(Datetime.now().getTime()));
             body.put('instanceConfig', new Map<String, Object>{
@@ -148,7 +122,6 @@ global with sharing class AgentCopilotService {
                 'chunkTypes' => new List<String>{ 'Text' }
             });
             body.put('bypassUser', true);
-            body.put('variables', variables);
 
             // Call API
             String endpoint = getBaseUrl() + '/agents/' + agentId + '/sessions';
@@ -540,6 +513,21 @@ global with sharing class AgentCopilotService {
             ctx.addAll(beauty);
         }
 
+        // Communication channel preferences
+        List<String> channels = new List<String>();
+        if (c.Email_Opt_In__c == true) channels.add('Email');
+        if (c.SMS_Opt_In__c == true) channels.add('SMS');
+        if (c.Push_Opt_In__c == true) channels.add('Push Notifications');
+        ctx.add('--- COMMUNICATION PREFERENCES ---');
+        ctx.add('Email: ' + (c.Email_Opt_In__c == true ? 'Opted In' : 'Opted Out'));
+        ctx.add('SMS: ' + (c.SMS_Opt_In__c == true ? 'Opted In' : 'Opted Out'));
+        ctx.add('Push Notifications: ' + (c.Push_Opt_In__c == true ? 'Opted In' : 'Opted Out'));
+        if (!channels.isEmpty()) {
+            ctx.add('Available channels for journey outreach: ' + String.join(channels, ', '));
+        } else {
+            ctx.add('No marketing channels currently opted in');
+        }
+
         // Recent orders
         try {
             List<Order> orders = [
@@ -730,6 +718,53 @@ global with sharing class AgentCopilotService {
                 'type' => 'Text',
                 'value' => value
             });
+        }
+    }
+
+    // ─── Diagnostic: Minimal Session Test ──────────────────────────────
+    // Run from Developer Console: AgentCopilotService.testAgentSession();
+
+    public static String testAgentSession() {
+        try {
+            String accessToken = getAccessToken();
+            String agentId = getAgentId('clientelling');
+
+            System.debug('Token obtained: ' + (String.isNotBlank(accessToken) ? 'YES (' + accessToken.left(20) + '...)' : 'NO'));
+            System.debug('Agent ID: ' + agentId);
+
+            // Minimal session request — no variables
+            Map<String, Object> body = new Map<String, Object>();
+            body.put('externalSessionKey', 'diag-' + String.valueOf(Datetime.now().getTime()));
+            body.put('instanceConfig', new Map<String, Object>{
+                'endpoint' => getInstanceUrl()
+            });
+            body.put('streamingCapabilities', new Map<String, Object>{
+                'chunkTypes' => new List<String>{ 'Text' }
+            });
+            body.put('bypassUser', true);
+
+            String endpoint = getBaseUrl() + '/agents/' + agentId + '/sessions';
+            System.debug('Endpoint: ' + endpoint);
+            System.debug('Request body: ' + JSON.serializePretty(body));
+
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(endpoint);
+            req.setMethod('POST');
+            req.setHeader('Authorization', 'Bearer ' + accessToken);
+            req.setHeader('Content-Type', 'application/json');
+            req.setBody(JSON.serialize(body));
+            req.setTimeout(30000);
+
+            Http http = new Http();
+            HttpResponse resp = http.send(req);
+
+            String result = 'HTTP ' + resp.getStatusCode() + ': ' + resp.getBody().left(1000);
+            System.debug('Response: ' + result);
+            return result;
+        } catch (Exception e) {
+            String err = 'Exception: ' + e.getMessage() + ' | ' + e.getStackTraceString();
+            System.debug(err);
+            return err;
         }
     }
 }

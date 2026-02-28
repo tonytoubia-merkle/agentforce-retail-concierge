@@ -214,6 +214,7 @@ function buildWelcomeMessage(ctx: CustomerSessionContext): string {
   } else {
     lines.push(`Customer: ${ctx.name} (greet by first name)`, `Email: ${ctx.email || 'unknown'}`, `Identity: ${ctx.identityTier}`);
     if (ctx.email) lines.push(`[INSTRUCTION] The customer has been identified via their email address (${ctx.email}). Call Identify Customer By Email with this address to resolve their contactId before performing any profile updates or event captures.`);
+    lines.push(`[INSTRUCTION] Keep your welcome greeting SHORT — 2 sentences maximum. Greet by first name. If there is ONE standout context item (an upcoming trip, a recent life event, a loyalty milestone), acknowledge it briefly in a warm, natural way. Do NOT list multiple preferences, product types, or questions. End with a single warm invitation or open question. Be conversational, not encyclopedic.`);
   }
 
   // ── Data usage rules ─────────────────────────────────────────
@@ -322,7 +323,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     'What do you recommend?',
   ]);
   const { processUIDirective, resetScene, setBackground, getSceneSnapshot, restoreSceneSnapshot } = useScene();
-  const { customer, selectedPersonaId, isResolving, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
+  const { customer, selectedPersonaId, isAuthenticated, isResolving, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
   const { showCapture } = useActivityToast();
   const messagesRef = useRef<AgentMessage[]>([]);
   const suggestedActionsRef = useRef<string[]>([]);
@@ -480,7 +481,11 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // Appended-tier customers: session is initialized with 3P signals
         // (so subsequent messages can use them for curation), but the welcome
         // screen looks identical to anonymous — no personalized greeting.
-        if (sessionCtx.identityTier === 'appended') {
+        // Known-but-not-authenticated: Merkury identified them but they haven't
+        // signed in. Treat the same — generic welcome, no personalization.
+        // Their full profile is loaded and ready for when they do sign in.
+        if (sessionCtx.identityTier === 'appended' ||
+            (sessionCtx.identityTier === 'known' && !isAuthenticated)) {
           setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
           setSuggestedActions([
             'Show me moisturizers',
@@ -554,7 +559,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [customer, selectedPersonaId, isResolving]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [customer, selectedPersonaId, isAuthenticated, isResolving]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendMessage = useCallback(async (content: string) => {
     const userMessage: AgentMessage = {
@@ -611,6 +616,19 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (captures?.length) {
           for (const c of captures) {
             showCapture(c);
+            // Write client-detected meaningful events to Salesforce (best-effort)
+            if (c.type === 'meaningful_event' && customer?.id) {
+              getDataCloudWriteService().writeMeaningfulEvent(
+                customer.id,
+                uuidv4(),
+                {
+                  eventType: 'life-event',
+                  description: c.label.replace(/^Event Captured:\s*/i, ''),
+                  capturedAt: new Date().toISOString(),
+                  agentNote: 'Auto-captured from agent conversation text',
+                }
+              ).catch(err => console.warn('[datacloud] Failed to write event:', err));
+            }
           }
         }
       }

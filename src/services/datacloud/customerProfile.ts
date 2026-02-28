@@ -373,26 +373,24 @@ export class DataCloudCustomerService {
     const member = memberRecords[0];
     const memberId = member.Id;
 
-    // 2. Get tier from LoyaltyMemberTier (two-step: get tier ID, then tier name)
+    // 2. Get tier from LoyaltyMemberTier → LoyaltyTier
+    // Query all tiers and pick the highest-ranked one (CreatedDate ordering is
+    // unreliable when tiers are seeded at the same instant)
+    const tierRank: Record<string, number> = { bronze: 1, silver: 2, gold: 3, platinum: 4 };
     let tier: LoyaltyData['tier'] = 'bronze';
     try {
-      // First get the LoyaltyTierId from LoyaltyMemberTier (order by TierSequenceNumber DESC to get current tier)
       const memberTierData = await this.fetchJson(
-        `/services/data/v60.0/query/?q=SELECT+LoyaltyTierId+FROM+LoyaltyMemberTier+WHERE+LoyaltyMemberId='${memberId}'+ORDER+BY+TierSequenceNumber+DESC+LIMIT+1`
+        `/services/data/v60.0/query/?q=SELECT+LoyaltyTierId,LoyaltyTier.Name+FROM+LoyaltyMemberTier+WHERE+LoyaltyMemberId='${memberId}'`
       );
-      const memberTierRecords = memberTierData.records || [];
-      if (memberTierRecords.length > 0 && memberTierRecords[0].LoyaltyTierId) {
-        const tierId = memberTierRecords[0].LoyaltyTierId;
-        // Then get the tier name from LoyaltyTier
-        const tierData = await this.fetchJson(
-          `/services/data/v60.0/query/?q=SELECT+Name+FROM+LoyaltyTier+WHERE+Id='${tierId}'+LIMIT+1`
-        );
-        const tierRecords = tierData.records || [];
-        if (tierRecords.length > 0 && tierRecords[0].Name) {
-          const tierName = tierRecords[0].Name.toLowerCase();
-          if (['bronze', 'silver', 'gold', 'platinum'].includes(tierName)) {
-            tier = tierName as LoyaltyData['tier'];
-          }
+      let bestRank = 0;
+      for (const mt of (memberTierData.records || [])) {
+        const raw: string | undefined = mt.LoyaltyTier?.Name;
+        if (!raw) continue;
+        const name = raw.toLowerCase().replace(' tier', '');
+        const rank = tierRank[name] || 0;
+        if (rank > bestRank) {
+          bestRank = rank;
+          tier = name as LoyaltyData['tier'];
         }
       }
     } catch (e) {
@@ -400,17 +398,20 @@ export class DataCloudCustomerService {
     }
 
     // 3. Get points balance from LoyaltyMemberCurrency
+    // Pick the highest balance across all currency types (e.g. "Points", "Beauty Points")
     let pointsBalance = 0;
     let lifetimePoints = 0;
     try {
       const currencyData = await this.fetchJson(
-        `/services/data/v60.0/query/?q=SELECT+PointsBalance,TotalPointsAccrued+FROM+LoyaltyMemberCurrency+WHERE+LoyaltyMemberId='${memberId}'+LIMIT+1`
+        `/services/data/v60.0/query/?q=SELECT+PointsBalance,TotalPointsAccrued+FROM+LoyaltyMemberCurrency+WHERE+LoyaltyMemberId='${memberId}'`
       );
-      const currencyRecords = currencyData.records || [];
-      if (currencyRecords.length > 0) {
-        pointsBalance = currencyRecords[0].PointsBalance || 0;
-        lifetimePoints = currencyRecords[0].TotalPointsAccrued || pointsBalance;
+      for (const c of (currencyData.records || [])) {
+        const bal = c.PointsBalance || 0;
+        const acc = c.TotalPointsAccrued || 0;
+        if (bal > pointsBalance) pointsBalance = bal;
+        if (acc > lifetimePoints) lifetimePoints = acc;
       }
+      if (lifetimePoints === 0 && pointsBalance > 0) lifetimePoints = pointsBalance;
     } catch (e) {
       console.warn('[datacloud] Could not fetch points balance:', e);
     }

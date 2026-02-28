@@ -198,7 +198,7 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             }
         }
 
-        // Get contact name for personalization
+        // Get contact name and opt-in for personalization and scoring
         String contactName = null;
         if (contactId != null) {
             try {
@@ -208,6 +208,63 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
                 // Continue without name
             }
         }
+
+        // Query browse context and profile data for enrichment
+        String browseContext = '';
+        String profileContext = '';
+        Boolean hasBrowseData = false;
+
+        String customerIdStr = contactId != null ? String.valueOf(contactId) : event.Customer_Id__c;
+        if (String.isNotBlank(customerIdStr)) {
+            try {
+                List<Browse_Session__c> browseSessions = [
+                    SELECT Session_Date__c, Categories_Browsed__c, Products_Viewed__c
+                    FROM Browse_Session__c
+                    WHERE Customer_Id__c = :customerIdStr
+                    ORDER BY Session_Date__c DESC
+                    LIMIT 3
+                ];
+
+                if (!browseSessions.isEmpty()) {
+                    hasBrowseData = true;
+                    List<String> browseLines = new List<String>();
+                    for (Browse_Session__c bs : browseSessions) {
+                        String line = '';
+                        if (bs.Session_Date__c != null) line += bs.Session_Date__c.format() + ': ';
+                        if (String.isNotBlank(bs.Categories_Browsed__c)) line += 'Categories: ' + bs.Categories_Browsed__c;
+                        if (String.isNotBlank(bs.Products_Viewed__c)) line += ' | Products: ' + bs.Products_Viewed__c;
+                        browseLines.add(line);
+                    }
+                    browseContext = String.join(browseLines, '\n');
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.WARN, 'Failed to query browse sessions: ' + e.getMessage());
+            }
+
+            try {
+                List<Agent_Captured_Profile__c> profileRecords = [
+                    SELECT Field_Name__c, Field_Value__c
+                    FROM Agent_Captured_Profile__c
+                    WHERE Customer_Id__c = :customerIdStr
+                    LIMIT 10
+                ];
+
+                if (!profileRecords.isEmpty()) {
+                    List<String> profileLines = new List<String>();
+                    for (Agent_Captured_Profile__c pr : profileRecords) {
+                        if (String.isNotBlank(pr.Field_Name__c) && String.isNotBlank(pr.Field_Value__c)) {
+                            profileLines.add(pr.Field_Name__c + ': ' + pr.Field_Value__c);
+                        }
+                    }
+                    profileContext = String.join(profileLines, '\n');
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.WARN, 'Failed to query profile data: ' + e.getMessage());
+            }
+        }
+
+        // Track original date presence for confidence scoring
+        Boolean hadOriginalDate = (event.Event_Date__c != null);
 
         // Derive event date if missing — enables multi-step journeys
         if (event.Event_Date__c == null) {
@@ -250,8 +307,14 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             return approvals;
         }
 
-        // Build common event summary
+        // Build common event summary enriched with browse and profile context
         String eventSummary = buildEventSummary(event);
+        if (String.isNotBlank(browseContext)) {
+            eventSummary += '\nBROWSE CONTEXT:\n' + browseContext + '\n';
+        }
+        if (String.isNotBlank(profileContext)) {
+            eventSummary += '\nPROFILE CONTEXT:\n' + profileContext + '\n';
+        }
 
         // Get AI-generated content for the first email step (primary touchpoint)
         CampaignAgentService.BriefGenerationResult agentResult = null;
@@ -261,7 +324,14 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             agentReq.eventDescription = event.Description__c;
             agentReq.eventDate = event.Event_Date__c;
             agentReq.suggestedProducts = event.Suggested_Products__c;
-            agentReq.additionalContext = event.Agent_Note__c;
+            String additionalCtx = event.Agent_Note__c != null ? event.Agent_Note__c : '';
+            if (String.isNotBlank(browseContext)) {
+                additionalCtx += '\nRecent Browse Activity:\n' + browseContext;
+            }
+            if (String.isNotBlank(profileContext)) {
+                additionalCtx += '\nCustomer Profile:\n' + profileContext;
+            }
+            agentReq.additionalContext = additionalCtx;
             agentReq.contactName = contactName;
 
             List<CampaignAgentService.BriefGenerationResult> agentResults =
@@ -365,6 +435,14 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             } else if (String.isNotBlank(step.productsJson)) {
                 approval.Recommended_Products__c = step.productsJson;
             }
+
+            // Compute confidence score based on real data signals
+            approval.Confidence_Score__c = computeConfidenceScore(
+                event, hadOriginalDate,
+                String.isNotBlank(promptResult.recommendedProductsJson),
+                agentResult != null,
+                hasBrowseData
+            );
 
             approvals.add(approval);
         }
@@ -504,6 +582,54 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
         summary += '\nCAPTURED: ' + event.Captured_At__c.format() + '\n';
 
         return summary;
+    }
+
+    /**
+     * Compute AI confidence score (0-100) based on available data signals.
+     */
+    private Integer computeConfidenceScore(
+        Meaningful_Event__c event,
+        Boolean hadOriginalDate,
+        Boolean hasAffinityProducts,
+        Boolean agentGenerated,
+        Boolean hasBrowseContext
+    ) {
+        // Confidence = how sure we are that the detected event and recommended
+        // journey are genuinely relevant to this customer.
+        // Explicit details → high confidence; vague inferences → low confidence.
+        Integer score = 0;
+
+        // Explicit date mentioned (e.g. "leaves Feb 28") — strong signal the
+        // event is real and timing is accurate
+        if (hadOriginalDate) score += 25;
+
+        // Detailed event description — longer, more specific descriptions
+        // suggest a concrete event vs. a vague hint
+        String eventDesc = event.Description__c != null ? event.Description__c : '';
+        if (eventDesc.length() > 120) {
+            score += 20;  // Rich detail — high specificity
+        } else if (eventDesc.length() > 60) {
+            score += 10;  // Moderate detail
+        }
+
+        // AI Agent generated content — means the campaign agent successfully
+        // understood the context and produced a tailored journey
+        if (agentGenerated) score += 15;
+
+        // Product affinity data available — the journey includes products
+        // matched to the customer's actual preferences
+        if (hasAffinityProducts) score += 15;
+
+        // Agent provided a note with additional context from the conversation
+        if (String.isNotBlank(event.Agent_Note__c)) score += 10;
+
+        // Browse/profile data corroborates the event — multi-signal validation
+        if (hasBrowseContext) score += 10;
+
+        // Agent note present suggests a rep explicitly flagged/detailed this event
+        // (already scored above — cumulative with description length)
+
+        return Math.min(Math.max(score, 5), 100);
     }
 
     /**

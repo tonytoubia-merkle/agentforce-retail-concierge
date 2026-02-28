@@ -335,6 +335,17 @@ global with sharing class DataCloudProfileService {
     public static void writeMeaningfulEvent(String customerId, String sessionId,
                                              String eventType, String description,
                                              String agentNote, String metadataJson) {
+        // Deduplication: skip if an identical event already exists for this customer
+        for (Meaningful_Event__c e : [
+            SELECT Id, Description__c FROM Meaningful_Event__c
+            WHERE Customer_Id__c = :customerId AND Event_Type__c = :eventType
+            ORDER BY Captured_At__c DESC LIMIT 20
+        ]) {
+            if (e.Description__c == description) {
+                return;
+            }
+        }
+
         Meaningful_Event__c record = new Meaningful_Event__c();
         record.Customer_Id__c = customerId;
         record.Session_Id__c = sessionId;
@@ -343,6 +354,10 @@ global with sharing class DataCloudProfileService {
         record.Captured_At__c = Datetime.now();
         record.Agent_Note__c = agentNote;
         record.Metadata_JSON__c = metadataJson;
+        // Link to Contact for Data Cloud Individual association
+        if (String.isNotBlank(customerId) && customerId.startsWith('003')) {
+            try { record.Contact__c = Id.valueOf(customerId); } catch (Exception e) { /* not a valid Id */ }
+        }
         insert record;
     }
 
@@ -357,6 +372,7 @@ global with sharing class DataCloudProfileService {
      * @param relativeTimeText Original temporal phrase (e.g., "in two weeks")
      * @param eventDate        Calculated actual event date
      * @param urgency          Immediate, This Week, This Month, Future, No Date
+     * @param eventEndDate     Expected end date for time-bound events (null = no expiry)
      * @return                 The created Meaningful_Event__c record Id
      */
     public static Id writeMeaningfulEventEnhanced(
@@ -364,8 +380,21 @@ global with sharing class DataCloudProfileService {
         String eventType, String description,
         String agentNote, String metadataJson,
         String relativeTimeText, Date eventDate,
-        String urgency
+        String urgency, Date eventEndDate
     ) {
+        // Deduplication: skip if an identical event already exists for this customer.
+        // Description__c is a long text area (not filterable in SOQL), so we query by
+        // customer + event type and compare descriptions in Apex.
+        for (Meaningful_Event__c e : [
+            SELECT Id, Description__c FROM Meaningful_Event__c
+            WHERE Customer_Id__c = :customerId AND Event_Type__c = :eventType
+            ORDER BY Captured_At__c DESC LIMIT 20
+        ]) {
+            if (e.Description__c == description) {
+                return e.Id;
+            }
+        }
+
         Meaningful_Event__c record = new Meaningful_Event__c();
         record.Customer_Id__c = customerId;
         record.Session_Id__c = sessionId;
@@ -374,11 +403,16 @@ global with sharing class DataCloudProfileService {
         record.Captured_At__c = Datetime.now();
         record.Agent_Note__c = agentNote;
         record.Metadata_JSON__c = metadataJson;
+        // Link to Contact for Data Cloud Individual association
+        if (String.isNotBlank(customerId) && customerId.startsWith('003')) {
+            try { record.Contact__c = Id.valueOf(customerId); } catch (Exception e) { /* not a valid Id */ }
+        }
 
-        // New temporal fields
+        // Temporal fields
         record.Relative_Time_Text__c = relativeTimeText;
         record.Event_Date__c = eventDate;
         record.Urgency__c = urgency != null ? urgency : 'No Date';
+        record.Event_End_Date__c = eventEndDate;
 
         // Set journey start date (default to today for immediate journeys)
         if (eventDate != null) {
@@ -387,6 +421,21 @@ global with sharing class DataCloudProfileService {
 
         insert record;
         return record.Id;
+    }
+
+    /** Backward-compatible overload without eventEndDate. */
+    public static Id writeMeaningfulEventEnhanced(
+        String customerId, String sessionId,
+        String eventType, String description,
+        String agentNote, String metadataJson,
+        String relativeTimeText, Date eventDate,
+        String urgency
+    ) {
+        return writeMeaningfulEventEnhanced(
+            customerId, sessionId, eventType, description,
+            agentNote, metadataJson, relativeTimeText, eventDate,
+            urgency, null
+        );
     }
 
     public static void writeCapturedProfileField(String customerId, String sessionId,

@@ -4,8 +4,23 @@ import sendMessage from '@salesforce/apex/AgentCopilotService.sendMessage';
 import endSession from '@salesforce/apex/AgentCopilotService.endSession';
 
 export default class AgentCopilotPanel extends LightningElement {
-    @api contactId;
     @api agentType = 'clientelling'; // 'clientelling' (rep copilot) or 'concierge' (consumer-facing)
+
+    // contactId is set by the parent via data binding.
+    // When it changes (customer switch), end any active session so the
+    // rep must explicitly click "Start Co-pilot Session" for the new customer.
+    _contactId = null;
+    @api
+    get contactId() {
+        return this._contactId;
+    }
+    set contactId(value) {
+        const prev = this._contactId;
+        this._contactId = value;
+        if (prev && prev !== value && this.sessionId) {
+            this.endCurrentSession();
+        }
+    }
 
     @track messages = [];
     @track inputText = '';
@@ -40,10 +55,10 @@ export default class AgentCopilotPanel extends LightningElement {
     @api
     async startSessionForCustomer(newContactId) {
         // End existing session if switching customers
-        if (this.sessionId && this.contactId !== newContactId) {
+        if (this.sessionId && this._contactId !== newContactId) {
             await this.endCurrentSession();
         }
-        this.contactId = newContactId;
+        this._contactId = newContactId;
         await this.handleStartSession();
     }
 

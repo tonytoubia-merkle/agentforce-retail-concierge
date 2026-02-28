@@ -5,8 +5,5 @@
     <description>Whether the contact has opted in to receive SMS messages</description>
     <externalId>false</externalId>
     <label>SMS Opt-In</label>
-    <trackFeedHistory>false</trackFeedHistory>
-    <trackHistory>true</trackHistory>
-    <trackTrending>false</trackTrending>
     <type>Checkbox</type>
 </CustomField>

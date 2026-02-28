@@ -76,6 +76,15 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (archetype) {
               profile.appendedProfile = archetype.appendedProfile;
             }
+            // Merge mock persona loyalty when Data Cloud returns null or default bronze/0
+            const matchedPersona = PERSONAS.find(p => p.profile.merkuryIdentity?.merkuryId === merkuryId);
+            if (matchedPersona?.profile.loyalty) {
+              const dcLoyalty = profile.loyalty;
+              const isDefault = !dcLoyalty || (dcLoyalty.tier === 'bronze' && dcLoyalty.pointsBalance === 0);
+              if (isDefault) {
+                profile.loyalty = matchedPersona.profile.loyalty;
+              }
+            }
           }
           setCustomer(profile);
         } catch (err) {
@@ -150,6 +159,15 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           const profile = await dataCloudService.getCustomerProfile(resolution.merkuryId);
           profile.merkuryIdentity = merkuryIdentity;
           if (resolution.appendedData) profile.appendedProfile = resolution.appendedData;
+          // Merge mock persona loyalty when Data Cloud returns null or default bronze/0
+          const mockPersona = getPersonaById(personaId);
+          if (mockPersona?.profile.loyalty) {
+            const dcLoyalty = profile.loyalty;
+            const isDefault = !dcLoyalty || (dcLoyalty.tier === 'bronze' && dcLoyalty.pointsBalance === 0);
+            if (isDefault) {
+              profile.loyalty = mockPersona.profile.loyalty;
+            }
+          }
           setCustomer(profile);
         } catch (dcError) {
           console.error('[datacloud] Profile fetch failed:', dcError);

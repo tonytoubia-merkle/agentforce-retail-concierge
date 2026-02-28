@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Criteria_JSON__c</fullName>
+    <description>Structured JSON criteria defining segment membership rules</description>
+    <externalId>false</externalId>
+    <label>Criteria JSON</label>
+    <length>131072</length>
+    <trackHistory>false</trackHistory>
+    <type>LongTextArea</type>
+    <visibleLines>10</visibleLines>
+</CustomField>

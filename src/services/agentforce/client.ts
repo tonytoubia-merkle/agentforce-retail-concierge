@@ -1,4 +1,4 @@
-import type { AgentResponse } from '@/types/agent';
+import type { AgentResponse, UIAction, UIDirective } from '@/types/agent';
 import type { AgentforceConfig } from './types';
 import type { CustomerSessionContext } from '@/types/customer';
 import { parseUIDirective } from './parseDirectives';
@@ -242,6 +242,39 @@ export class AgentforceClient {
         displayMessage = "Here's what I found for you.";
       }
     }
+
+    // ─── Client-side event capture detection ─────────────────────
+    // The agent sometimes describes event captures as text instead of
+    // invoking the server-side action. Detect and surface as toast notifications.
+    const captureRegex = /\((?:Event [Cc]aptured|event captured|Captured|captured):\s*(.+?)\)/g;
+    const detectedCaptures: Array<{ type: 'meaningful_event'; label: string }> = [];
+    let captureMatch;
+    while ((captureMatch = captureRegex.exec(displayMessage)) !== null) {
+      detectedCaptures.push({ type: 'meaningful_event', label: `Event Captured: ${captureMatch[1]}` });
+    }
+    if (detectedCaptures.length > 0) {
+      console.log('[agentforce] Detected event captures from text:', detectedCaptures);
+      // Inject into directive so ConversationContext shows toasts
+      if (uiDirective) {
+        const existing = (uiDirective.payload as Record<string, unknown>)?.captures as unknown[] || [];
+        (uiDirective.payload as Record<string, unknown>).captures = [...existing, ...detectedCaptures];
+      } else {
+        // Create a minimal CAPTURE_ONLY directive to carry the captures
+        uiDirective = {
+          action: 'CAPTURE_ONLY' as UIAction,
+          payload: { captures: detectedCaptures } as unknown as UIDirective['payload'],
+        };
+      }
+    }
+
+    // ─── Strip meta-text noise from displayed message ───────────
+    // Agent sometimes adds parenthetical meta-notes not meant for the customer
+    displayMessage = displayMessage
+      .replace(/\((?:Event [Cc]aptured|event captured|Captured|captured):\s*.+?\)/g, '')
+      .replace(/\(uiDirective\s+forthcoming[^)]*\)/gi, '')
+      .replace(/\(Note:?\s*[^)]*\)/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
 
     // Warn when agent mentions products but no directive was parsed
     if (!uiDirective && displayMessage) {

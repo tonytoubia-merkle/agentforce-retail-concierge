@@ -93,12 +93,12 @@ function generateWelcomeResponse(): AgentResponse | null {
     if (hasTripEvent && loyaltyInfo) {
       return {
         sessionId: 'mock-session',
-        message: `Welcome back, ${customerCtx.name}! How was Mumbai? As a ${loyaltyInfo}, you've earned some rewards while you were away.`,
+        message: `Welcome back, ${customerCtx.name}! How was the trip? Let me know if you need to restock anything.`,
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: `Welcome back, ${customerCtx.name}!`,
-            welcomeSubtext: `Your travel SPF is probably running low after that trip. Let me help you restock — and you have rewards to redeem!`,
+            welcomeSubtext: `How was the trip? Let me help you restock.`,
             sceneContext: {
               setting: 'lifestyle',
               mood: 'warm-travel-return',
@@ -114,17 +114,14 @@ function generateWelcomeResponse(): AgentResponse | null {
 
     // James-like: known + anniversary + browsing fragrances + no loyalty
     if (hasAnniversary && hasBrowseFragrance) {
-      const enrollText = isNotLoyalty
-        ? " Also, I'd love to tell you about our loyalty program — you'd earn points on every purchase."
-        : '';
       return {
         sessionId: 'mock-session',
-        message: `Welcome back, ${customerCtx.name}! I see you've been browsing fragrances — shopping for something special?${enrollText}`,
+        message: `Welcome back, ${customerCtx.name}! Shopping for something special? I can help you find the perfect pick.`,
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: `Welcome back, ${customerCtx.name}!`,
-            welcomeSubtext: `I noticed you've been looking at fragrances. I can help you find the perfect gift.${isNotLoyalty ? ' Plus, join our loyalty program today and earn points!' : ''}`,
+            welcomeSubtext: `Shopping for something special? I can help.`,
             sceneContext: {
               setting: 'bedroom',
               mood: 'elegant-gifting',
@@ -144,12 +141,12 @@ function generateWelcomeResponse(): AgentResponse | null {
     if (hasReturnEvent && loyaltyInfo) {
       return {
         sessionId: 'mock-session',
-        message: `Welcome back, ${customerCtx.name}! As a ${loyaltyInfo}, I wanted to follow up — I have some lighter alternatives that might be a better fit for you.`,
+        message: `Welcome back, ${customerCtx.name}! I have some alternatives that might be a better fit. Want to take a look?`,
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: `Welcome back, ${customerCtx.name}!`,
-            welcomeSubtext: `I remember you returned something that wasn't quite right. Let me find you something better — plus you have rewards to redeem!`,
+            welcomeSubtext: `I found some alternatives that might be a better fit.`,
             sceneContext: {
               setting: 'vanity',
               mood: 'elegant-makeup',
@@ -168,12 +165,12 @@ function generateWelcomeResponse(): AgentResponse | null {
     if (isBeginnerEvent && isNotLoyalty) {
       return {
         sessionId: 'mock-session',
-        message: `Hey ${customerCtx.name}! Great to see you back. How's the cleanser working out? Ready to add the next step to your routine?`,
+        message: `Hey ${customerCtx.name}! Ready to add the next step to your routine?`,
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
-            welcomeMessage: `Welcome back, ${customerCtx.name}!`,
-            welcomeSubtext: `Let's build on your new routine. I'll keep it simple — just one step at a time.`,
+            welcomeMessage: `Hey ${customerCtx.name}!`,
+            welcomeSubtext: `Ready for the next step in your routine?`,
             sceneContext: {
               setting: 'bathroom',
               mood: 'fresh-start',
@@ -193,12 +190,12 @@ function generateWelcomeResponse(): AgentResponse | null {
       const setting = hasBrowseFragrance ? 'bedroom' : hasBrowseMakeup ? 'vanity' : 'lifestyle';
       return {
         sessionId: 'mock-session',
-        message: `Welcome back, ${customerCtx.name}! I noticed you were looking at ${browseContext} recently.`,
+        message: `Welcome back, ${customerCtx.name}! Shall I pick up where you left off with ${browseContext}?`,
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: `Welcome back, ${customerCtx.name}!`,
-            welcomeSubtext: `I noticed you were browsing ${browseContext} recently. Shall I pick up where we left off?`,
+            welcomeSubtext: `Pick up where you left off?`,
             sceneContext: {
               setting,
               mood: 'personalized-return',
@@ -222,13 +219,11 @@ function generateWelcomeResponse(): AgentResponse | null {
 
     // Known customer, generic welcome
     const loyaltySubtext = loyaltyInfo
-      ? `As a ${loyaltyInfo}, you have early access to our new arrivals.`
-      : isNotLoyalty
-        ? "Let me help you discover something perfect today. Have you considered joining our loyalty program?"
-        : "Let me help you discover something perfect today.";
+      ? `Great to see you — what can I help you find today?`
+      : "What can I help you find today?";
     return {
       sessionId: 'mock-session',
-      message: `Welcome back, ${customerCtx.name}! Great to see you again.`,
+      message: `Welcome back, ${customerCtx.name}! What can I help you find today?`,
       uiDirective: {
         action: 'WELCOME_SCENE' as UIAction,
         payload: {

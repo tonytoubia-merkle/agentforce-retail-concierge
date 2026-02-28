@@ -471,4 +471,32 @@ public with sharing class JourneyStepService {
 
         return channels;
     }
+
+    /**
+     * Update the send delay for a specific journey step.
+     *
+     * @param approvalId The Journey_Approval__c record ID
+     * @param delayDays Number of days to delay after previous step
+     * @return Map with success status
+     */
+    @AuraEnabled
+    public static Map<String, Object> updateStepTiming(Id approvalId, Integer delayDays) {
+        Map<String, Object> result = new Map<String, Object>();
+
+        try {
+            Journey_Approval__c step = new Journey_Approval__c(
+                Id = approvalId,
+                Send_Delay_Days__c = delayDays
+            );
+            update step;
+
+            result.put('success', true);
+            result.put('message', 'Send timing updated');
+        } catch (Exception e) {
+            result.put('success', false);
+            result.put('errorMessage', e.getMessage());
+        }
+
+        return result;
+    }
 }

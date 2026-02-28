@@ -13,6 +13,12 @@ export default class CustomerProfilePanel extends LightningElement {
         this.fetchProfile();
     }
 
+    @api
+    clearProfile() {
+        this.profile = null;
+        this.selectedContactId = null;
+    }
+
     async fetchProfile() {
         if (!this.selectedContactId) return;
 

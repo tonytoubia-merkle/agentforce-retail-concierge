@@ -73,6 +73,21 @@ export default class ClientellingConsole extends NavigationMixin(LightningElemen
         this.pendingCustomer = null;
     }
 
+    handleHeaderRefresh() {
+        const profilePanel = this.template.querySelector('c-customer-profile-panel');
+        if (profilePanel && typeof profilePanel.loadCustomerProfile === 'function') {
+            profilePanel.loadCustomerProfile(this.selectedContactId);
+        }
+    }
+
+    handleHeaderClose() {
+        const profilePanel = this.template.querySelector('c-customer-profile-panel');
+        if (profilePanel && typeof profilePanel.clearProfile === 'function') {
+            profilePanel.clearProfile();
+        }
+        this.handleProfileClosed();
+    }
+
     handleProfileClosed() {
         this.selectedContactId = null;
         this.selectedCustomerName = null;
@@ -87,11 +102,10 @@ export default class ClientellingConsole extends NavigationMixin(LightningElemen
             profilePanel.loadCustomerProfile(contactId);
         }
 
-        // Start co-pilot session
-        const copilotPanel = this.template.querySelector('c-agent-copilot-panel');
-        if (copilotPanel && typeof copilotPanel.startSessionForCustomer === 'function') {
-            copilotPanel.startSessionForCustomer(contactId);
-        }
+        // Co-pilot session is NOT auto-started here.
+        // The contactId flows to c-agent-copilot-panel via the HTML data binding
+        // (contact-id={selectedContactId}), and the rep clicks "Start Co-pilot Session"
+        // when ready. This decouples profile loading (~1-2s) from copilot init (~15-30s).
     }
 
     // ─── Action Bar Handlers ─────────────────────────────────────────

@@ -16,12 +16,19 @@
                             </div>
                         </div>
                         <p class="slds-page-header__name-meta">
-                            Manage marketer assignments and portfolio settings
+                            Manage marketer assignments, segments, and portfolio priority
                         </p>
                     </div>
                 </div>
             </div>
             <div class="slds-page-header__col-actions">
+                <lightning-button
+                    label="New Portfolio"
+                    icon-name="utility:add"
+                    variant="neutral"
+                    onclick={handleNewPortfolio}
+                    class="slds-m-right_x-small">
+                </lightning-button>
                 <lightning-button
                     label="Process Events Now"
                     icon-name="utility:process"
@@ -78,6 +85,9 @@
     <!-- Portfolio Table -->
     <div class="slds-p-horizontal_medium slds-p-bottom_medium">
         <lightning-card title="Marketer Portfolios" icon-name="standard:campaign_members">
+            <div slot="actions">
+                <span class="slds-text-body_small slds-text-color_weak">Drag priority: higher position = higher priority</span>
+            </div>
             <template if:true={isLoading}>
                 <div class="slds-p-around_large slds-text-align_center">
                     <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
@@ -89,8 +99,10 @@
                     <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
                         <thead>
                             <tr class="slds-line-height_reset">
+                                <th scope="col" style="width: 80px;"><div class="slds-truncate">Priority</div></th>
                                 <th scope="col"><div class="slds-truncate">Portfolio</div></th>
                                 <th scope="col"><div class="slds-truncate">Type</div></th>
+                                <th scope="col"><div class="slds-truncate">Segment</div></th>
                                 <th scope="col"><div class="slds-truncate">Primary Marketer</div></th>
                                 <th scope="col"><div class="slds-truncate">Secondary</div></th>
                                 <th scope="col"><div class="slds-truncate">Workload</div></th>
@@ -98,12 +110,41 @@
                                 <th scope="col"><div class="slds-truncate">Approved</div></th>
                                 <th scope="col"><div class="slds-truncate">Sent</div></th>
                                 <th scope="col"><div class="slds-truncate">Auto-Approve</div></th>
-                                <th scope="col"><div class="slds-truncate">Actions</div></th>
+                                <th scope="col" style="width: 120px;"><div class="slds-truncate">Actions</div></th>
                             </tr>
                         </thead>
                         <tbody>
                             <template for:each={portfolios} for:item="portfolio">
                                 <tr key={portfolio.id}>
+                                    <td>
+                                        <div class="priority-cell">
+                                            <span class="priority-badge">{portfolio.displayPriority}</span>
+                                            <div class="priority-arrows">
+                                                <template if:false={portfolio.isFirst}>
+                                                    <lightning-button-icon
+                                                        icon-name="utility:arrowup"
+                                                        alternative-text="Move up"
+                                                        size="x-small"
+                                                        variant="bare"
+                                                        data-id={portfolio.id}
+                                                        data-direction="up"
+                                                        onclick={handleMovePriority}>
+                                                    </lightning-button-icon>
+                                                </template>
+                                                <template if:false={portfolio.isLast}>
+                                                    <lightning-button-icon
+                                                        icon-name="utility:arrowdown"
+                                                        alternative-text="Move down"
+                                                        size="x-small"
+                                                        variant="bare"
+                                                        data-id={portfolio.id}
+                                                        data-direction="down"
+                                                        onclick={handleMovePriority}>
+                                                    </lightning-button-icon>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td>
                                         <div class="slds-truncate" title={portfolio.name}>
                                             <strong>{portfolio.name}</strong>
@@ -111,6 +152,16 @@
                                     </td>
                                     <td>
                                         <div class="slds-truncate">{portfolio.portfolioType}</div>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate">
+                                            <template if:true={portfolio.segmentLabel}>
+                                                <span class="segment-badge">{portfolio.segmentLabel}</span>
+                                            </template>
+                                            <template if:false={portfolio.segmentLabel}>
+                                                <span class="slds-text-color_weak">—</span>
+                                            </template>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="slds-truncate">
@@ -172,12 +223,22 @@
                                         </template>
                                     </td>
                                     <td>
-                                        <lightning-button-icon
-                                            icon-name="utility:edit"
-                                            alternative-text="Edit"
-                                            data-id={portfolio.id}
-                                            onclick={handleEditPortfolio}>
-                                        </lightning-button-icon>
+                                        <div class="slds-button-group">
+                                            <lightning-button-icon
+                                                icon-name="utility:edit"
+                                                alternative-text="Edit"
+                                                data-id={portfolio.id}
+                                                onclick={handleEditPortfolio}>
+                                            </lightning-button-icon>
+                                            <lightning-button-icon
+                                                icon-name="utility:delete"
+                                                alternative-text="Delete"
+                                                variant="bare"
+                                                class="delete-btn"
+                                                data-id={portfolio.id}
+                                                onclick={handleDeletePortfolio}>
+                                            </lightning-button-icon>
+                                        </div>
                                     </td>
                                 </tr>
                             </template>
@@ -190,7 +251,7 @@
                         <lightning-icon icon-name="utility:warning" size="large" class="slds-m-bottom_medium"></lightning-icon>
                         <h3 class="slds-text-heading_medium">No Portfolios Found</h3>
                         <p class="slds-text-body_regular slds-text-color_weak">
-                            Create Marketer Portfolio records to get started.
+                            Click "New Portfolio" to create your first portfolio.
                         </p>
                     </div>
                 </template>
@@ -198,38 +259,129 @@
         </lightning-card>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- Create / Edit Modal -->
     <template if:true={showEditModal}>
-        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_large">
             <div class="slds-modal__container">
                 <header class="slds-modal__header">
                     <lightning-button-icon
                         icon-name="utility:close"
                         alternative-text="Close"
-                        variant="bare-inverse"
+                        variant="bare"
                         class="slds-modal__close"
                         onclick={handleCloseModal}>
                     </lightning-button-icon>
-                    <h2 class="slds-modal__title">Edit Portfolio: {selectedPortfolio.name}</h2>
+                    <h2 class="slds-modal__title">{modalTitle}</h2>
                 </header>
                 <div class="slds-modal__content slds-p-around_medium">
                     <div class="slds-form">
-                        <div class="slds-form-element slds-m-bottom_medium">
-                            <lightning-combobox
-                                label="Primary Marketer"
-                                value={editPrimaryMarketer}
-                                options={marketingUsers}
-                                onchange={handlePrimaryMarketerChange}>
-                            </lightning-combobox>
+                        <!-- Row 1: Name + Type -->
+                        <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-input
+                                    label="Portfolio Name"
+                                    value={editName}
+                                    onchange={handleNameChange}
+                                    required>
+                                </lightning-input>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-combobox
+                                    label="Portfolio Type"
+                                    value={editPortfolioType}
+                                    options={portfolioTypeOptions}
+                                    onchange={handlePortfolioTypeChange}>
+                                </lightning-combobox>
+                            </div>
                         </div>
-                        <div class="slds-form-element slds-m-bottom_medium">
-                            <lightning-combobox
-                                label="Secondary Marketer"
-                                value={editSecondaryMarketer}
-                                options={marketingUsers}
-                                onchange={handleSecondaryMarketerChange}>
-                            </lightning-combobox>
+
+                        <!-- Row 2: Segment + Region/Specialty -->
+                        <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-combobox
+                                    label="Customer Segment"
+                                    value={editSegmentApiName}
+                                    options={segmentOptions}
+                                    onchange={handleSegmentChange}
+                                    placeholder="Select a segment...">
+                                </lightning-combobox>
+                                <template if:true={selectedSegmentDescription}>
+                                    <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                                        {selectedSegmentDescription}
+                                    </p>
+                                </template>
+                                <template if:true={hasCriteriaRules}>
+                                    <div class="criteria-panel slds-m-top_small slds-p-around_small">
+                                        <p class="slds-text-title_caps slds-m-bottom_xx-small">
+                                            Segment Criteria ({selectedSegmentCriteria.criteriaLogic})
+                                        </p>
+                                        <template for:each={selectedSegmentCriteria.criteriaRules} for:item="rule">
+                                            <div key={rule.field} class="criteria-rule slds-m-bottom_xx-small">
+                                                <span class="criteria-source">{rule.source}</span>
+                                                <span class="slds-text-body_small">
+                                                    {rule.field} <strong>{rule.operator}</strong> {rule.valuesDisplay}
+                                                </span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                <template if:true={showRegionField}>
+                                    <lightning-input
+                                        label="Region"
+                                        value={editRegion}
+                                        onchange={handleRegionChange}>
+                                    </lightning-input>
+                                </template>
+                                <template if:false={showRegionField}>
+                                    <lightning-input
+                                        type="number"
+                                        label="Workload Capacity"
+                                        value={editWorkloadCapacity}
+                                        min="1"
+                                        max="200"
+                                        onchange={handleWorkloadCapacityChange}>
+                                    </lightning-input>
+                                </template>
+                            </div>
                         </div>
+
+                        <!-- Row 2b: Workload when region is shown -->
+                        <template if:true={showRegionField}>
+                            <div class="slds-form-element slds-m-bottom_medium">
+                                <lightning-input
+                                    type="number"
+                                    label="Workload Capacity"
+                                    value={editWorkloadCapacity}
+                                    min="1"
+                                    max="200"
+                                    onchange={handleWorkloadCapacityChange}>
+                                </lightning-input>
+                            </div>
+                        </template>
+
+                        <!-- Row 3: Primary + Secondary Marketer -->
+                        <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-combobox
+                                    label="Primary Marketer"
+                                    value={editPrimaryMarketer}
+                                    options={marketingUsers}
+                                    onchange={handlePrimaryMarketerChange}>
+                                </lightning-combobox>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                <lightning-combobox
+                                    label="Secondary Marketer"
+                                    value={editSecondaryMarketer}
+                                    options={marketingUsers}
+                                    onchange={handleSecondaryMarketerChange}>
+                                </lightning-combobox>
+                            </div>
+                        </div>
+
+                        <!-- Row 4: Auto-Approval -->
                         <div class="slds-form-element slds-m-bottom_medium">
                             <lightning-input
                                 type="checkbox"
@@ -256,7 +408,46 @@
                 </div>
                 <footer class="slds-modal__footer">
                     <lightning-button label="Cancel" onclick={handleCloseModal}></lightning-button>
-                    <lightning-button label="Save" variant="brand" onclick={handleSavePortfolio} class="slds-m-left_x-small"></lightning-button>
+                    <lightning-button
+                        label={saveButtonLabel}
+                        variant="brand"
+                        onclick={handleSavePortfolio}
+                        class="slds-m-left_x-small">
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Delete Confirmation Modal -->
+    <template if:true={showDeleteModal}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header slds-theme_error">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close"
+                        variant="bare-inverse"
+                        class="slds-modal__close"
+                        onclick={handleCloseDeleteModal}>
+                    </lightning-button-icon>
+                    <h2 class="slds-modal__title">Deactivate Portfolio</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p>Are you sure you want to deactivate <strong>{deleteTargetName}</strong>?</p>
+                    <p class="slds-m-top_small slds-text-color_weak">
+                        The portfolio will be hidden from active views. Any pending approvals will remain in their current state and can be reassigned.
+                    </p>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleCloseDeleteModal}></lightning-button>
+                    <lightning-button
+                        label="Deactivate"
+                        variant="destructive"
+                        onclick={handleConfirmDelete}
+                        class="slds-m-left_x-small">
+                    </lightning-button>
                 </footer>
             </div>
         </section>

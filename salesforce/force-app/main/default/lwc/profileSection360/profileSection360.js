@@ -22,6 +22,7 @@ export default class ProfileSection360 extends LightningElement {
     }
 
     get beautyExpanded() { return this.expandedSections.has('beauty'); }
+    get channelsExpanded() { return this.expandedSections.has('channels'); }
     get ordersExpanded() { return this.expandedSections.has('orders'); }
     get loyaltyExpanded() { return this.expandedSections.has('loyalty'); }
     get eventsExpanded() { return this.expandedSections.has('events'); }
@@ -31,6 +32,7 @@ export default class ProfileSection360 extends LightningElement {
     get notesExpanded() { return this.expandedSections.has('notes'); }
 
     get beautyExpandIcon() { return this.beautyExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get channelsExpandIcon() { return this.channelsExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
     get ordersExpandIcon() { return this.ordersExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
     get loyaltyExpandIcon() { return this.loyaltyExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
     get eventsExpandIcon() { return this.eventsExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
@@ -38,6 +40,17 @@ export default class ProfileSection360 extends LightningElement {
     get browseExpandIcon() { return this.browseExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
     get capturedExpandIcon() { return this.capturedExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
     get notesExpandIcon() { return this.notesExpanded ? 'utility:chevrondown' : 'utility:chevronright'; }
+
+    // Channel preference badge classes
+    get emailBadgeClass() {
+        return 'channel-badge ' + (this.profile?.emailOptIn ? 'channel-opted-in' : 'channel-opted-out');
+    }
+    get smsBadgeClass() {
+        return 'channel-badge ' + (this.profile?.smsOptIn ? 'channel-opted-in' : 'channel-opted-out');
+    }
+    get pushBadgeClass() {
+        return 'channel-badge ' + (this.profile?.pushOptIn ? 'channel-opted-in' : 'channel-opted-out');
+    }
 
     // ─── Data presence checks ────────────────────────────────────────
 

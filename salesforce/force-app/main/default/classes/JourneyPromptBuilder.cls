@@ -404,6 +404,14 @@ public with sharing class JourneyPromptBuilder {
         // Fall back to event type template
         if (template == null) {
             String eventKey = normalizeEventType(eventType);
+            // If eventType normalizes to generic 'life-event', also check the description
+            // for contextual keywords (e.g., "traveling to Dubai" → 'travel')
+            if (eventKey == 'life-event' && String.isNotBlank(contextLower)) {
+                String contextKey = normalizeEventType(contextLower);
+                if (contextKey != 'life-event') {
+                    eventKey = contextKey;
+                }
+            }
             Map<String, String> typeTemplates = getStepTemplates().get(eventKey);
             if (typeTemplates == null) {
                 typeTemplates = getStepTemplates().get('life-event');

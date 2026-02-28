@@ -1,4 +1,4 @@
-import type { ChatSummary, MeaningfulEvent, CapturedProfileField, ProfilePreferences } from '@/types/customer';
+import type { BrowseSession, ChatSummary, MeaningfulEvent, CapturedProfileField, ProfilePreferences } from '@/types/customer';
 import type { DataCloudConfig } from './types';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
@@ -153,6 +153,29 @@ export class DataCloudWriteService {
     }
 
     await this.postJson('/services/data/v60.0/sobjects/Meaningful_Event__c', record);
+  }
+
+  async writeBrowseSession(
+    customerId: string,
+    session: BrowseSession,
+  ): Promise<void> {
+    if (useMockData) {
+      console.log('[mock] Would write browse session:', {
+        categories: session.categoriesBrowsed,
+        products: session.productsViewed,
+        duration: session.durationMinutes,
+      });
+      return;
+    }
+
+    await this.postJson('/services/data/v60.0/sobjects/Browse_Session__c', {
+      Customer_Id__c: customerId,
+      Session_Date__c: session.sessionDate,
+      Categories_Browsed__c: session.categoriesBrowsed.join(';'),
+      Products_Viewed__c: session.productsViewed.join(';'),
+      Duration_Minutes__c: session.durationMinutes,
+      Device__c: session.device,
+    });
   }
 
   async writeCapturedProfileField(

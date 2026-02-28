@@ -12,6 +12,7 @@ import { AppointmentBooking } from './AppointmentBooking';
 import { EmailSignup } from './EmailSignup';
 import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { useBrowseTracking } from '@/hooks/useBrowseTracking';
 import type { Product, ProductCategory } from '@/types/product';
 
 interface StorefrontPageProps {
@@ -25,6 +26,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
 }) => {
   const { view, selectedCategory, selectedProduct, navigateHome, navigateToCategory } = useStore();
   const { customer, isAuthenticated } = useCustomer();
+  useBrowseTracking();
 
   // Group products by category for home page sections
   const productGroups = useMemo(() => {

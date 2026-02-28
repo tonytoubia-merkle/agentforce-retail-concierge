@@ -1,14 +1,19 @@
 /**
  * PortfolioAssignmentService
  *
- * Handles assignment of Journey Approvals to Marketer Portfolios using
- * configurable routing rules. Supports:
- * - Regional assignment based on contact location
- * - Segment assignment based on loyalty tier
- * - Event specialty assignment based on meaningful event type
- * - VIP assignment for high-value customers
- * - Workload balancing across portfolios
- * - Confidence-based tiering for auto-approval
+ * Waterfall assignment of Journey Approvals to Marketer Portfolios.
+ * Portfolios are evaluated in Priority_Order__c order (configurable in
+ * the admin UI). The first portfolio the customer qualifies for wins —
+ * ensuring exclusive assignment and preventing duplicate outreach.
+ *
+ * Qualification by portfolio type:
+ * - Event Specialist: event type matches portfolio's specialty events
+ * - VIP: customer value score >= 80
+ * - Segment: verified Data Cloud / CRM segment membership
+ * - Regional: contact state maps to portfolio's region
+ * - Lifecycle: segment-based or catch-all
+ *
+ * Also supports workload capacity limits and confidence-based approval tiers.
  */
 public with sharing class PortfolioAssignmentService {
 
@@ -117,6 +122,24 @@ public with sharing class PortfolioAssignmentService {
         List<Journey_Approval__c> toUpdate = new List<Journey_Approval__c>();
         Set<Id> affectedPortfolios = new Set<Id>();
 
+        // Pre-evaluate segments for all contacts (bulk, efficient)
+        Set<Id> allContactIds = new Set<Id>();
+        List<String> segmentApiNames = new List<String>();
+        for (Journey_Approval__c a : approvals.values()) {
+            if (a.Contact__c != null) allContactIds.add(a.Contact__c);
+        }
+        for (Marketer_Portfolio__c p : portfolios) {
+            if (p.Portfolio_Type__c == 'Segment' && String.isNotBlank(p.Data_Cloud_Segment__c)) {
+                segmentApiNames.add(p.Data_Cloud_Segment__c);
+            }
+        }
+        Map<Id, Map<String, Boolean>> bulkSegmentResults = new Map<Id, Map<String, Boolean>>();
+        if (!segmentApiNames.isEmpty() && !allContactIds.isEmpty()) {
+            bulkSegmentResults = SegmentEvaluationService.evaluateContactSegmentsBulk(
+                allContactIds, segmentApiNames
+            );
+        }
+
         for (Id approvalId : approvalIds) {
             Journey_Approval__c approval = approvals.get(approvalId);
             AssignmentResult result = new AssignmentResult();
@@ -140,9 +163,12 @@ public with sharing class PortfolioAssignmentService {
                 }
             }
 
-            // Fallback to rule-based assignment
+            // Fallback to rule-based assignment with segment evaluation
             if (portfolio == null) {
-                portfolio = findBestPortfolioFromList(approval, portfolios);
+                Map<String, Boolean> contactSegResults = bulkSegmentResults.containsKey(approval.Contact__c)
+                    ? bulkSegmentResults.get(approval.Contact__c)
+                    : new Map<String, Boolean>();
+                portfolio = findBestPortfolioFromList(approval, portfolios, contactSegResults);
             }
 
             if (portfolio != null) {
@@ -312,80 +338,111 @@ public with sharing class PortfolioAssignmentService {
      */
     private static Marketer_Portfolio__c findBestPortfolio(Journey_Approval__c approval) {
         List<Marketer_Portfolio__c> portfolios = getActivePortfolios();
-        return findBestPortfolioFromList(approval, portfolios);
+        // Evaluate segments for this single contact
+        List<String> segApiNames = new List<String>();
+        for (Marketer_Portfolio__c p : portfolios) {
+            if (p.Portfolio_Type__c == 'Segment' && String.isNotBlank(p.Data_Cloud_Segment__c)) {
+                segApiNames.add(p.Data_Cloud_Segment__c);
+            }
+        }
+        Map<String, Boolean> segResults = new Map<String, Boolean>();
+        if (!segApiNames.isEmpty() && approval.Contact__c != null) {
+            segResults = SegmentEvaluationService.evaluateContactSegments(approval.Contact__c, segApiNames);
+        }
+        return findBestPortfolioFromList(approval, portfolios, segResults);
     }
 
+    /**
+     * Waterfall assignment: iterate portfolios in Priority_Order__c order.
+     * The FIRST portfolio the customer qualifies for wins. This means
+     * reordering portfolios in the admin UI directly controls the waterfall.
+     */
     private static Marketer_Portfolio__c findBestPortfolioFromList(
         Journey_Approval__c approval,
-        List<Marketer_Portfolio__c> portfolios
+        List<Marketer_Portfolio__c> portfolios,
+        Map<String, Boolean> segmentResults
     ) {
-        Marketer_Portfolio__c bestMatch = null;
-        Integer bestScore = 0;
-
         String eventType = approval.Meaningful_Event__r?.Event_Type__c;
         String state = approval.Contact__r?.MailingState;
 
+        // Portfolios are already ordered by Priority_Order__c ASC.
+        // First qualifying match wins (waterfall).
         for (Marketer_Portfolio__c portfolio : portfolios) {
             // Skip if at capacity
             if (portfolio.Current_Workload__c >= portfolio.Workload_Capacity__c) {
                 continue;
             }
 
-            Integer score = 0;
+            Boolean qualifies = doesContactQualify(portfolio, approval, eventType, state, segmentResults);
 
-            // Event specialty match (highest priority)
-            if (portfolio.Portfolio_Type__c == 'Event Specialist' &&
-                portfolio.Specialty_Events__c != null &&
-                eventType != null &&
-                portfolio.Specialty_Events__c.contains(eventType)) {
-                score += 100;
-            }
-
-            // VIP portfolio (high priority)
-            if (portfolio.Portfolio_Type__c == 'VIP' &&
-                approval.Customer_Value_Score__c != null &&
-                approval.Customer_Value_Score__c >= 80) {
-                score += 90;
-            }
-
-            // Regional match
-            if (portfolio.Portfolio_Type__c == 'Regional' &&
-                portfolio.Region__c != null &&
-                state != null) {
-                String region = getRegionForState(state);
-                if (portfolio.Region__c == region) {
-                    score += 50;
-                }
-            }
-
-            // Segment match based on loyalty tier
-            // (Would need to join to LoyaltyMember__c for full implementation)
-            if (portfolio.Portfolio_Type__c == 'Segment') {
-                score += 30; // Base score for segment portfolios
-            }
-
-            // Prefer portfolios with lower workload (load balancing)
-            if (portfolio.Current_Workload__c < portfolio.Workload_Capacity__c * 0.5) {
-                score += 10;
-            }
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = portfolio;
+            if (qualifies) {
+                return portfolio;
             }
         }
 
-        // If no specific match, find any portfolio with capacity
-        if (bestMatch == null) {
-            for (Marketer_Portfolio__c portfolio : portfolios) {
-                if (portfolio.Current_Workload__c < portfolio.Workload_Capacity__c) {
-                    bestMatch = portfolio;
-                    break;
-                }
+        // No qualifying match — fall back to any portfolio with capacity
+        for (Marketer_Portfolio__c portfolio : portfolios) {
+            if (portfolio.Current_Workload__c < portfolio.Workload_Capacity__c) {
+                return portfolio;
             }
         }
 
-        return bestMatch;
+        return null;
+    }
+
+    /**
+     * Check whether a contact qualifies for a specific portfolio
+     * based on its type and criteria.
+     */
+    private static Boolean doesContactQualify(
+        Marketer_Portfolio__c portfolio,
+        Journey_Approval__c approval,
+        String eventType,
+        String state,
+        Map<String, Boolean> segmentResults
+    ) {
+        String pType = portfolio.Portfolio_Type__c;
+
+        if (pType == 'Event Specialist') {
+            // Must have a matching event type
+            return portfolio.Specialty_Events__c != null
+                && eventType != null
+                && portfolio.Specialty_Events__c.contains(eventType);
+        }
+
+        if (pType == 'VIP') {
+            // Must meet the value threshold
+            return approval.Customer_Value_Score__c != null
+                && approval.Customer_Value_Score__c >= 80;
+        }
+
+        if (pType == 'Segment') {
+            // Must be a verified member of the portfolio's Data Cloud segment
+            return String.isNotBlank(portfolio.Data_Cloud_Segment__c)
+                && segmentResults != null
+                && segmentResults.containsKey(portfolio.Data_Cloud_Segment__c)
+                && segmentResults.get(portfolio.Data_Cloud_Segment__c) == true;
+        }
+
+        if (pType == 'Regional') {
+            // Must be in the portfolio's region
+            if (portfolio.Region__c == null || state == null) return false;
+            return portfolio.Region__c == getRegionForState(state);
+        }
+
+        if (pType == 'Lifecycle') {
+            // Lifecycle portfolios with a segment use segment evaluation
+            if (String.isNotBlank(portfolio.Data_Cloud_Segment__c)) {
+                return segmentResults != null
+                    && segmentResults.containsKey(portfolio.Data_Cloud_Segment__c)
+                    && segmentResults.get(portfolio.Data_Cloud_Segment__c) == true;
+            }
+            // Lifecycle without a segment qualifies everyone (catch-all)
+            return true;
+        }
+
+        // Unknown type — doesn't qualify
+        return false;
     }
 
     /**
@@ -481,10 +538,11 @@ public with sharing class PortfolioAssignmentService {
             SELECT Id, Name, Primary_Marketer__c, Secondary_Marketer__c,
                    Portfolio_Type__c, Region__c, Specialty_Events__c, Loyalty_Tiers__c,
                    Workload_Capacity__c, Current_Workload__c,
-                   Auto_Approval_Enabled__c, Auto_Approval_Confidence_Threshold__c
+                   Auto_Approval_Enabled__c, Auto_Approval_Confidence_Threshold__c,
+                   Priority_Order__c, Data_Cloud_Segment__c
             FROM Marketer_Portfolio__c
             WHERE Is_Active__c = true
-            ORDER BY Portfolio_Type__c, Name
+            ORDER BY Priority_Order__c ASC NULLS LAST, Name ASC
         ];
     }
 
@@ -524,7 +582,7 @@ public with sharing class PortfolioAssignmentService {
     /**
      * Map US state to region.
      */
-    private static String getRegionForState(String state) {
+    public static String getRegionForState(String state) {
         if (state == null) return null;
 
         Set<String> northeast = new Set<String>{'CT', 'DE', 'MA', 'MD', 'ME', 'NH', 'NJ', 'NY', 'PA', 'RI', 'VT'};

@@ -18,6 +18,30 @@
     align-items: center;
 }
 
+.timing-editable {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.timing-editable:hover {
+    background: rgba(1, 118, 211, 0.08);
+    color: #0176d3;
+}
+
+.timing-edit-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.timing-input {
+    width: 70px;
+}
+
 .step-progress-container {
     height: 4px;
     background: #d8dde6;

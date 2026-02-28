@@ -5,8 +5,5 @@
     <description>Whether the contact has opted in to receive marketing emails</description>
     <externalId>false</externalId>
     <label>Email Opt-In</label>
-    <trackFeedHistory>false</trackFeedHistory>
-    <trackHistory>true</trackHistory>
-    <trackTrending>false</trackTrending>
     <type>Checkbox</type>
 </CustomField>

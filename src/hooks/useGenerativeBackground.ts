@@ -34,41 +34,29 @@ const KNOWN_SETTINGS = new Set<string>([
   'bedroom', 'vanity', 'gym', 'office',
 ]);
 
-// Patterns that indicate a truly novel/specific scene worth generating
-const NOVEL_PATTERNS = [
-  // Specific locations
-  /\b(nyc|new york|paris|tokyo|london|rome|dubai|miami|la|los angeles|san francisco|chicago|barcelona|berlin|amsterdam|sydney|seoul|mumbai|shanghai|hong kong)\b/i,
-  // Countries/regions
-  /\b(japan|france|italy|spain|brazil|india|china|thailand|mexico|greece|morocco|iceland|norway|scotland|ireland|hawaii|caribbean|mediterranean|bali|maldives)\b/i,
-  // Weather/nature specifics
-  /\b(rain|rainy|snow|snowy|storm|thunder|fog|foggy|misty|hurricane|blizzard)\b/i,
-  // Unusual/specific outdoor environments
-  /\b(desert|jungle|forest|mountain|volcano|cave|underwater|rooftop|alley|street|market|bazaar|temple|castle|ruins|bridge|pier|dock|harbor|boardwalk)\b/i,
-  // Specific time/season references
-  /\b(cherry blossom|autumn leaves|fall foliage|winter wonderland|northern lights|aurora|starry|moonlit|neon|cyberpunk)\b/i,
-  // Transportation/movement
-  /\b(airplane|train|subway|yacht|sailboat|cruise|helicopter|cable car|gondola)\b/i,
-  // Cultural/event specifics (exclude "lounge" - too common in "beauty lounge")
-  /\b(festival|carnival|concert|gallery|museum|library|bookstore|cafe|restaurant|bar|club)\b/i,
-];
+// Generic phrases that DON'T warrant generation — standard beauty-scene boilerplate.
+// If the prompt contains ONLY words like these, it's not novel.
+const GENERIC_PHRASES = /^[\w\s,.-]*(luxurious|elegant|soft lighting|high-end|beauty|skincare|cosmetic|product|showcase|atmosphere|setting|perfect for)[\w\s,.-]*$/i;
 
 /**
  * Determine if a background prompt describes a novel scene that warrants
  * dynamic image generation, vs a standard beauty scene that can use static assets.
+ *
+ * The logic is simple: if the agent provided any meaningful scene description
+ * (theme, mood, context) that goes beyond generic beauty-scene boilerplate,
+ * treat it as novel and generate. The agent is the best judge of what's novel —
+ * we don't try to enumerate every possible location or keyword.
  */
 function isNovelPrompt(prompt: string, setting: SceneSetting): boolean {
   // If the setting itself is not one of our known preseeded settings, it's novel
   if (!KNOWN_SETTINGS.has(setting)) return true;
 
-  // Check for location/weather/specific-scene patterns
-  for (const pattern of NOVEL_PATTERNS) {
-    if (pattern.test(prompt)) {
-      console.log('[bg] Novel prompt detected:', prompt.substring(0, 80));
-      return true;
-    }
-  }
+  // If the prompt is just generic beauty-scene boilerplate, skip generation
+  if (!prompt || GENERIC_PHRASES.test(prompt)) return false;
 
-  return false;
+  // The agent provided something specific — trust it
+  console.log('[bg] Novel prompt detected:', prompt.substring(0, 80));
+  return true;
 }
 
 export interface BackgroundOptions {

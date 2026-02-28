@@ -9,7 +9,7 @@ export interface PersonaMeta {
 }
 
 // ─── Sarah Chen: Known Customer, Loyalty Gold ───────────────────
-// Rich data: 4 orders, 2 chats, 3 meaningful events (all traceable to chats), browse data, loyalty
+// Sensitive skin, fragrance-free preference, loyal repeat buyer
 const sarahChen: CustomerProfile = {
   id: 'persona-sarah',
   name: 'Sarah',
@@ -17,11 +17,11 @@ const sarahChen: CustomerProfile = {
 
   beautyProfile: {
     skinType: 'sensitive',
-    concerns: ['hydration', 'redness', 'anti-aging'],
+    concerns: ['hydration'],
     allergies: ['fragrance'],
     fragrancePreference: 'fragrance-free',
     communicationPrefs: { email: true, sms: true, push: false },
-    preferredBrands: ['SERENE', 'LUMIERE'],
+    preferredBrands: ['SERENE'],
     ageRange: '30-40',
   },
 
@@ -38,16 +38,6 @@ const sarahChen: CustomerProfile = {
       ],
     },
     {
-      orderId: 'ORD-2025-1203',
-      orderDate: '2025-09-08',
-      channel: 'in-store',
-      status: 'completed',
-      totalAmount: 45.00,
-      lineItems: [
-        { productId: 'mask-hydrating', productName: 'Deep Dew Hydrating Mask', quantity: 1, unitPrice: 45.00 },
-      ],
-    },
-    {
       orderId: 'ORD-2025-1456',
       orderDate: '2025-11-15',
       channel: 'online',
@@ -58,81 +48,11 @@ const sarahChen: CustomerProfile = {
         { productId: 'moisturizer-sensitive', productName: 'Hydra-Calm Sensitive Moisturizer', quantity: 1, unitPrice: 58.00 },
       ],
     },
-    {
-      orderId: 'ORD-2025-1789',
-      orderDate: '2025-12-20',
-      channel: 'mobile-app',
-      status: 'completed',
-      totalAmount: 70.00,
-      lineItems: [
-        { productId: 'sunscreen-lightweight', productName: 'Invisible Shield SPF 50', quantity: 1, unitPrice: 42.00 },
-        { productId: 'mist-refreshing', productName: 'Cooling Facial Mist', quantity: 1, unitPrice: 28.00 },
-      ],
-    },
   ],
 
-  chatSummaries: [
-    {
-      sessionDate: '2025-09-08',
-      summary: 'Sarah visited the in-store advisor asking about overnight hydration for sensitive skin. Recommended the Deep Dew Hydrating Mask. She was concerned about fragrance in skincare and confirmed she avoids all fragranced products.',
-      sentiment: 'positive',
-      topicsDiscussed: ['overnight hydration', 'sensitive skin', 'fragrance allergy'],
-    },
-    {
-      sessionDate: '2025-12-18',
-      summary: 'Sarah asked for travel-friendly skincare for an upcoming work trip to Mumbai (hot, humid climate). Recommended SPF 50 and Cooling Facial Mist as carry-on essentials. She also mentioned interest in trying retinol but worried about sensitivity.',
-      sentiment: 'positive',
-      topicsDiscussed: ['travel skincare', 'hot climate', 'SPF', 'retinol interest', 'sensitivity concern'],
-    },
-  ],
-
-  // Every event here is traceable to a chat session above
-  meaningfulEvents: [
-    {
-      eventType: 'preference',
-      description: 'Strictly fragrance-free — allergic reaction to fragranced products',
-      capturedAt: '2025-09-08', // from chat #1
-      agentNote: 'Never recommend fragranced products to this customer',
-    },
-    {
-      eventType: 'life-event',
-      description: 'Work trip to Mumbai, India (2 weeks, hot/humid climate)',
-      capturedAt: '2025-12-18', // from chat #2
-      agentNote: 'Purchased travel SPF kit before departure. Trip ended around Jan 15.',
-      metadata: { destination: 'Mumbai, India', climate: 'hot', tripEnd: '2026-01-15' },
-    },
-    {
-      eventType: 'concern',
-      description: 'Expressed interest in retinol but concerned about irritation on her sensitive skin',
-      capturedAt: '2025-12-18', // from chat #2
-      agentNote: 'Consider recommending encapsulated retinol (gentler delivery) when she brings this up again',
-    },
-  ],
-
-  agentCapturedProfile: {
-    // Captured from chat #2 (2025-12-18) — she mentioned her work travel schedule
-    workEnvironment: {
-      value: 'Office, travels frequently for work',
-      capturedAt: '2025-12-18',
-      capturedFrom: 'chat session 2025-12-18',
-      confidence: 'stated',
-    },
-    // Captured from chat #1 (2025-09-08) — discussed her evening routine
-    morningRoutineTime: {
-      value: 'Has about 10 minutes in the morning, prefers to do more at night',
-      capturedAt: '2025-09-08',
-      capturedFrom: 'chat session 2025-09-08',
-      confidence: 'stated',
-    },
-    // Captured from chat #1 — she explicitly said she avoids fragrance
-    beautyPriority: {
-      value: 'Ingredient-conscious, prioritizes gentle/clean formulations',
-      capturedAt: '2025-09-08',
-      capturedFrom: 'chat session 2025-09-08',
-      confidence: 'inferred',
-    },
-    // Not yet captured: birthday, anniversary, giftsFor, exerciseRoutine, priceRange
-  },
+  chatSummaries: [],
+  meaningfulEvents: [],
+  agentCapturedProfile: {},
 
   browseSessions: [
     {
@@ -141,13 +61,6 @@ const sarahChen: CustomerProfile = {
       productsViewed: ['serum-retinol', 'serum-anti-aging'],
       durationMinutes: 8,
       device: 'mobile',
-    },
-    {
-      sessionDate: '2026-01-28',
-      categoriesBrowsed: ['eye-cream', 'serum'],
-      productsViewed: ['eye-cream', 'serum-vitamin-c'],
-      durationMinutes: 5,
-      device: 'desktop',
     },
   ],
 
@@ -158,7 +71,6 @@ const sarahChen: CustomerProfile = {
     memberSince: '2024-11-01',
     rewardsAvailable: [
       { name: '$10 off next purchase', pointsCost: 1000 },
-      { name: 'Free deluxe sample set', pointsCost: 1500 },
     ],
     nextTierThreshold: 6000,
     tierExpiryDate: '2026-11-01',
@@ -171,12 +83,9 @@ const sarahChen: CustomerProfile = {
     resolvedAt: new Date().toISOString(),
   },
 
-  // Legacy fields
   purchaseHistory: [
     { productId: 'cleanser-gentle', productName: 'Cloud Cream Cleanser', purchaseDate: '2025-11-15', quantity: 1, rating: 5 },
     { productId: 'moisturizer-sensitive', productName: 'Hydra-Calm Sensitive Moisturizer', purchaseDate: '2025-11-15', quantity: 1, rating: 5 },
-    { productId: 'sunscreen-lightweight', productName: 'Invisible Shield SPF 50', purchaseDate: '2025-12-20', quantity: 1, rating: 4 },
-    { productId: 'mist-refreshing', productName: 'Cooling Facial Mist', purchaseDate: '2025-12-20', quantity: 1 },
   ],
   savedPaymentMethods: [
     { id: 'pm-1', type: 'card', last4: '4242', brand: 'visa', isDefault: true },
@@ -185,17 +94,13 @@ const sarahChen: CustomerProfile = {
     { id: 'addr-1', name: 'Sarah Chen', line1: '123 Main St', city: 'San Francisco', state: 'CA', postalCode: '94102', country: 'US', isDefault: true },
   ],
   travelPreferences: { upcomingTrips: [], prefersTravelSize: true },
-  recentActivity: [
-    { type: 'trip', description: 'Completed work trip to Mumbai', date: '2026-01-15', metadata: { destination: 'Mumbai, India', climate: 'hot', purpose: 'work' } },
-    { type: 'purchase', description: 'Purchased travel SPF kit for Mumbai trip', date: '2025-12-20', productIds: ['sunscreen-lightweight', 'mist-refreshing'] },
-    { type: 'browse', description: 'Browsed retinol serums', date: '2026-01-22', productIds: ['serum-retinol'] },
-  ],
+  recentActivity: [],
   loyaltyTier: 'gold',
-  lifetimeValue: 303,
+  lifetimeValue: 188,
 };
 
 // ─── James Rodriguez: Known Customer, NO Loyalty ────────────────
-// 1 order, 2 chats (second is recent and captures anniversary intent), events match chats
+// Oily skin, 1 order, anniversary gift search — not yet a loyalty member
 const jamesRodriguez: CustomerProfile = {
   id: 'persona-james',
   name: 'James',
@@ -203,9 +108,10 @@ const jamesRodriguez: CustomerProfile = {
 
   beautyProfile: {
     skinType: 'oily',
-    concerns: ['acne', 'oil control', 'pores'],
+    concerns: ['oil control'],
     allergies: [],
-    preferredBrands: ['DERMAFIX'],
+    communicationPrefs: { email: true, sms: false, push: false },
+    preferredBrands: [],
     ageRange: '25-35',
   },
 
@@ -222,61 +128,9 @@ const jamesRodriguez: CustomerProfile = {
     },
   ],
 
-  chatSummaries: [
-    {
-      sessionDate: '2025-07-10',
-      summary: 'James asked for help with oily skin and breakouts. Recommended the Clear Start Salicylic Cleanser as a starting point. He mentioned he was new to skincare and wanted to keep things simple.',
-      sentiment: 'positive',
-      topicsDiscussed: ['oily skin', 'acne', 'beginner routine'],
-    },
-    {
-      sessionDate: '2026-01-25',
-      summary: 'James came back looking for a fragrance gift for his partner — anniversary coming up. Browsed Jardin de Nuit and Bois Sauvage together. He seemed drawn to the floral notes in Jardin de Nuit. Also mentioned wanting to build out his skincare routine beyond just the cleanser.',
-      sentiment: 'positive',
-      topicsDiscussed: ['fragrance', 'gifting', 'anniversary', 'skincare routine expansion'],
-    },
-  ],
-
-  // Every event traceable to a chat above
-  meaningfulEvents: [
-    {
-      eventType: 'intent',
-      description: 'Wants to build a proper skincare routine beyond just a cleanser',
-      capturedAt: '2025-07-10', // from chat #1
-      agentNote: 'Only purchased cleanser so far. Good candidate for a step-up to serum + moisturizer.',
-    },
-    {
-      eventType: 'intent',
-      description: 'Anniversary coming up — looking for a fragrance gift for his partner',
-      capturedAt: '2026-01-25', // from chat #2
-      agentNote: 'Browsed Jardin de Nuit and Bois Sauvage. Seemed drawn to floral scents for gifting.',
-      metadata: { occasion: 'anniversary', giftFor: 'partner' },
-    },
-  ],
-
-  agentCapturedProfile: {
-    // Captured from chat #2 (2026-01-25) — mentioned anniversary and partner
-    anniversary: {
-      value: 'Coming up in February',
-      capturedAt: '2026-01-25',
-      capturedFrom: 'chat session 2026-01-25',
-      confidence: 'stated',
-    },
-    giftsFor: {
-      value: ['partner'],
-      capturedAt: '2026-01-25',
-      capturedFrom: 'chat session 2026-01-25',
-      confidence: 'stated',
-    },
-    // Captured from chat #1 (2025-07-10) — said he's new to skincare
-    beautyPriority: {
-      value: 'Wants to keep it simple, new to skincare',
-      capturedAt: '2025-07-10',
-      capturedFrom: 'chat session 2025-07-10',
-      confidence: 'stated',
-    },
-    // Not yet captured: birthday, morningRoutineTime, exerciseRoutine, workEnvironment, priceRange
-  },
+  chatSummaries: [],
+  meaningfulEvents: [],
+  agentCapturedProfile: {},
 
   browseSessions: [
     {
@@ -286,16 +140,9 @@ const jamesRodriguez: CustomerProfile = {
       durationMinutes: 12,
       device: 'mobile',
     },
-    {
-      sessionDate: '2026-01-20',
-      categoriesBrowsed: ['serum'],
-      productsViewed: ['serum-niacinamide'],
-      durationMinutes: 4,
-      device: 'desktop',
-    },
   ],
 
-  loyalty: null, // Not a loyalty member — opportunity to enroll
+  loyalty: null,
 
   merkuryIdentity: {
     merkuryId: 'MRK-JR-78701',
@@ -304,7 +151,6 @@ const jamesRodriguez: CustomerProfile = {
     resolvedAt: new Date().toISOString(),
   },
 
-  // Legacy fields
   purchaseHistory: [
     { productId: 'cleanser-acne', productName: 'Clear Start Salicylic Cleanser', purchaseDate: '2025-07-10', quantity: 1, rating: 4 },
   ],
@@ -314,10 +160,7 @@ const jamesRodriguez: CustomerProfile = {
   shippingAddresses: [
     { id: 'addr-2', name: 'James Rodriguez', line1: '456 Oak Ave', city: 'Austin', state: 'TX', postalCode: '78701', country: 'US', isDefault: true },
   ],
-  recentActivity: [
-    { type: 'browse', description: 'Browsed fragrances — anniversary coming up', date: '2026-01-25', productIds: ['fragrance-floral', 'fragrance-woody'] },
-    { type: 'browse', description: 'Viewed pore-refining products', date: '2026-01-20', productIds: ['serum-niacinamide'] },
-  ],
+  recentActivity: [],
   loyaltyTier: undefined,
   lifetimeValue: 32,
 };
@@ -399,7 +242,7 @@ const anonymousVisitor: CustomerProfile = {
 };
 
 // ─── Maya Thompson: Known, Loyalty Platinum, Makeup Enthusiast ──
-// Heavy buyer, 3 chats, loves makeup, recently returned an item
+// Frequent buyer, loves makeup and fragrance
 const mayaThompson: CustomerProfile = {
   id: 'persona-maya',
   name: 'Maya',
@@ -407,11 +250,11 @@ const mayaThompson: CustomerProfile = {
 
   beautyProfile: {
     skinType: 'normal',
-    concerns: ['brightening', 'glow'],
+    concerns: ['brightening'],
     allergies: [],
     fragrancePreference: 'love',
     communicationPrefs: { email: true, sms: true, push: true },
-    preferredBrands: ['LUMIERE', 'MAISON'],
+    preferredBrands: ['LUMIERE'],
     ageRange: '25-30',
   },
 
@@ -450,94 +293,11 @@ const mayaThompson: CustomerProfile = {
         { productId: 'foundation-dewy', productName: 'Skin Glow Serum Foundation', quantity: 1, unitPrice: 52.00 },
       ],
     },
-    {
-      orderId: 'ORD-2025-1501',
-      orderDate: '2025-12-01',
-      channel: 'online',
-      status: 'returned',
-      totalAmount: 95.00,
-      lineItems: [
-        { productId: 'serum-anti-aging', productName: 'Peptide Lift Pro Serum', quantity: 1, unitPrice: 95.00 },
-      ],
-    },
-    {
-      orderId: 'ORD-2026-0088',
-      orderDate: '2026-01-10',
-      channel: 'mobile-app',
-      status: 'completed',
-      totalAmount: 66.00,
-      lineItems: [
-        { productId: 'shampoo-repair', productName: 'Bond Repair Shampoo', quantity: 1, unitPrice: 32.00 },
-        { productId: 'conditioner-hydrating', productName: 'Silk Hydration Conditioner', quantity: 1, unitPrice: 34.00 },
-      ],
-    },
   ],
 
-  chatSummaries: [
-    {
-      sessionDate: '2025-06-02',
-      summary: 'Maya visited in-store looking for a signature fragrance. Tested several options and loved Jardin de Nuit — said the jasmine-sandalwood blend felt "like her." Also picked up a new lip color.',
-      sentiment: 'positive',
-      topicsDiscussed: ['fragrance', 'in-store experience', 'lipstick'],
-    },
-    {
-      sessionDate: '2025-12-05',
-      summary: 'Maya reached out about returning the Peptide Lift Pro Serum — she felt it was too heavy for her skin type and didn\'t see results after 2 weeks. She asked for a lighter anti-aging alternative.',
-      sentiment: 'neutral',
-      topicsDiscussed: ['product return', 'anti-aging', 'serum texture preference'],
-    },
-    {
-      sessionDate: '2026-01-10',
-      summary: 'Maya asked about haircare for color-treated hair. Recommended the Bond Repair duo. She mentioned she recently got highlights and was worried about damage.',
-      sentiment: 'positive',
-      topicsDiscussed: ['haircare', 'color-treated hair', 'damage repair'],
-    },
-  ],
-
-  meaningfulEvents: [
-    {
-      eventType: 'preference',
-      description: 'Jardin de Nuit is her signature fragrance — "feels like me"',
-      capturedAt: '2025-06-02', // from chat #1
-      agentNote: 'Could use this for personalized scent recommendations or layering suggestions',
-    },
-    {
-      eventType: 'concern',
-      description: 'Returned Peptide Lift Pro — found it too heavy, wants lighter anti-aging options',
-      capturedAt: '2025-12-05', // from chat #2
-      agentNote: 'Avoid recommending heavy serums. Try Vitamin C or encapsulated retinol instead.',
-    },
-    {
-      eventType: 'life-event',
-      description: 'Recently got hair highlights, concerned about color damage',
-      capturedAt: '2026-01-10', // from chat #3
-      agentNote: 'Recommend bond-repair products and color-safe formulas',
-    },
-  ],
-
-  agentCapturedProfile: {
-    // From chat #1 — Jardin de Nuit is her signature
-    beautyPriority: {
-      value: 'Loves makeup and fragrance, views beauty as self-expression',
-      capturedAt: '2025-06-02',
-      capturedFrom: 'chat session 2025-06-02',
-      confidence: 'inferred',
-    },
-    // From chat #2 — returned a product because texture was wrong
-    priceRange: {
-      value: 'Willing to spend on premium products but expects them to work',
-      capturedAt: '2025-12-05',
-      capturedFrom: 'chat session 2025-12-05',
-      confidence: 'inferred',
-    },
-    makeupFrequency: {
-      value: 'Daily — foundation, blush, mascara are staples',
-      capturedAt: '2025-06-02',
-      capturedFrom: 'inferred from purchase pattern',
-      confidence: 'inferred',
-    },
-    // Not yet captured: birthday, anniversary, morningRoutineTime, exerciseRoutine, workEnvironment
-  },
+  chatSummaries: [],
+  meaningfulEvents: [],
+  agentCapturedProfile: {},
 
   browseSessions: [
     {
@@ -556,7 +316,6 @@ const mayaThompson: CustomerProfile = {
     memberSince: '2024-03-01',
     rewardsAvailable: [
       { name: '$25 off next purchase', pointsCost: 2000 },
-      { name: 'Exclusive early access event', pointsCost: 3000 },
     ],
     tierExpiryDate: '2027-03-01',
   },
@@ -576,11 +335,11 @@ const mayaThompson: CustomerProfile = {
     { id: 'addr-3', name: 'Maya Thompson', line1: '789 Elm St', city: 'Los Angeles', state: 'CA', postalCode: '90028', country: 'US', isDefault: true },
   ],
   recentActivity: [],
-  lifetimeValue: 562,
+  lifetimeValue: 401,
 };
 
 // ─── David Kim: Known, Loyalty Silver, Routine Builder ──────────
-// 2 orders, 1 chat about building a routine, methodical buyer
+// Combination skin, methodical, building out his routine
 const davidKim: CustomerProfile = {
   id: 'persona-david',
   name: 'David',
@@ -588,9 +347,10 @@ const davidKim: CustomerProfile = {
 
   beautyProfile: {
     skinType: 'combination',
-    concerns: ['pores', 'texture', 'oil control'],
+    concerns: ['pores'],
     allergies: [],
-    preferredBrands: ['DERMAFIX', 'SERENE'],
+    communicationPrefs: { email: true, sms: false, push: true },
+    preferredBrands: ['DERMAFIX'],
     ageRange: '30-40',
   },
 
@@ -619,40 +379,9 @@ const davidKim: CustomerProfile = {
     },
   ],
 
-  chatSummaries: [
-    {
-      sessionDate: '2025-08-15',
-      summary: 'David asked for help building a simple skincare routine for combination skin. He wanted to address enlarged pores and occasional oiliness. Recommended the Salicylic Cleanser and Niacinamide Serum as a two-step starting point. He was very methodical — asked about ingredient interactions and application order.',
-      sentiment: 'positive',
-      topicsDiscussed: ['combination skin', 'pores', 'routine building', 'ingredient interactions'],
-    },
-  ],
-
-  meaningfulEvents: [
-    {
-      eventType: 'preference',
-      description: 'Very methodical about skincare — wants to understand ingredient interactions and correct application order',
-      capturedAt: '2025-08-15', // from chat #1
-      agentNote: 'Provide detailed ingredient explanations when recommending. This customer appreciates the science.',
-    },
-  ],
-
-  agentCapturedProfile: {
-    // From chat #1 — asked detailed ingredient questions
-    beautyPriority: {
-      value: 'Science-driven, wants to understand how ingredients interact before buying',
-      capturedAt: '2025-08-15',
-      capturedFrom: 'chat session 2025-08-15',
-      confidence: 'stated',
-    },
-    morningRoutineTime: {
-      value: 'Has time for a full routine — not rushed',
-      capturedAt: '2025-08-15',
-      capturedFrom: 'chat session 2025-08-15',
-      confidence: 'inferred',
-    },
-    // Not yet captured: birthday, anniversary, giftsFor, exerciseRoutine, workEnvironment, priceRange
-  },
+  chatSummaries: [],
+  meaningfulEvents: [],
+  agentCapturedProfile: {},
 
   browseSessions: [
     {
@@ -661,13 +390,6 @@ const davidKim: CustomerProfile = {
       productsViewed: ['serum-retinol', 'moisturizer-sensitive'],
       durationMinutes: 11,
       device: 'desktop',
-    },
-    {
-      sessionDate: '2026-01-27',
-      categoriesBrowsed: ['eye-cream'],
-      productsViewed: ['eye-cream'],
-      durationMinutes: 3,
-      device: 'mobile',
     },
   ],
 
@@ -745,8 +467,8 @@ const priyaSharma: CustomerProfile = {
   },
 };
 
-// ─── Marcus Williams: Known, 1 order, 1 chat, brand new ────────
-// Just getting started — 1 order last week, 1 chat that prompted it, no loyalty yet
+// ─── Marcus Williams: Known, Brand New ──────────────────────────
+// Just getting started — 1 order, no loyalty yet
 const marcusWilliams: CustomerProfile = {
   id: 'persona-marcus',
   name: 'Marcus',
@@ -754,8 +476,9 @@ const marcusWilliams: CustomerProfile = {
 
   beautyProfile: {
     skinType: 'dry',
-    concerns: ['hydration', 'dullness'],
+    concerns: ['hydration'],
     allergies: [],
+    communicationPrefs: { email: false, sms: true, push: true },
     preferredBrands: [],
     ageRange: '20-25',
   },
@@ -773,35 +496,9 @@ const marcusWilliams: CustomerProfile = {
     },
   ],
 
-  chatSummaries: [
-    {
-      sessionDate: '2026-01-24',
-      summary: 'Marcus is brand new to skincare. A friend recommended this brand. He has dry, dull skin and wanted to start with the basics. Recommended the Cloud Cream Cleanser as a gentle first step. He asked what to add next.',
-      sentiment: 'positive',
-      topicsDiscussed: ['beginner skincare', 'dry skin', 'first purchase', 'next steps'],
-    },
-  ],
-
-  meaningfulEvents: [
-    {
-      eventType: 'intent',
-      description: 'Complete skincare beginner — wants to know what to add next after his cleanser',
-      capturedAt: '2026-01-24', // from chat #1
-      agentNote: 'Recommend moisturizer as next step, then SPF. Keep it simple — he\'s just starting out.',
-    },
-  ],
-
-  agentCapturedProfile: {
-    // From chat #1 — mentioned a friend recommended the brand
-    beautyPriority: {
-      value: 'Total beginner, friend recommended the brand, wants to keep it simple',
-      capturedAt: '2026-01-24',
-      capturedFrom: 'chat session 2026-01-24',
-      confidence: 'stated',
-    },
-    // Not yet captured: everything else — this is a brand new customer
-  },
-
+  chatSummaries: [],
+  meaningfulEvents: [],
+  agentCapturedProfile: {},
   browseSessions: [],
   loyalty: null,
 
@@ -828,56 +525,56 @@ export const PERSONAS: PersonaMeta[] = [
     id: 'sarah',
     label: 'Sarah Chen',
     subtitle: 'Known · Loyalty Gold',
-    traits: ['Sensitive skin', 'Recent Mumbai trip', '4 orders', 'Browsing retinol', '2,450 loyalty pts'],
+    traits: ['Sensitive skin', 'Fragrance-free', '2 orders', '2,450 pts'],
     profile: sarahChen,
   },
   {
     id: 'james',
     label: 'James Rodriguez',
     subtitle: 'Known · No Loyalty',
-    traits: ['Oily skin', 'Anniversary gift search', '1 order', '2 chats', 'Not a loyalty member'],
+    traits: ['Oily skin', '1 order', 'Anniversary gift search'],
     profile: jamesRodriguez,
   },
   {
     id: 'maya',
     label: 'Maya Thompson',
     subtitle: 'Known · Loyalty Platinum',
-    traits: ['Makeup enthusiast', '5 orders', 'Returned a serum', 'New highlights', '5,200 loyalty pts'],
+    traits: ['Makeup enthusiast', '3 orders', '5,200 pts'],
     profile: mayaThompson,
   },
   {
     id: 'david',
     label: 'David Kim',
     subtitle: 'Known · Loyalty Silver',
-    traits: ['Combination skin', 'Routine builder', '2 orders', 'Methodical buyer', 'Browsing retinol'],
+    traits: ['Combination skin', '2 orders', 'Routine builder'],
     profile: davidKim,
   },
   {
     id: 'marcus',
     label: 'Marcus Williams',
     subtitle: 'Known · Brand New',
-    traits: ['Dry skin', 'Skincare beginner', '1 order last week', 'No loyalty yet'],
+    traits: ['Dry skin', '1 order', 'No loyalty yet'],
     profile: marcusWilliams,
   },
   {
     id: 'aisha',
     label: 'Aisha Patel',
     subtitle: 'Merkury Appended Only',
-    traits: ['New to brand', 'Clean beauty interest', 'Wellness-focused', 'NYC', 'No purchase history'],
+    traits: ['Clean beauty interest', 'NYC', 'No purchase history'],
     profile: aishaPatel,
   },
   {
     id: 'priya',
     label: 'Priya Sharma',
     subtitle: 'Merkury Appended Only',
-    traits: ['New to brand', 'Anti-aging interest', 'Affluent suburban', 'Dallas', 'Has children'],
+    traits: ['Anti-aging interest', 'Dallas', 'Has children'],
     profile: priyaSharma,
   },
   {
     id: 'anonymous',
     label: 'Anonymous Visitor',
     subtitle: 'Merkury: No Match',
-    traits: ['No identity resolved', 'No history', 'Discovery mode'],
+    traits: ['No identity resolved', 'No history'],
     profile: anonymousVisitor,
   },
 ];

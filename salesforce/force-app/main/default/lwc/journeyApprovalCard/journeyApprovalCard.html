@@ -49,7 +49,41 @@
                     </div>
                     <span class="send-timing">
                         <lightning-icon icon-name="utility:clock" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
-                        {sendTimingLabel}
+                        <template if:false={isEditingTiming}>
+                            <span onclick={handleEditTiming} class={timingLabelClass} title={timingEditTitle}>
+                                {sendTimingLabel}
+                                <template if:true={canEditTiming}>
+                                    <lightning-icon icon-name="utility:edit" size="xx-small" class="slds-m-left_xx-small"></lightning-icon>
+                                </template>
+                            </span>
+                        </template>
+                        <template if:true={isEditingTiming}>
+                            <span class="timing-edit-inline">
+                                <lightning-input
+                                    type="number"
+                                    value={editedDelayDays}
+                                    min="0"
+                                    max="90"
+                                    onchange={handleDelayDaysChange}
+                                    variant="label-hidden"
+                                    class="timing-input">
+                                </lightning-input>
+                                <span class="slds-m-horizontal_xx-small">days after Step {previousStepNumber}</span>
+                                <lightning-button-icon
+                                    icon-name="utility:check"
+                                    alternative-text="Save"
+                                    onclick={handleTimingSave}
+                                    variant="brand"
+                                    size="small">
+                                </lightning-button-icon>
+                                <lightning-button-icon
+                                    icon-name="utility:close"
+                                    alternative-text="Cancel"
+                                    onclick={handleTimingCancel}
+                                    size="small">
+                                </lightning-button-icon>
+                            </span>
+                        </template>
                     </span>
                 </div>
                 <!-- Progress Bar -->
@@ -60,12 +94,17 @@
         </template>
 
         <div class="slds-card__body slds-card__body_inner">
-            <!-- Event Info -->
+            <!-- Event Context -->
             <div class="slds-box slds-theme_shade slds-m-bottom_small">
                 <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-start">
                     <div>
-                        <p class="slds-text-title_caps slds-m-bottom_xx-small">{formattedEventType}</p>
+                        <p class="slds-text-title_caps slds-m-bottom_xx-small">Event Context</p>
                         <p class="slds-text-body_regular">{eventDescription}</p>
+                        <template if:true={hasAgentInsight}>
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small" style="font-style: italic;">
+                                {agentInsight}
+                            </p>
+                        </template>
                     </div>
                     <template if:true={hasEventDate}>
                         <div class="slds-text-align_right slds-shrink-none slds-m-left_small">
@@ -415,14 +454,6 @@
                     </template>
                 </div>
 
-                <!-- Event Summary (Expandable) -->
-                <template if:true={approval.Event_Summary__c}>
-                    <lightning-accordion allow-multiple-sections-open>
-                        <lightning-accordion-section name="context" label="Event Context">
-                            <pre class="event-summary">{approval.Event_Summary__c}</pre>
-                        </lightning-accordion-section>
-                    </lightning-accordion>
-                </template>
             </template>
         </div>
 

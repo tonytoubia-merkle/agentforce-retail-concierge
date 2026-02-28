@@ -33,6 +33,20 @@
                         <lightning-icon icon-name="utility:user" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
                         {selectedCustomerName}
                     </span>
+                    <lightning-button-icon
+                        icon-name="utility:refresh"
+                        alternative-text="Refresh profile"
+                        variant="bare-inverse"
+                        onclick={handleHeaderRefresh}
+                        class="slds-m-left_x-small"
+                    ></lightning-button-icon>
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close profile"
+                        variant="bare-inverse"
+                        onclick={handleHeaderClose}
+                        class="slds-m-left_xx-small"
+                    ></lightning-button-icon>
                 </template>
             </div>
             <div class="header-right">

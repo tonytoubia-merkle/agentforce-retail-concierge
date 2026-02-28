@@ -144,6 +144,24 @@
             </template>
         </div>
 
+        <!-- Communication Preferences -->
+        <div class="section-card slds-m-bottom_xx-small">
+            <div class="section-header" onclick={toggleSection} data-section="channels">
+                <lightning-icon icon-name="utility:email" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                <span class="section-title">Channel Preferences</span>
+                <lightning-icon icon-name={channelsExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
+            </div>
+            <template if:true={channelsExpanded}>
+                <div class="section-body">
+                    <div class="channel-badges">
+                        <span class={emailBadgeClass}>Email</span>
+                        <span class={smsBadgeClass}>SMS</span>
+                        <span class={pushBadgeClass}>Push</span>
+                    </div>
+                </div>
+            </template>
+        </div>
+
         <!-- Order History (observed) -->
         <div class="section-card slds-m-bottom_xx-small">
             <div class="section-header" onclick={toggleSection} data-section="orders">
@@ -213,7 +231,7 @@
             <div class="section-card slds-m-bottom_xx-small">
                 <div class="section-header" onclick={toggleSection} data-section="events">
                     <lightning-icon icon-name="utility:event" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                    <span class="section-title">Life Events</span>
+                    <span class="section-title">Meaningful Events</span>
                     <c-provenance-badge provenance="stated" class="slds-m-left_x-small"></c-provenance-badge>
                     <span class="section-count">({eventCount})</span>
                     <lightning-icon icon-name={eventsExpandIcon} size="xx-small" class="expand-icon"></lightning-icon>
@@ -222,7 +240,12 @@
                     <div class="section-body">
                         <template for:each={profile.meaningfulEvents} for:item="event">
                             <div key={event.capturedAt} class="event-item">
-                                <span class="event-type">{event.eventType}</span>
+                                <div class="event-header-row">
+                                    <span class="event-type">{event.eventType}</span>
+                                    <template if:true={event.urgency}>
+                                        <span class={event.urgencyClass}>{event.timeContext}</span>
+                                    </template>
+                                </div>
                                 <span class="event-desc">{event.description}</span>
                                 <template if:true={event.agentNote}>
                                     <span class="event-note">{event.agentNote}</span>

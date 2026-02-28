@@ -421,10 +421,42 @@ public with sharing class CampaignAgentService {
         content.put('briefContent', 'Personalized journey for ' + eventType + ': ' + eventDescription);
         content.put('subject', subject);
         content.put('body', body);
-        content.put('imagePrompt', 'Elegant ' + eventType + ' celebration, luxury beauty products, ' +
-            'soft rose gold accents, warm natural lighting, sophisticated editorial style');
+        content.put('imagePrompt', buildFallbackImagePrompt(eventLower));
 
         return content;
+    }
+
+    // ─── Fallback Image Prompt Builder ──────────────────────────────
+
+    private static String buildFallbackImagePrompt(String eventDescLower) {
+        if (eventDescLower.contains('wedding') || eventDescLower.contains('bridal')) {
+            return 'Bridal preparation vanity scene, luxury beauty products arranged on white marble surface, '
+                 + 'soft romantic lighting, white roses and champagne, luxury bridal suite atmosphere, '
+                 + 'silk ribbon accents, editorial wedding photography';
+        }
+        if (eventDescLower.contains('travel') || eventDescLower.contains('trip') || eventDescLower.contains('vacation')) {
+            return 'Elegant open suitcase on luxury hotel bed, luxury beauty products beautifully arranged inside, '
+                 + 'destination cityscape through window, soft natural light, jet-set lifestyle photography, '
+                 + 'rose gold accents, premium editorial composition';
+        }
+        if (eventDescLower.contains('birthday')) {
+            return 'Beautiful birthday gift arrangement, luxury beauty products wrapped with silk ribbons, '
+                 + 'elegant gift boxes, rose petals scattered, soft bokeh lights, '
+                 + 'celebration atmosphere, premium product photography';
+        }
+        if (eventDescLower.contains('anniversary')) {
+            return 'Romantic celebration scene, luxury beauty products beside champagne flutes, '
+                 + 'rose petals, candlelight, elegant marble surface, intimate atmosphere, '
+                 + 'premium editorial photography';
+        }
+        if (eventDescLower.contains('baby') || eventDescLower.contains('pregnant')) {
+            return 'Gentle nursery setting, luxury beauty products arranged on soft white blanket, '
+                 + 'pastel colors, soft diffused light, peaceful nurturing atmosphere, '
+                 + 'cotton details, tender motherhood moment';
+        }
+        return 'Lifestyle flat-lay arrangement, luxury beauty products beautifully styled, '
+             + 'clean minimalist background, natural lighting, premium product photography, '
+             + 'soft rose gold accents, warm editorial composition';
     }
 
     // ─── Custom Exception ─────────────────────────────────────────────

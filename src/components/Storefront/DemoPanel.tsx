@@ -3,12 +3,176 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { PERSONA_STUBS } from '@/mocks/customerPersonas';
 import { fetchDemoContacts } from '@/services/demo/contacts';
-import type { DemoContact } from '@/types/customer';
+import type { DemoContact, CustomerProfile } from '@/types/customer';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
+// ─── Profile detail sub-components (dark theme) ─────────────────
+
+const DetailField: React.FC<{ label: string; value: string | undefined | null }> = ({ label, value }) => {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between gap-2 py-0.5">
+      <span className="text-[11px] text-white/40 shrink-0">{label}</span>
+      <span className="text-[11px] text-white/80 text-right">{value}</span>
+    </div>
+  );
+};
+
+const DetailSection: React.FC<{ title: string; source?: string; children: React.ReactNode }> = ({
+  title, source, children,
+}) => (
+  <div className="border-b border-white/5 last:border-b-0 pb-2 mb-2 last:mb-0 last:pb-0">
+    <div className="flex items-center gap-2 mb-1">
+      <span className="text-[10px] font-medium text-white/60 uppercase tracking-wider">{title}</span>
+      {source && <span className="text-[9px] px-1 py-0.5 rounded bg-white/5 text-white/30">{source}</span>}
+    </div>
+    {children}
+  </div>
+);
+
+function renderProfileDetail(customer: CustomerProfile) {
+  const sections: React.ReactNode[] = [];
+  const bp = customer.beautyProfile;
+
+  if (bp?.skinType) {
+    sections.push(
+      <DetailSection key="beauty" title="Beauty Profile" source="Contact">
+        <DetailField label="Skin Type" value={bp.skinType} />
+        <DetailField label="Concerns" value={bp.concerns?.join(', ')} />
+        <DetailField label="Allergies" value={bp.allergies?.join(', ')} />
+        <DetailField label="Brands" value={bp.preferredBrands?.join(', ')} />
+      </DetailSection>
+    );
+  }
+
+  if (customer.orders && customer.orders.length > 0) {
+    sections.push(
+      <DetailSection key="orders" title={`Orders (${customer.orders.length})`} source="Order">
+        {customer.orders.slice(0, 3).map((o, i) => (
+          <div key={i} className="py-0.5">
+            <div className="flex justify-between">
+              <span className="text-[10px] text-white/60">{o.orderId}</span>
+              <span className="text-[10px] text-white/30">{o.orderDate}</span>
+            </div>
+            <div className="text-[10px] text-white/40 truncate">
+              {o.lineItems.map(li => li.productName).join(', ')} — ${o.totalAmount}
+            </div>
+          </div>
+        ))}
+      </DetailSection>
+    );
+  }
+
+  if (customer.chatSummaries && customer.chatSummaries.length > 0) {
+    sections.push(
+      <DetailSection key="chat" title={`Chat Summaries (${customer.chatSummaries.length})`} source="Chat_Summary__c">
+        {customer.chatSummaries.map((c, i) => (
+          <div key={i} className="py-0.5">
+            <div className="flex justify-between">
+              <span className="text-[10px] text-white/30">{c.sessionDate}</span>
+              <span className={`text-[10px] ${c.sentiment === 'positive' ? 'text-emerald-400/70' : c.sentiment === 'negative' ? 'text-red-400/70' : 'text-white/30'}`}>
+                {c.sentiment}
+              </span>
+            </div>
+            <p className="text-[10px] text-white/60 mt-0.5 leading-snug">{c.summary}</p>
+          </div>
+        ))}
+      </DetailSection>
+    );
+  }
+
+  if (customer.meaningfulEvents && customer.meaningfulEvents.length > 0) {
+    sections.push(
+      <DetailSection key="events" title={`Meaningful Events (${customer.meaningfulEvents.length})`} source="Meaningful_Event__c">
+        {customer.meaningfulEvents.map((e, i) => (
+          <div key={i} className="py-0.5">
+            <div className="flex justify-between">
+              <span className="text-[10px] px-1 rounded bg-white/10 text-white/50">{e.eventType}</span>
+              <span className="text-[10px] text-white/30">{e.capturedAt}</span>
+            </div>
+            <p className="text-[10px] text-white/60 mt-0.5 leading-snug">{e.description}</p>
+          </div>
+        ))}
+      </DetailSection>
+    );
+  }
+
+  if (customer.agentCapturedProfile) {
+    const fields = Object.entries(customer.agentCapturedProfile).filter(([, v]) => v?.value);
+    if (fields.length > 0) {
+      sections.push(
+        <DetailSection key="captured" title={`Agent Captured (${fields.length})`} source="Agent_Captured_Profile__c">
+          {fields.map(([key, field]) => (
+            <div key={key} className="py-0.5">
+              <div className="flex justify-between">
+                <span className="text-[10px] text-white/50">{key}</span>
+                <span className={`text-[10px] ${field!.confidence === 'stated' ? 'text-blue-400/70' : 'text-amber-400/70'}`}>
+                  {field!.confidence}
+                </span>
+              </div>
+              <p className="text-[10px] text-white/70">
+                {Array.isArray(field!.value) ? field!.value.join(', ') : String(field!.value)}
+              </p>
+            </div>
+          ))}
+        </DetailSection>
+      );
+    }
+  }
+
+  if (customer.browseSessions && customer.browseSessions.length > 0) {
+    sections.push(
+      <DetailSection key="browse" title={`Browse Sessions (${customer.browseSessions.length})`} source="Browse_Session__c">
+        {customer.browseSessions.map((b, i) => (
+          <div key={i} className="py-0.5">
+            <div className="flex justify-between">
+              <span className="text-[10px] text-white/30">{b.sessionDate}</span>
+              <span className="text-[10px] text-white/30">{b.durationMinutes}min / {b.device}</span>
+            </div>
+            <DetailField label="Categories" value={b.categoriesBrowsed?.join(', ')} />
+            <DetailField label="Products" value={b.productsViewed?.join(', ')} />
+          </div>
+        ))}
+      </DetailSection>
+    );
+  }
+
+  if (customer.loyalty) {
+    const l = customer.loyalty;
+    sections.push(
+      <DetailSection key="loyalty" title="Loyalty" source="LoyaltyProgramMember">
+        <DetailField label="Tier" value={l.tier.charAt(0).toUpperCase() + l.tier.slice(1)} />
+        <DetailField label="Points" value={`${l.pointsBalance?.toLocaleString()} balance / ${l.lifetimePoints?.toLocaleString()} lifetime`} />
+        <DetailField label="Member Since" value={l.memberSince} />
+      </DetailSection>
+    );
+  }
+
+  if (customer.appendedProfile) {
+    const ap = customer.appendedProfile;
+    sections.push(
+      <DetailSection key="appended" title="Merkury Appended (3P)" source="Merkury">
+        <DetailField label="Age Range" value={ap.ageRange} />
+        <DetailField label="Gender" value={ap.gender} />
+        <DetailField label="Income" value={ap.householdIncome} />
+        <DetailField label="Region" value={ap.geoRegion} />
+        <DetailField label="Interests" value={ap.interests?.join(', ')} />
+        <DetailField label="Lifestyle" value={ap.lifestyleSignals?.join(', ')} />
+      </DetailSection>
+    );
+  }
+
+  return sections;
+}
+
+// ─── Main DemoPanel ─────────────────────────────────────────────
+
+type PanelView = 'list' | 'detail';
+
 export const DemoPanel: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [view, setView] = useState<PanelView>('list');
   const [crmContacts, setCrmContacts] = useState<DemoContact[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
   const { customer, selectedPersonaId, selectPersona, isResolving, isLoading } = useCustomer();
@@ -20,6 +184,11 @@ export const DemoPanel: React.FC = () => {
     fetchDemoContacts()
       .then(setCrmContacts)
       .finally(() => setContactsLoading(false));
+  }, [isOpen]);
+
+  // Reset to list view when panel closes
+  useEffect(() => {
+    if (!isOpen) setView('list');
   }, [isOpen]);
 
   const handleSelect = async (personaId: string) => {
@@ -77,6 +246,15 @@ export const DemoPanel: React.FC = () => {
     return 'Demo';
   })();
 
+  const tierLabel = (() => {
+    const tier = customer?.merkuryIdentity?.identityTier;
+    if (!tier || tier === 'anonymous') return 'Anonymous';
+    if (tier === 'appended') return 'Merkury Appended';
+    const loyalty = customer?.loyalty?.tier;
+    if (loyalty) return `Known · ${loyalty.charAt(0).toUpperCase() + loyalty.slice(1)}`;
+    return 'Known · No Loyalty';
+  })();
+
   return (
     <>
       {/* Floating trigger button — bottom right */}
@@ -107,18 +285,29 @@ export const DemoPanel: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed bottom-20 right-6 z-50 w-72 bg-gradient-to-b from-stone-800 to-stone-900 rounded-xl shadow-2xl border border-white/10 overflow-hidden"
+              className="fixed bottom-20 right-6 z-50 w-80 bg-gradient-to-b from-stone-800 to-stone-900 rounded-xl shadow-2xl border border-white/10 overflow-hidden"
             >
               {/* Header */}
               <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                  </svg>
+                  {view === 'detail' ? (
+                    <button
+                      onClick={() => setView('list')}
+                      className="text-white/50 hover:text-white transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                  )}
                   <span className="text-[11px] font-medium text-white/70 uppercase tracking-wider">
-                    Demo Mode
+                    {view === 'detail' ? 'Profile Detail' : 'Demo Mode'}
                   </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {view === 'list' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
@@ -128,155 +317,237 @@ export const DemoPanel: React.FC = () => {
                 </button>
               </div>
 
-              {/* Profile list */}
-              <div className="px-3 py-2 space-y-1 max-h-72 overflow-y-auto">
-                {contactsLoading ? (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-emerald-400 rounded-full animate-spin" />
-                    <span className="ml-2 text-xs text-white/50">Loading from CRM...</span>
-                  </div>
-                ) : useMockData || crmContacts.length === 0 ? (
-                  /* Mock mode: use PERSONA_STUBS */
-                  PERSONA_STUBS.map((stub) => {
-                    const isActive = stub.id === selectedPersonaId;
-                    const stubFirstName = stub.defaultLabel.split(' ')[0];
-                    return (
-                      <button
-                        key={stub.id}
-                        onClick={() => handleSelect(stub.id)}
-                        disabled={isResolving || isLoading}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
-                          isActive
-                            ? 'bg-white/10 border border-emerald-500/50'
-                            : 'hover:bg-white/5 border border-transparent'
-                        } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 ${
-                          stub.identityTier === 'anonymous'
-                            ? 'bg-gradient-to-br from-gray-500 to-gray-600'
-                            : stub.identityTier === 'appended'
+              <AnimatePresence mode="wait">
+                {view === 'list' ? (
+                  <motion.div
+                    key="list"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    {/* Profile list */}
+                    <div className="px-3 py-2 space-y-1 max-h-72 overflow-y-auto">
+                      {contactsLoading ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="w-5 h-5 border-2 border-white/20 border-t-emerald-400 rounded-full animate-spin" />
+                          <span className="ml-2 text-xs text-white/50">Loading from CRM...</span>
+                        </div>
+                      ) : useMockData || crmContacts.length === 0 ? (
+                        /* Mock mode: use PERSONA_STUBS */
+                        PERSONA_STUBS.map((stub) => {
+                          const isActive = stub.id === selectedPersonaId;
+                          const stubFirstName = stub.defaultLabel.split(' ')[0];
+                          return (
+                            <button
+                              key={stub.id}
+                              onClick={() => handleSelect(stub.id)}
+                              disabled={isResolving || isLoading}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                                isActive
+                                  ? 'bg-white/10 border border-emerald-500/50'
+                                  : 'hover:bg-white/5 border border-transparent'
+                              } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 ${
+                                stub.identityTier === 'anonymous'
+                                  ? 'bg-gradient-to-br from-gray-500 to-gray-600'
+                                  : stub.identityTier === 'appended'
+                                    ? 'bg-gradient-to-br from-amber-400 to-orange-400'
+                                    : 'bg-gradient-to-br from-purple-400 to-pink-400'
+                              }`}>
+                                {stub.identityTier === 'anonymous' ? '?' : stubFirstName.charAt(0)}
+                              </div>
+                              <div className="flex-1 text-left min-w-0">
+                                <div className="text-sm font-medium text-white/90 truncate">
+                                  {stub.defaultLabel}
+                                </div>
+                                <div className={`text-[10px] truncate ${
+                                  stub.identityTier === 'anonymous' ? 'text-red-400/70' : 'text-white/50'
+                                }`}>
+                                  {stub.identityTier === 'anonymous'
+                                    ? 'No identity match'
+                                    : stub.identityTier === 'appended'
+                                      ? 'Merkury 3P only'
+                                      : 'Known · CRM match'}
+                                </div>
+                              </div>
+                              {isActive && (
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })
+                      ) : (
+                        /* Real mode: grouped CRM contacts + static Merkury appended */
+                        <>
+                          {seededContacts.length > 0 && (
+                            <>
+                              <div className="text-[10px] font-medium text-white/30 uppercase tracking-wider px-3 pt-2 pb-1">
+                                Seeded ({seededContacts.length})
+                              </div>
+                              {seededContacts.map((c) => renderContactItem(c))}
+                            </>
+                          )}
+                          {/* Merkury Appended profiles (not in CRM — static from PERSONA_STUBS) */}
+                          {(() => {
+                            const appendedStubs = PERSONA_STUBS.filter((s) => s.identityTier === 'appended');
+                            const totalMerkury = merkuryContacts.length + appendedStubs.length;
+                            if (totalMerkury === 0) return null;
+                            return (
+                              <>
+                                <div className="text-[10px] font-medium text-white/30 uppercase tracking-wider px-3 pt-2 pb-1">
+                                  Merkury ({totalMerkury})
+                                </div>
+                                {merkuryContacts.map((c) => renderContactItem(c))}
+                                {appendedStubs.map((stub) => {
+                                  const isActive = stub.id === selectedPersonaId;
+                                  const stubFirstName = stub.defaultLabel.split(' ')[0];
+                                  return (
+                                    <button
+                                      key={stub.id}
+                                      onClick={() => handleSelect(stub.id)}
+                                      disabled={isResolving || isLoading}
+                                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                                        isActive
+                                          ? 'bg-white/10 border border-emerald-500/50'
+                                          : 'hover:bg-white/5 border border-transparent'
+                                      } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 bg-gradient-to-br from-amber-400 to-orange-400">
+                                        {stubFirstName.charAt(0)}
+                                      </div>
+                                      <div className="flex-1 text-left min-w-0">
+                                        <div className="text-sm font-medium text-white/90 truncate">
+                                          {stub.defaultLabel}
+                                        </div>
+                                        <div className="text-[10px] text-white/50 truncate">
+                                          Merkury 3P only
+                                        </div>
+                                      </div>
+                                      {isActive && (
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </>
+                            );
+                          })()}
+                          {createdContacts.length > 0 && (
+                            <>
+                              <div className="text-[10px] font-medium text-white/30 uppercase tracking-wider px-3 pt-2 pb-1">
+                                Created ({createdContacts.length})
+                              </div>
+                              {createdContacts.map((c) => renderContactItem(c))}
+                            </>
+                          )}
+                          {/* Anonymous option */}
+                          <div className="border-t border-white/10 mt-2 pt-2">
+                            <button
+                              onClick={() => handleSelect('anonymous')}
+                              disabled={isResolving || isLoading}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                                selectedPersonaId === 'anonymous'
+                                  ? 'bg-white/10 border border-emerald-500/50'
+                                  : 'hover:bg-white/5 border border-transparent'
+                              } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 bg-gradient-to-br from-gray-500 to-gray-600">
+                                ?
+                              </div>
+                              <div className="flex-1 text-left min-w-0">
+                                <div className="text-sm font-medium text-white/90">Anonymous Visitor</div>
+                                <div className="text-[10px] text-red-400/70">No identity match</div>
+                              </div>
+                              {selectedPersonaId === 'anonymous' && (
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                              )}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* View Profile button — only when a customer is loaded */}
+                    {customer && selectedPersonaId && selectedPersonaId !== 'anonymous' && (
+                      <div className="px-3 pb-2">
+                        <button
+                          onClick={() => setView('detail')}
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-xs transition-all"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          View {customer.name?.split(' ')[0] || 'Profile'}'s Profile
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Footer hint */}
+                    <div className="px-4 py-2 border-t border-white/5">
+                      <p className="text-white/20 text-[9px] leading-relaxed">
+                        Switch identities to simulate Merkury resolution
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="detail"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    {/* Profile detail header */}
+                    {customer && (
+                      <div className="px-4 py-3 border-b border-white/10">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0 ${
+                            customer.merkuryIdentity?.identityTier === 'appended'
                               ? 'bg-gradient-to-br from-amber-400 to-orange-400'
                               : 'bg-gradient-to-br from-purple-400 to-pink-400'
-                        }`}>
-                          {stub.identityTier === 'anonymous' ? '?' : stubFirstName.charAt(0)}
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                          <div className="text-sm font-medium text-white/90 truncate">
-                            {stub.defaultLabel}
-                          </div>
-                          <div className={`text-[10px] truncate ${
-                            stub.identityTier === 'anonymous' ? 'text-red-400/70' : 'text-white/50'
                           }`}>
-                            {stub.identityTier === 'anonymous'
-                              ? 'No identity match'
-                              : stub.identityTier === 'appended'
-                                ? 'Merkury 3P only'
-                                : 'Known · CRM match'}
+                            {(customer.name || 'G').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-white/90 truncate">
+                              {customer.name || 'Guest'}
+                            </div>
+                            <div className="text-[10px] text-white/40">
+                              {tierLabel}
+                            </div>
                           </div>
                         </div>
-                        {isActive && (
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })
-                ) : (
-                  /* Real mode: grouped CRM contacts + static Merkury appended */
-                  <>
-                    {seededContacts.length > 0 && (
-                      <>
-                        <div className="text-[10px] font-medium text-white/30 uppercase tracking-wider px-3 pt-2 pb-1">
-                          Seeded ({seededContacts.length})
-                        </div>
-                        {seededContacts.map((c) => renderContactItem(c))}
-                      </>
+                      </div>
                     )}
-                    {/* Merkury Appended profiles (not in CRM — static from PERSONA_STUBS) */}
-                    {(() => {
-                      const appendedStubs = PERSONA_STUBS.filter((s) => s.identityTier === 'appended');
-                      const totalMerkury = merkuryContacts.length + appendedStubs.length;
-                      if (totalMerkury === 0) return null;
-                      return (
-                        <>
-                          <div className="text-[10px] font-medium text-white/30 uppercase tracking-wider px-3 pt-2 pb-1">
-                            Merkury ({totalMerkury})
-                          </div>
-                          {merkuryContacts.map((c) => renderContactItem(c))}
-                          {appendedStubs.map((stub) => {
-                            const isActive = stub.id === selectedPersonaId;
-                            const stubFirstName = stub.defaultLabel.split(' ')[0];
-                            return (
-                              <button
-                                key={stub.id}
-                                onClick={() => handleSelect(stub.id)}
-                                disabled={isResolving || isLoading}
-                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
-                                  isActive
-                                    ? 'bg-white/10 border border-emerald-500/50'
-                                    : 'hover:bg-white/5 border border-transparent'
-                                } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              >
-                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 bg-gradient-to-br from-amber-400 to-orange-400">
-                                  {stubFirstName.charAt(0)}
-                                </div>
-                                <div className="flex-1 text-left min-w-0">
-                                  <div className="text-sm font-medium text-white/90 truncate">
-                                    {stub.defaultLabel}
-                                  </div>
-                                  <div className="text-[10px] text-white/50 truncate">
-                                    Merkury 3P only
-                                  </div>
-                                </div>
-                                {isActive && (
-                                  <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                                )}
-                              </button>
-                            );
-                          })}
-                        </>
-                      );
-                    })()}
-                    {createdContacts.length > 0 && (
-                      <>
-                        <div className="text-[10px] font-medium text-white/30 uppercase tracking-wider px-3 pt-2 pb-1">
-                          Created ({createdContacts.length})
-                        </div>
-                        {createdContacts.map((c) => renderContactItem(c))}
-                      </>
-                    )}
-                    {/* Anonymous option */}
-                    <div className="border-t border-white/10 mt-2 pt-2">
+
+                    {/* Profile data sections */}
+                    <div className="px-4 py-3 max-h-80 overflow-y-auto">
+                      {customer ? (
+                        renderProfileDetail(customer)
+                      ) : (
+                        <p className="text-xs text-white/30 text-center py-4">
+                          No profile loaded
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Switch profiles button */}
+                    <div className="px-3 py-2 border-t border-white/5">
                       <button
-                        onClick={() => handleSelect('anonymous')}
-                        disabled={isResolving || isLoading}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
-                          selectedPersonaId === 'anonymous'
-                            ? 'bg-white/10 border border-emerald-500/50'
-                            : 'hover:bg-white/5 border border-transparent'
-                        } ${(isResolving || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => setView('list')}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-white/50 hover:text-white text-xs transition-all"
                       >
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 bg-gradient-to-br from-gray-500 to-gray-600">
-                          ?
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                          <div className="text-sm font-medium text-white/90">Anonymous Visitor</div>
-                          <div className="text-[10px] text-red-400/70">No identity match</div>
-                        </div>
-                        {selectedPersonaId === 'anonymous' && (
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                        )}
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        Switch Profiles
                       </button>
                     </div>
-                  </>
+                  </motion.div>
                 )}
-              </div>
-
-              {/* Footer hint */}
-              <div className="px-4 py-2 border-t border-white/5">
-                <p className="text-white/20 text-[9px] leading-relaxed">
-                  Switch identities to simulate Merkury resolution
-                </p>
-              </div>
+              </AnimatePresence>
             </motion.div>
           </>
         )}

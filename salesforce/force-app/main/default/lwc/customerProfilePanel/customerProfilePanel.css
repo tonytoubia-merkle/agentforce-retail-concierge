@@ -1,14 +1,50 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
 .panel-header {
     padding: 12px 16px;
     border-bottom: 1px solid #e5e5e5;
     background: #fff;
+    flex-shrink: 0;
 }
 
 .panel-title {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: #333;
-    margin-bottom: 8px;
+    margin: 0;
+}
+
+/* Compact header for selected customer */
+.panel-header-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-bottom: 1px solid #e5e5e5;
+    background: #fff;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.customer-name-compact {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.contact-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    color: #888;
+    margin-left: 4px;
 }
 
 .customer-header {
@@ -90,9 +126,12 @@
     align-items: center;
     gap: 8px;
     background: #e3f2fd;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 6px;
-    margin-top: 8px;
+}
+
+.loading-area {
+    flex: 1;
 }
 
 .appt-type {
@@ -134,15 +173,40 @@
     color: #7b1fa2;
 }
 
+/* Empty state */
+.empty-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 32px;
+    color: #aaa;
+}
+
+.empty-icon {
+    margin-bottom: 16px;
+    opacity: 0.3;
+}
+
+.empty-text {
+    font-size: 14px;
+    text-align: center;
+    color: #999;
+    line-height: 1.5;
+}
+
 /* Profile content */
 .profile-content {
     padding: 8px;
     overflow-y: auto;
-    max-height: calc(100vh - 220px);
+    flex: 1;
+    min-height: 0;
 }
 
 .note-capture-section {
     padding: 8px;
     border-top: 1px solid #e5e5e5;
     background: #fafafa;
+    flex-shrink: 0;
 }

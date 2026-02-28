@@ -9,6 +9,7 @@ import approveAllJourneySteps from '@salesforce/apex/JourneyApprovalService.appr
 import declineAllJourneySteps from '@salesforce/apex/JourneyStepService.declineAllSteps';
 import sendJourneyToMarketingFlow from '@salesforce/apex/JourneyApprovalService.sendJourneyToMarketingFlow';
 import processEventsNow from '@salesforce/apex/JourneyApprovalService.processEventsNow';
+import updateStepTimingFromLWC from '@salesforce/apex/JourneyStepService.updateStepTiming';
 import { refreshApex } from '@salesforce/apex';
 
 export default class JourneyApprovalDashboard extends LightningElement {
@@ -250,6 +251,13 @@ export default class JourneyApprovalDashboard extends LightningElement {
         console.log('[Dashboard] handleCardAction triggered:', event.detail);
         const { action, approvalId, data } = event.detail;
         console.log('[Dashboard] Action:', action, 'ApprovalId:', approvalId);
+
+        // Handle step navigation locally (no Apex call needed)
+        if (action === 'navigateStep') {
+            this.handleNavigateStep(approvalId, data.direction);
+            return;
+        }
+
         this.isLoading = true;
 
         try {
@@ -308,6 +316,13 @@ export default class JourneyApprovalDashboard extends LightningElement {
                 case 'sendJourney':
                     result = await sendJourneyToMarketingFlow({
                         journeyId: data.journeyId
+                    });
+                    break;
+
+                case 'updateTiming':
+                    result = await updateStepTimingFromLWC({
+                        approvalId: approvalId,
+                        delayDays: data.delayDays
                     });
                     break;
 
@@ -376,14 +391,39 @@ export default class JourneyApprovalDashboard extends LightningElement {
     }
 
     /**
+     * Navigate to a sibling step within the same journey (for edit modal arrows).
+     */
+    handleNavigateStep(approvalId, direction) {
+        const group = this.journeyGroups.find(g =>
+            g.steps.some(s => s.Id === approvalId)
+        );
+        if (!group) return;
+
+        const currentIndex = group.steps.findIndex(s => s.Id === approvalId);
+        if (currentIndex === -1) return;
+
+        const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+        if (newIndex < 0 || newIndex >= group.steps.length) return;
+
+        const newStep = group.steps[newIndex];
+        this.selectedStep = {
+            ...newStep,
+            contactName: newStep.Contact__r?.Name || newStep.contactName || 'Unknown',
+            contactEmail: newStep.Contact__r?.Email || newStep.contactEmail || '',
+            eventType: newStep.Event_Type__c || 'Journey'
+        };
+    }
+
+    /**
      * Handle actions from the edit modal's journey approval card.
      */
     async handleEditModalAction(event) {
-        // Forward to the main card action handler
+        const { action } = event.detail;
         await this.handleCardAction(event);
 
-        // Close modal after successful action
-        if (!this.isLoading) {
+        // Keep modal open for navigation and non-terminal edits
+        const keepOpen = ['navigateStep', 'updateTiming', 'regenerate', 'updateProducts'];
+        if (!keepOpen.includes(action) && !this.isLoading) {
             this.handleCloseEditModal();
         }
     }

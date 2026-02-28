@@ -2,12 +2,12 @@
  * PortfolioController
  *
  * Admin-only controller for Portfolio Management.
- * Allows viewing all marketer portfolios, stats, and reassigning marketers.
+ * Supports full CRUD, priority reordering, and segment selection.
  */
 public with sharing class PortfolioController {
 
     /**
-     * Get all marketer portfolios with stats.
+     * Get all marketer portfolios with stats, ordered by priority.
      */
     @AuraEnabled(cacheable=true)
     public static List<PortfolioWrapper> getPortfolios() {
@@ -19,10 +19,11 @@ public with sharing class PortfolioController {
                    Secondary_Marketer__c, Secondary_Marketer__r.Name,
                    Workload_Capacity__c,
                    Auto_Approval_Enabled__c, Auto_Approval_Confidence_Threshold__c,
-                   Specialty_Events__c, Loyalty_Tiers__c, Is_Active__c
+                   Specialty_Events__c, Loyalty_Tiers__c, Is_Active__c,
+                   Priority_Order__c, Data_Cloud_Segment__c, Data_Cloud_Segment_Label__c
             FROM Marketer_Portfolio__c
             WHERE Is_Active__c = true
-            ORDER BY Name
+            ORDER BY Priority_Order__c ASC NULLS LAST, Name ASC
         ];
 
         // Get pending counts per portfolio
@@ -84,6 +85,36 @@ public with sharing class PortfolioController {
     }
 
     /**
+     * Create a new portfolio.
+     */
+    @AuraEnabled
+    public static Id createPortfolio(String name, String portfolioType, String region,
+                                      Id primaryMarketerId, Id secondaryMarketerId,
+                                      String segmentApiName, String segmentLabel,
+                                      Integer priorityOrder, Decimal workloadCapacity,
+                                      Boolean autoApprovalEnabled, Decimal confidenceThreshold,
+                                      String specialtyEvents, String loyaltyTiers) {
+        Marketer_Portfolio__c mp = new Marketer_Portfolio__c();
+        mp.Name = name;
+        mp.Portfolio_Type__c = portfolioType;
+        mp.Region__c = region;
+        mp.Primary_Marketer__c = primaryMarketerId;
+        mp.Secondary_Marketer__c = secondaryMarketerId;
+        mp.Data_Cloud_Segment__c = segmentApiName;
+        mp.Data_Cloud_Segment_Label__c = segmentLabel;
+        mp.Priority_Order__c = priorityOrder != null ? priorityOrder : 100;
+        mp.Workload_Capacity__c = workloadCapacity != null ? workloadCapacity : 50;
+        mp.Auto_Approval_Enabled__c = autoApprovalEnabled != null ? autoApprovalEnabled : false;
+        mp.Auto_Approval_Confidence_Threshold__c = confidenceThreshold != null ? confidenceThreshold : 80;
+        mp.Specialty_Events__c = specialtyEvents;
+        mp.Loyalty_Tiers__c = loyaltyTiers;
+        mp.Is_Active__c = true;
+
+        insert mp;
+        return mp.Id;
+    }
+
+    /**
      * Update portfolio marketer assignment.
      */
     @AuraEnabled
@@ -101,7 +132,7 @@ public with sharing class PortfolioController {
     }
 
     /**
-     * Update portfolio settings.
+     * Update portfolio settings (all editable fields).
      */
     @AuraEnabled
     public static void updatePortfolioSettings(Id portfolioId, Boolean autoApprovalEnabled, Decimal confidenceThreshold) {
@@ -115,6 +146,68 @@ public with sharing class PortfolioController {
         mp.Auto_Approval_Enabled__c = autoApprovalEnabled;
         mp.Auto_Approval_Confidence_Threshold__c = confidenceThreshold;
         update mp;
+    }
+
+    /**
+     * Update portfolio segment and type fields.
+     */
+    @AuraEnabled
+    public static void updatePortfolioDetails(Id portfolioId, String portfolioType, String region,
+                                               String segmentApiName, String segmentLabel,
+                                               Decimal workloadCapacity,
+                                               String specialtyEvents, String loyaltyTiers) {
+        Marketer_Portfolio__c mp = [
+            SELECT Id
+            FROM Marketer_Portfolio__c
+            WHERE Id = :portfolioId
+            LIMIT 1
+        ];
+
+        mp.Portfolio_Type__c = portfolioType;
+        mp.Region__c = region;
+        mp.Data_Cloud_Segment__c = segmentApiName;
+        mp.Data_Cloud_Segment_Label__c = segmentLabel;
+        mp.Workload_Capacity__c = workloadCapacity;
+        mp.Specialty_Events__c = specialtyEvents;
+        mp.Loyalty_Tiers__c = loyaltyTiers;
+        update mp;
+    }
+
+    /**
+     * Soft-delete a portfolio (set Is_Active__c = false).
+     */
+    @AuraEnabled
+    public static void deletePortfolio(Id portfolioId) {
+        Marketer_Portfolio__c mp = [
+            SELECT Id, Is_Active__c
+            FROM Marketer_Portfolio__c
+            WHERE Id = :portfolioId
+            LIMIT 1
+        ];
+
+        mp.Is_Active__c = false;
+        update mp;
+    }
+
+    /**
+     * Bulk update priority ordering for portfolios.
+     * Accepts JSON array of {id, priorityOrder} pairs.
+     */
+    @AuraEnabled
+    public static void updatePortfolioPriority(String updatesJson) {
+        List<PriorityUpdate> updates = (List<PriorityUpdate>) JSON.deserialize(updatesJson, List<PriorityUpdate>.class);
+
+        List<Marketer_Portfolio__c> toUpdate = new List<Marketer_Portfolio__c>();
+        for (PriorityUpdate pu : updates) {
+            Marketer_Portfolio__c mp = new Marketer_Portfolio__c();
+            mp.Id = pu.id;
+            mp.Priority_Order__c = pu.priorityOrder;
+            toUpdate.add(mp);
+        }
+
+        if (!toUpdate.isEmpty()) {
+            update toUpdate;
+        }
     }
 
     /**
@@ -180,6 +273,9 @@ public with sharing class PortfolioController {
         @AuraEnabled public Integer pendingApprovals;
         @AuraEnabled public Integer approvedNotSent;
         @AuraEnabled public Integer sentJourneys;
+        @AuraEnabled public Integer priorityOrder;
+        @AuraEnabled public String segmentApiName;
+        @AuraEnabled public String segmentLabel;
 
         public PortfolioWrapper(Marketer_Portfolio__c mp) {
             this.id = mp.Id;
@@ -196,6 +292,9 @@ public with sharing class PortfolioController {
             this.autoApprovalThreshold = mp.Auto_Approval_Confidence_Threshold__c;
             this.specialtyEvents = mp.Specialty_Events__c;
             this.loyaltyTiers = mp.Loyalty_Tiers__c;
+            this.priorityOrder = mp.Priority_Order__c != null ? mp.Priority_Order__c.intValue() : 100;
+            this.segmentApiName = mp.Data_Cloud_Segment__c;
+            this.segmentLabel = mp.Data_Cloud_Segment_Label__c;
         }
     }
 
@@ -217,5 +316,10 @@ public with sharing class PortfolioController {
         @AuraEnabled public Integer approvedToday = 0;
         @AuraEnabled public Integer sentToday = 0;
         @AuraEnabled public Integer eventsThisWeek = 0;
+    }
+
+    public class PriorityUpdate {
+        public Id id;
+        public Integer priorityOrder;
     }
 }

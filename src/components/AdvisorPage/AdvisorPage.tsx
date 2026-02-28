@@ -6,7 +6,7 @@ import { ChatInterface } from '@/components/ChatInterface';
 import { CheckoutOverlay } from '@/components/CheckoutOverlay';
 import { WelcomeScreen } from '@/components/WelcomeScreen/WelcomeScreen';
 import { WelcomeLoader } from '@/components/WelcomeScreen/WelcomeLoader';
-import { IdentityPanel } from '@/components/IdentityPanel/IdentityPanel';
+import { DemoPanel } from '@/components/Storefront/DemoPanel';
 import { sceneAnimationVariants } from '@/utils/animations';
 
 export const AdvisorPage: React.FC = () => {
@@ -52,7 +52,7 @@ export const AdvisorPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <IdentityPanel />
+      <DemoPanel />
     </div>
   );
 };

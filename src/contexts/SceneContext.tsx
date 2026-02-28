@@ -4,22 +4,52 @@ import type { Product } from '@/types/product';
 import type { UIDirective } from '@/types/agent';
 import { useGenerativeBackground, type BackgroundOptions } from '@/hooks/useGenerativeBackground';
 
-/** Build BackgroundOptions from a UIDirective's sceneContext payload. */
+/** Build BackgroundOptions from a UIDirective's sceneContext payload.
+ *  The agent may provide a rich `backgroundPrompt`, or it may provide separate
+ *  `context`, `theme`, and `mood` fields. Synthesise a prompt from whatever is
+ *  available so that the novel-detection in useGenerativeBackground can see
+ *  location keywords (e.g. "Dubai") and trigger generation. */
 function buildBgOptions(sc?: UIDirective['payload']['sceneContext']): BackgroundOptions {
   if (!sc) return {};
   const raw = sc as Record<string, unknown>;
+
+  // Prefer explicit backgroundPrompt; otherwise synthesise from context/theme/mood
+  let prompt = sc.backgroundPrompt;
+  if (!prompt) {
+    const context = (raw.context as string) || '';
+    const theme   = (raw.theme as string) || '';
+    const mood    = (raw.mood as string) || '';
+    if (context || theme) {
+      prompt = [context, theme, mood].filter(Boolean).join('. ') + '.';
+    }
+  }
+
   return {
     cmsAssetId: sc.cmsAssetId,
     cmsTag: sc.cmsTag,
     editMode: sc.editMode,
-    backgroundPrompt: sc.backgroundPrompt,
-    editPrompt: sc.editMode ? sc.backgroundPrompt : undefined,
+    backgroundPrompt: prompt,
+    editPrompt: sc.editMode ? prompt : undefined,
     sceneAssetId: sc.sceneAssetId,
     imageUrl: sc.imageUrl,
     mood: raw.mood as string | undefined,
-    customerContext: raw.customerContext as string | undefined,
+    customerContext: (raw.customerContext as string) || (raw.context as string) || undefined,
     sceneType: raw.sceneType as string | undefined,
   };
+}
+
+/** Infer a scene setting from the agent's theme/context text when no explicit setting is provided. */
+function inferSettingFromText(text: string): SceneSetting | null {
+  const lower = text.toLowerCase();
+  if (/travel|trip|vacation|flight|airport|luggage|suitcase/i.test(lower)) return 'travel';
+  if (/outdoor|beach|hiking|camping|garden|park|sun/i.test(lower)) return 'outdoor';
+  if (/gym|workout|fitness|exercise|active/i.test(lower)) return 'gym';
+  if (/office|work|professional|desk|meeting/i.test(lower)) return 'office';
+  if (/vanity|makeup|glam|mirror/i.test(lower)) return 'vanity';
+  if (/bedroom|night|evening|sleep|rest/i.test(lower)) return 'bedroom';
+  if (/bathroom|shower|bath|skincare|routine/i.test(lower)) return 'bathroom';
+  if (/lifestyle|lounge|home|living/i.test(lower)) return 'lifestyle';
+  return null;
 }
 
 /** Infer a scene setting from product categories when the agent doesn't provide one. */
@@ -153,13 +183,16 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           dispatch({ type: 'TRANSITION_LAYOUT', layout, products: payload.products });
         }
 
-        // Use explicit sceneContext setting if provided. Otherwise, keep the current
-        // setting when we already have a background image — only infer from products
-        // if we're on the initial gradient (no image loaded yet).
+        // Use explicit sceneContext setting if provided. Otherwise try inferring from
+        // theme/context text, then fall back to current setting or product categories.
         const curBg = sceneRef.current;
         const hasExistingImage = curBg.background.type === 'image' && curBg.background.value;
         const agentExplicitSetting = payload.sceneContext?.setting;
+        const prodRaw = payload.sceneContext as Record<string, unknown> | undefined;
+        const prodTextHint = [prodRaw?.theme as string, prodRaw?.context as string].filter(Boolean).join(' ');
+        const prodInferred = prodTextHint ? inferSettingFromText(prodTextHint) : null;
         const setting: SceneSetting = agentExplicitSetting
+          || prodInferred
           || (hasExistingImage ? curBg.setting : inferSettingFromProducts(payload.products || []));
         const shouldGenerate = payload.sceneContext?.generateBackground !== false;
 
@@ -211,18 +244,24 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       case 'CHANGE_SCENE': {
-        // Keep current setting when agent doesn't explicitly provide one and we have a background
+        // Keep current setting when agent doesn't explicitly provide one and we have a background.
+        // Also try inferring from agent's theme/context text (e.g. "luxury travel essentials" → travel).
         const curForChange = sceneRef.current;
         const hasImageForChange = curForChange.background.type === 'image' && curForChange.background.value;
         const agentChangeSetting = payload.sceneContext?.setting;
+        const sceneRaw = payload.sceneContext as Record<string, unknown> | undefined;
+        const textHint = [sceneRaw?.theme as string, sceneRaw?.context as string].filter(Boolean).join(' ');
+        const inferredFromText = textHint ? inferSettingFromText(textHint) : null;
         const sceneSetting: SceneSetting = agentChangeSetting
+          || inferredFromText
           || (hasImageForChange ? curForChange.setting : inferSettingFromProducts(payload.products || []));
         const shouldGen = payload.sceneContext?.generateBackground !== false;
 
-        // Auto-generate a backgroundPrompt if not provided
+        // buildBgOptions already synthesises a backgroundPrompt from context/theme/mood
         const changeCtx: UIDirective['payload']['sceneContext'] = payload.sceneContext || { setting: sceneSetting };
-        const agentProvidedPrompt = !!payload.sceneContext?.backgroundPrompt;
-        if (!changeCtx.backgroundPrompt) {
+        const bgOpts = buildBgOptions(changeCtx);
+        const agentProvidedPrompt = !!bgOpts.backgroundPrompt;
+        if (!bgOpts.backgroundPrompt) {
           changeCtx.backgroundPrompt = `A luxurious ${sceneSetting} setting with elegant, soft lighting and a high-end beauty atmosphere.`;
           changeCtx.setting = sceneSetting;
           changeCtx.generateBackground = true;

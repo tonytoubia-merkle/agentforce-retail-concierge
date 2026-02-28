@@ -3,7 +3,8 @@
  * meaningful events from conversations. Called by Agentforce topics during
  * or after conversations.
  *
- * Meaningful events include: preferences, milestones, life-events, concerns, intents.
+ * Meaningful events include: Travel, Wedding, Maternity, Birthday, Anniversary,
+ * Relocation, Graduation, Career, Other, Intent, Concern, Preference, Milestone.
  * These are persisted to Data Cloud for future personalization.
  *
  * Enhanced with temporal parsing for journey orchestration:
@@ -41,6 +42,9 @@ global with sharing class MeaningfulEventService {
 
         @InvocableVariable(required=false label='Event Date (if known)')
         public Date eventDate; // Explicit date if agent captured it directly
+
+        @InvocableVariable(required=false label='Event End Date')
+        public Date eventEndDate; // Expected end date for time-bound events (trips, projects)
     }
 
     public class EventExtractionResult {
@@ -102,7 +106,8 @@ global with sharing class MeaningfulEventService {
                         req.agentNote, null,
                         temporal.relativeText,
                         temporal.eventDate,
-                        temporal.urgency
+                        temporal.urgency,
+                        req.eventEndDate
                     );
 
                     Map<String, Object> event = new Map<String, Object>();
@@ -355,57 +360,34 @@ global with sharing class MeaningfulEventService {
         List<Map<String, Object>> events = new List<Map<String, Object>>();
         String lower = text.toLowerCase();
 
-        // Life events with temporal parsing
+        // Life events — specific types for segment targeting
         if (lower.contains('anniversary')) {
-            events.add(createEventEnhanced('life-event', 'Mentioned an upcoming anniversary', 'May be looking for gifts', lower));
+            events.add(createEventEnhanced('Anniversary', 'Mentioned an upcoming anniversary', 'May be looking for gifts', lower));
         }
         if (lower.contains('birthday')) {
-            events.add(createEventEnhanced('life-event', 'Mentioned a birthday', 'Potential gifting opportunity', lower));
+            events.add(createEventEnhanced('Birthday', 'Mentioned a birthday', 'Potential gifting opportunity', lower));
         }
         if (lower.contains('wedding')) {
-            events.add(createEventEnhanced('life-event', 'Mentioned a wedding', 'May need special occasion products', lower));
+            events.add(createEventEnhanced('Wedding', 'Mentioned a wedding', 'May need special occasion products', lower));
         }
-        if (lower.contains('pregnant') || lower.contains('baby')) {
-            events.add(createEventEnhanced('life-event', 'Mentioned pregnancy or new baby', 'May need pregnancy-safe products', lower));
+        if (lower.contains('pregnant') || lower.contains('baby') || lower.contains('expecting')) {
+            events.add(createEventEnhanced('Maternity', 'Mentioned pregnancy or new baby', 'May need pregnancy-safe products', lower));
         }
         if (lower.contains('moving') || lower.contains('new home') || lower.contains('relocat')) {
-            events.add(createEventEnhanced('life-event', 'Mentioned moving or relocation', 'Climate change may affect skin', lower));
+            events.add(createEventEnhanced('Relocation', 'Mentioned moving or relocation', 'Climate change may affect skin', lower));
         }
-
-        // Travel/trips
         if (lower.contains('trip') || lower.contains('vacation') || lower.contains('flying') || lower.contains('travel')) {
-            events.add(createEventEnhanced('life-event', 'Has upcoming travel plans', 'May need travel-size products or SPF', lower));
+            events.add(createEventEnhanced('Travel', 'Has upcoming travel plans', 'May need travel-size products or SPF', lower));
+        }
+        if (lower.contains('graduat') || lower.contains('commencement')) {
+            events.add(createEventEnhanced('Graduation', 'Mentioned a graduation', 'Potential gifting or celebration opportunity', lower));
+        }
+        if (lower.contains('new job') || lower.contains('promotion') || lower.contains('career change')) {
+            events.add(createEventEnhanced('Career', 'Mentioned a career change', 'Lifestyle shift may affect needs', lower));
         }
 
-        // Preferences (typically don't have temporal context)
-        if (lower.contains('fragrance-free') || lower.contains('no fragrance') || lower.contains('unscented')) {
-            events.add(createEventEnhanced('preference', 'Prefers fragrance-free products', 'Likely has sensitivity', null));
-        }
-        if (lower.contains('cruelty-free') || lower.contains('vegan') || lower.contains('clean beauty')) {
-            events.add(createEventEnhanced('preference', 'Values clean/cruelty-free beauty', 'Filter recommendations accordingly', null));
-        }
-        if (lower.contains('organic') || lower.contains('natural ingredients')) {
-            events.add(createEventEnhanced('preference', 'Prefers organic/natural products', null, null));
-        }
-
-        // Concerns
-        if (lower.contains('breakout') || lower.contains('breaking out')) {
-            events.add(createEventEnhanced('concern', 'Experiencing breakouts', 'Check current routine for potential irritants', null));
-        }
-        if (lower.contains('dry') && (lower.contains('skin') || lower.contains('flak'))) {
-            events.add(createEventEnhanced('concern', 'Experiencing dry/flaky skin', 'May need richer moisturizer', null));
-        }
-        if (lower.contains('sensiti') && lower.contains('skin')) {
-            events.add(createEventEnhanced('concern', 'Has sensitive skin concerns', 'Avoid harsh ingredients', null));
-        }
-
-        // Intents
-        if (lower.contains('start a routine') || lower.contains('new to skincare') || lower.contains('beginner')) {
-            events.add(createEventEnhanced('intent', 'Wants to start a skincare routine', 'Guide with basics first', null));
-        }
-        if (lower.contains('gift for') || lower.contains('shopping for someone')) {
-            events.add(createEventEnhanced('intent', 'Shopping for a gift', 'Ask about the recipient', lower));
-        }
+        // Note: Preferences, concerns, intents, and milestones are captured
+        // separately by the Profile Enrichment system, not as meaningful events.
 
         return events;
     }
