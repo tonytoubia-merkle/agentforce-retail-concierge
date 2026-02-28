@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
+import { useCampaign } from '@/contexts/CampaignContext';
 import { PERSONA_STUBS } from '@/mocks/customerPersonas';
 import { fetchDemoContacts } from '@/services/demo/contacts';
 import { getDataCloudWriteService } from '@/services/datacloud';
 import type { DemoContact, CustomerProfile } from '@/types/customer';
+import type { CampaignAttribution } from '@/types/campaign';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
@@ -200,6 +202,83 @@ function renderProfileDetail(customer: CustomerProfile, manage?: ManageOptions) 
   return sections;
 }
 
+// ─── Campaign Attribution Section ────────────────────────────────
+
+const strategyDisplayLabels: Record<string, string> = {
+  'lookalike': 'Lookalike Modeling',
+  'retargeting': 'Retargeting',
+  'interest-based': 'Interest-Based',
+  'demographic': 'Demographic',
+  'contextual': 'Contextual',
+  'first-party': '1P CRM Activation',
+  'household': 'Household Targeting',
+};
+
+const matchTypeLabels: Record<string, string> = {
+  pid: 'PID (Individual)',
+  hid: 'HID (Household)',
+  modeled: 'Modeled (Lookalike)',
+};
+
+function renderCampaignAttribution(campaign: CampaignAttribution, onClear: () => void) {
+  const ad = campaign.adCreative;
+  return (
+    <DetailSection title="Campaign Attribution" source="UTM">
+      <DetailField label="Campaign" value={ad.campaignName} />
+      <DetailField
+        label="Channel"
+        value={`${ad.platform.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())} · ${ad.utmParams.utm_medium.replace(/_/g, ' ')}`}
+      />
+      <DetailField label="Audience" value={ad.audienceSegment.segmentName} />
+      <DetailField label="Segment Size" value={ad.audienceSegment.segmentSize} />
+      <DetailField label="Strategy" value={strategyDisplayLabels[ad.targetingStrategy] || ad.targetingStrategy} />
+      <DetailField label="Match Type" value={matchTypeLabels[ad.audienceSegment.matchType] || ad.audienceSegment.matchType} />
+      {ad.inferredInterests.length > 0 && (
+        <div className="mt-1">
+          <span className="text-[10px] text-white/40">Inferred Interests</span>
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {ad.inferredInterests.map((interest) => (
+              <span key={interest} className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400/70">
+                {interest}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {ad.inferredIntentSignals.length > 0 && (
+        <div className="mt-1">
+          <span className="text-[10px] text-white/40">Intent Signals</span>
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {ad.inferredIntentSignals.map((signal) => (
+              <span key={signal} className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400/70">
+                {signal}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {ad.audienceSegment.dataSignals.length > 0 && (
+        <div className="mt-1">
+          <span className="text-[10px] text-white/40">Data Signals</span>
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {ad.audienceSegment.dataSignals.map((signal) => (
+              <span key={signal} className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400/70">
+                {signal}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      <button
+        onClick={onClear}
+        className="mt-2 text-[10px] text-white/30 hover:text-white/60 underline transition-colors"
+      >
+        Clear attribution
+      </button>
+    </DetailSection>
+  );
+}
+
 // ─── Main DemoPanel ─────────────────────────────────────────────
 
 type PanelView = 'list' | 'detail';
@@ -210,6 +289,7 @@ export const DemoPanel: React.FC = () => {
   const [crmContacts, setCrmContacts] = useState<DemoContact[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
   const { customer, selectedPersonaId, selectPersona, isResolving, isLoading, refreshProfile } = useCustomer();
+  const { campaign, clearCampaign, navigateToMediaWall } = useCampaign();
   const [isManageMode, setIsManageMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
@@ -580,8 +660,8 @@ export const DemoPanel: React.FC = () => {
                       )}
                     </div>
 
-                    {/* View Profile button — only when a customer is loaded */}
-                    {customer && selectedPersonaId && selectedPersonaId !== 'anonymous' && (
+                    {/* View Profile / Campaign button */}
+                    {(customer && selectedPersonaId && selectedPersonaId !== 'anonymous') || campaign ? (
                       <div className="px-3 pb-2">
                         <button
                           onClick={() => setView('detail')}
@@ -590,14 +670,27 @@ export const DemoPanel: React.FC = () => {
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          View {customer.name?.split(' ')[0] || 'Profile'}'s Profile
+                          {customer && selectedPersonaId !== 'anonymous'
+                            ? `View ${customer.name?.split(' ')[0] || 'Profile'}'s Profile`
+                            : 'View Campaign Attribution'}
                         </button>
                       </div>
-                    )}
+                    ) : null}
 
-                    {/* Footer hint */}
-                    <div className="px-4 py-2 border-t border-white/5">
-                      <p className="text-white/20 text-[9px] leading-relaxed">
+                    {/* Footer: Media Wall link + hint */}
+                    <div className="px-3 py-2 border-t border-white/5 space-y-1.5">
+                      {navigateToMediaWall && (
+                        <button
+                          onClick={() => { setIsOpen(false); navigateToMediaWall(); }}
+                          className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400/80 hover:text-cyan-400 text-[10px] font-medium transition-all"
+                        >
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Merkury Media Wall
+                        </button>
+                      )}
+                      <p className="text-white/20 text-[9px] leading-relaxed text-center">
                         Switch identities to simulate Merkury resolution
                       </p>
                     </div>
@@ -662,6 +755,9 @@ export const DemoPanel: React.FC = () => {
 
                     {/* Profile data sections */}
                     <div className="px-4 py-3 max-h-80 overflow-y-auto">
+                      {/* Campaign attribution — renders independently of identity */}
+                      {campaign && renderCampaignAttribution(campaign, clearCampaign)}
+
                       {customer ? (
                         renderProfileDetail(customer, {
                           isManageMode,
@@ -669,9 +765,11 @@ export const DemoPanel: React.FC = () => {
                           onToggle: toggleDeleteSelection,
                         })
                       ) : (
-                        <p className="text-xs text-white/30 text-center py-4">
-                          No profile loaded
-                        </p>
+                        !campaign && (
+                          <p className="text-xs text-white/30 text-center py-4">
+                            No profile loaded
+                          </p>
+                        )
                       )}
                     </div>
 

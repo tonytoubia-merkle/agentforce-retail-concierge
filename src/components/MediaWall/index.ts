@@ -1,0 +1,1 @@
+export { MediaWallPage } from './MediaWallPage';

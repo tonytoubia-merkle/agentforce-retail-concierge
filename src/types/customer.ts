@@ -298,4 +298,12 @@ export interface CustomerSessionContext {
   missingProfileFields?: string[];
   // Provenance-tagged context fields for privacy-aware agent prompting
   taggedContext?: TaggedContextField[];
+  // Campaign attribution from ad click-through (UTM params)
+  campaignContext?: {
+    campaignName: string;
+    channel: string;
+    audienceSegment: string;
+    targetingStrategy: string;
+    inferredInterests: string[];
+  };
 }

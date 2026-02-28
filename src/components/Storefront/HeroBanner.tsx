@@ -1,6 +1,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { CustomerProfile } from '@/types/customer';
+import type { CampaignAttribution } from '@/types/campaign';
+import { useCampaign } from '@/contexts/CampaignContext';
 import { isPersonalizationConfigured, getHeroCampaignDecision, type PersonalizationDecision } from '@/services/personalization';
 
 interface HeroBannerProps {
@@ -29,9 +31,34 @@ interface HeroVariant {
   imageAlt: string;
 }
 
-function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boolean): HeroVariant {
+// Map campaign themes to hero badge + copy overrides
+const CAMPAIGN_HERO_MAP: Record<string, { badge: string; headlineTop: string; headlineBottom: string; subtitle: string }> = {
+  'summer-glow': { badge: 'Summer Collection', headlineTop: 'Your Summer', headlineBottom: 'Glow Awaits', subtitle: 'Sun-kissed radiance starts with the right serums and SPF.' },
+  'anti-aging': { badge: 'Science of Skin', headlineTop: 'Ageless Beauty,', headlineBottom: 'Backed by Science', subtitle: 'Clinically proven retinol and peptide formulas for radiant, youthful skin.' },
+  'bridal-beauty': { badge: 'Wedding Season', headlineTop: 'Your Perfect', headlineBottom: 'Bridal Look', subtitle: 'Curated beauty for your most beautiful day.' },
+  'luxury-fragrance': { badge: 'Luxury Fragrance', headlineTop: 'Discover', headlineBottom: 'Luxury, Bottled', subtitle: 'An immersive fragrance collection for those who demand the extraordinary.' },
+  'k-beauty': { badge: 'K-Beauty Edit', headlineTop: 'Glass Skin', headlineBottom: 'Essentials', subtitle: 'The Korean skincare routine, simplified for effortless glow.' },
+  'spf-season': { badge: 'SPF Season', headlineTop: 'Protect Your', headlineBottom: 'Glow', subtitle: 'Lightweight, invisible sunscreens that actually feel good.' },
+  'glow-up': { badge: 'Glow Up', headlineTop: 'Your Glow Up', headlineBottom: 'Starts Here', subtitle: 'Join 10K+ creators showing off their BEAUTE transformations.' },
+  'mens-skincare': { badge: "Men's Edit", headlineTop: 'Skincare.', headlineBottom: 'No BS.', subtitle: 'Simple, effective routines built for guys who want great skin.' },
+  'loyalty-engagement': { badge: '2x Points Weekend', headlineTop: 'Double Points', headlineBottom: 'This Weekend', subtitle: 'Earn 2x loyalty points on every purchase. Exclusive for Gold+ members.' },
+};
+
+function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boolean, campaign?: CampaignAttribution | null): HeroVariant {
   const tier = customer?.merkuryIdentity?.identityTier;
   const firstName = customer?.name?.split(' ')[0];
+
+  // Campaign-driven variant (when visitor arrived via ad, before identity check)
+  if (campaign && !isAuthenticated) {
+    const themeOverride = CAMPAIGN_HERO_MAP[campaign.adCreative.campaignTheme];
+    if (themeOverride) {
+      return {
+        ...themeOverride,
+        heroImage: HERO_IMAGES.default,
+        imageAlt: `${themeOverride.badge} campaign`,
+      };
+    }
+  }
 
   // Authenticated known customer
   if (isAuthenticated && tier === 'known' && firstName) {
@@ -101,6 +128,7 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvisor, customer, isAuthenticated }) => {
   const [sfpDecision, setSfpDecision] = useState<PersonalizationDecision | null>(null);
+  const { campaign } = useCampaign();
 
   // Try SF Personalization campaign decision when customer changes
   useEffect(() => {
@@ -108,21 +136,19 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvis
     getHeroCampaignDecision().then(setSfpDecision);
   }, [customer]);
 
-  // SF Personalization decision takes priority, fallback to local logic
-  // Merge SFP decision with local variant to ensure heroImage/imageAlt are always present
+  // SF Personalization decision takes priority, then campaign, then local logic
   const variant = useMemo(() => {
-    const localVariant = getHeroVariant(customer, isAuthenticated);
+    const localVariant = getHeroVariant(customer, isAuthenticated, campaign);
     if (sfpDecision) {
       return {
         ...localVariant,
         ...sfpDecision,
-        // Use SFP heroImage if provided, otherwise keep local logic's choice
         heroImage: sfpDecision.heroImage || localVariant.heroImage,
         imageAlt: sfpDecision.imageAlt || localVariant.imageAlt,
       };
     }
     return localVariant;
-  }, [sfpDecision, customer, isAuthenticated]);
+  }, [sfpDecision, customer, isAuthenticated, campaign]);
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-stone-100 via-rose-50 to-purple-50">

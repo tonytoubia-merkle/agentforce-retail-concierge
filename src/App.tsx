@@ -3,40 +3,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SceneProvider } from '@/contexts/SceneContext';
 import { ConversationProvider } from '@/contexts/ConversationContext';
 import { CustomerProvider } from '@/contexts/CustomerContext';
+import { CampaignProvider } from '@/contexts/CampaignContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { StoreProvider } from '@/contexts/StoreContext';
 import { ActivityToastProvider } from '@/components/ActivityToast';
 import { AdvisorPage } from '@/components/AdvisorPage';
 import { StorefrontPage } from '@/components/Storefront';
+import { MediaWallPage } from '@/components/MediaWall';
+import { resolveUTMToCampaign } from '@/mocks/adCreatives';
 import type { Product } from '@/types/product';
+import type { CampaignAttribution } from '@/types/campaign';
 import { MOCK_PRODUCTS } from '@/mocks/products';
 
 /**
- * Unified commerce experience with:
- * - Traditional storefront as the default experience
- * - Conversational "Beauty Advisor" accessible via button
- * - Profile dropdown with persona selector for demos
+ * AppShell — owns mode state and the CampaignProvider so it can
+ * pass handleOpenMediaWall directly as a prop.
  */
-function App() {
-  const [mode, setMode] = useState<'storefront' | 'advisor'>('storefront');
+function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | null }) {
+  const [mode, setMode] = useState<'storefront' | 'advisor' | 'media'>('storefront');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load products on mount - use local mock data for reliable images
   useEffect(() => {
-    // Use mock products directly for consistent image display
-    // The Salesforce API products have outdated image URLs
     setProducts(MOCK_PRODUCTS);
     setLoading(false);
   }, []);
 
-  const handleOpenAdvisor = useCallback(() => {
-    setMode('advisor');
-  }, []);
-
-  const handleCloseAdvisor = useCallback(() => {
-    setMode('storefront');
-  }, []);
+  const handleOpenAdvisor = useCallback(() => setMode('advisor'), []);
+  const handleCloseAdvisor = useCallback(() => setMode('storefront'), []);
+  const handleBackToStore = useCallback(() => setMode('storefront'), []);
+  const handleOpenMediaWall = useCallback(() => setMode('media'), []);
 
   if (loading) {
     return (
@@ -55,7 +51,10 @@ function App() {
   }
 
   return (
-    <CustomerProvider>
+    <CampaignProvider
+      initialCampaign={initialCampaign}
+      onNavigateToMediaWall={handleOpenMediaWall}
+    >
       <CartProvider>
         <StoreProvider>
           <SceneProvider>
@@ -88,7 +87,6 @@ function App() {
                       <AdvisorPage />
                     </ConversationProvider>
 
-                    {/* Back to Store button */}
                     <motion.button
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -103,11 +101,48 @@ function App() {
                     </motion.button>
                   </motion.div>
                 )}
+                {mode === 'media' && (
+                  <motion.div
+                    key="media"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <MediaWallPage
+                      onAdClick={handleBackToStore}
+                      onBackToStore={handleBackToStore}
+                    />
+                  </motion.div>
+                )}
               </AnimatePresence>
             </ActivityToastProvider>
           </SceneProvider>
         </StoreProvider>
       </CartProvider>
+    </CampaignProvider>
+  );
+}
+
+/**
+ * Root App — parses UTM params once on mount (before any providers),
+ * then hands the result to AppShell as initialCampaign.
+ */
+function App() {
+  // Parse UTM from URL once on mount (lazy initializer — no re-renders)
+  const [initialCampaign] = useState<CampaignAttribution | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('utm_source')) {
+      const attribution = resolveUTMToCampaign(params);
+      window.history.replaceState({}, '', window.location.pathname);
+      return attribution;
+    }
+    return null;
+  });
+
+  return (
+    <CustomerProvider>
+      <AppShell initialCampaign={initialCampaign} />
     </CustomerProvider>
   );
 }

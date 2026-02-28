@@ -5,6 +5,7 @@ import type { CustomerSessionContext, CustomerProfile, AgentCapturedProfile, Cap
 import { PROVENANCE_USAGE } from '@/types/customer';
 import { useScene } from './SceneContext';
 import { useCustomer } from './CustomerContext';
+import { useCampaign } from './CampaignContext';
 import { generateMockResponse, setMockCustomerContext, getMockAgentSnapshot, restoreMockAgentSnapshot } from '@/services/mock/mockAgent';
 import type { MockAgentSnapshot } from '@/services/mock/mockAgent';
 import type { AgentResponse } from '@/types/agent';
@@ -28,7 +29,7 @@ interface SessionSnapshot {
   sessionInitialized: boolean;
 }
 
-function buildSessionContext(customer: CustomerProfile): CustomerSessionContext {
+function buildSessionContext(customer: CustomerProfile, campaignAttribution?: import('@/types/campaign').CampaignAttribution): CustomerSessionContext {
   // Flatten recent orders into readable purchase summaries
   const recentOrders = (customer.orders || [])
     .sort((a, b) => b.orderDate.localeCompare(a.orderDate))
@@ -191,6 +192,15 @@ function buildSessionContext(customer: CustomerProfile): CustomerSessionContext 
     capturedProfile,
     missingProfileFields,
     taggedContext,
+    ...(campaignAttribution ? {
+      campaignContext: {
+        campaignName: campaignAttribution.adCreative.campaignName,
+        channel: `${campaignAttribution.adCreative.platform} / ${campaignAttribution.adCreative.utmParams.utm_medium}`,
+        audienceSegment: campaignAttribution.adCreative.audienceSegment.segmentName,
+        targetingStrategy: campaignAttribution.adCreative.targetingStrategy,
+        inferredInterests: campaignAttribution.adCreative.inferredInterests,
+      },
+    } : {}),
   };
 }
 
@@ -246,6 +256,21 @@ function buildWelcomeMessage(ctx: CustomerSessionContext): string {
       lines.push('[INFLUENCE ONLY — use to curate selections, NEVER reference directly]');
       influence.forEach(f => lines.push(`  ${f.value}`));
     }
+  }
+
+  // ── Campaign attribution (from ad click-through) ────────────
+  if (ctx.campaignContext) {
+    const cc = ctx.campaignContext;
+    lines.push('');
+    lines.push('[CAMPAIGN ATTRIBUTION — visitor arrived via a paid media ad]');
+    lines.push(`  Campaign: ${cc.campaignName}`);
+    lines.push(`  Channel: ${cc.channel}`);
+    lines.push(`  Audience Segment: ${cc.audienceSegment}`);
+    lines.push(`  Targeting Strategy: ${cc.targetingStrategy}`);
+    if (cc.inferredInterests.length) {
+      lines.push(`  Inferred Interests: ${cc.inferredInterests.join(', ')}`);
+    }
+    lines.push(`[INSTRUCTION] This is background context only. Do NOT mention the ad, campaign, or targeting in conversation. Do NOT reference this in your welcome message. Use it purely as a soft signal when choosing which products to recommend — e.g., if the campaign theme was "Summer Glow", slightly favor radiance products. The visitor should never know you have this context.`);
   }
 
   // ── Enrichment opportunity ───────────────────────────────────
@@ -324,6 +349,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   ]);
   const { processUIDirective, resetScene, setBackground, getSceneSnapshot, restoreSceneSnapshot } = useScene();
   const { customer, selectedPersonaId, isAuthenticated, isResolving, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
+  const { campaign } = useCampaign();
   const { showCapture } = useActivityToast();
   const messagesRef = useRef<AgentMessage[]>([]);
   const suggestedActionsRef = useRef<string[]>([]);
@@ -450,7 +476,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
 
     // ── No cache — fresh session ──
-    const sessionCtx = buildSessionContext(customer);
+    const sessionCtx = buildSessionContext(customer, campaign ?? undefined);
 
     if (useMockData) {
       setMockCustomerContext(sessionCtx);
