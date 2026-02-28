@@ -3,6 +3,8 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { getBrowseTracker } from '@/services/datacloud/browseTracker';
+import { setPersonalizationCampaign } from '@/services/personalization';
+import { pushUtmToDataLayer } from '@/services/merkury/dataLayer';
 
 /**
  * Side-effect-only hook that bridges React state to the BrowseSessionTracker singleton.
@@ -21,12 +23,17 @@ export function useBrowseTracking() {
   }, [customer?.id]);
 
   // Sync campaign attribution — persisted with browse sessions for server-side decode
+  // AND pushed to SF Personalization as context variables for same-session targeting
   useEffect(() => {
     if (campaign) {
       const { utm_campaign, utm_source, utm_medium } = campaign.adCreative.utmParams;
       tracker.setCampaign(utm_campaign, utm_source, utm_medium);
+      setPersonalizationCampaign(utm_campaign, utm_source, utm_medium);
+      pushUtmToDataLayer(utm_campaign, utm_source, utm_medium);
     } else {
       tracker.setCampaign(null, null, null);
+      setPersonalizationCampaign(null, null, null);
+      pushUtmToDataLayer();
     }
   }, [campaign]);
 

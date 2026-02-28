@@ -67,6 +67,31 @@ interface NavState {
   productCategory?: string;
 }
 
+/**
+ * Personalization context — Merkury appended data + UTM params.
+ * Sent as dynamic context variables with every Personalization.fetch() call,
+ * enabling first-page personalization without waiting for Data Cloud ingestion.
+ */
+interface PersonalizationContext {
+  // UTM campaign attribution (from URL params)
+  utmCampaign: string;
+  utmSource: string;
+  utmMedium: string;
+  // Merkury appended profile (3P enrichment)
+  interests: string;          // comma-separated
+  ageRange: string;
+  gender: string;
+  householdIncome: string;
+  lifestyle: string;          // comma-separated lifestyle signals
+  geoRegion: string;
+  // Beauty profile (Merkury hints or Contact fields)
+  skinType: string;
+  skinConcerns: string;       // comma-separated
+  preferredBrands: string;    // comma-separated
+  // Identity
+  identityTier: string;       // 'known' | 'appended' | 'anonymous'
+}
+
 // ── Config from env ──────────────────────────────────────────────────────────
 const SFP_BEACON_URL = (import.meta.env.VITE_SFP_BEACON_URL || '').trim();
 const SFP_DATASET = (import.meta.env.VITE_SFP_DATASET || '').trim();
@@ -85,6 +110,51 @@ let sdkReady: Promise<boolean> | null = null;
 let navState: NavState = { view: '' };
 let sdkType: 'c360a' | 'interactions' | 'unknown' = 'unknown';
 
+const EMPTY_CONTEXT: PersonalizationContext = {
+  utmCampaign: '', utmSource: '', utmMedium: '',
+  interests: '', ageRange: '', gender: '', householdIncome: '',
+  lifestyle: '', geoRegion: '',
+  skinType: '', skinConcerns: '', preferredBrands: '',
+  identityTier: 'anonymous',
+};
+let personalizationContext: PersonalizationContext = { ...EMPTY_CONTEXT };
+
+/**
+ * Resolve a personalization context value.
+ * Priority: module-level state (set by React contexts) → window.dataLayer (set by Merkury tag).
+ * This ensures first-page personalization works even before React mounts, because
+ * the Merkury tag pushes to dataLayer before the app hydrates.
+ */
+function resolveCtx(field: keyof PersonalizationContext): string {
+  // Module-level state (set by setPersonalizationProfile / setPersonalizationCampaign)
+  const fromState = personalizationContext[field];
+  if (fromState) return fromState;
+
+  // Fall back to window.dataLayer (set by Merkury tag before React)
+  const dl = (window as any).dataLayer;
+  if (!dl) return '';
+
+  // Map PersonalizationContext fields to dataLayer structure
+  const merkury = dl.merkury;
+  const utm = dl.utm;
+  switch (field) {
+    case 'utmCampaign':     return utm?.campaign || '';
+    case 'utmSource':       return utm?.source || '';
+    case 'utmMedium':       return utm?.medium || '';
+    case 'interests':       return merkury?.interests?.join(',') || '';
+    case 'ageRange':        return merkury?.ageRange || '';
+    case 'gender':          return merkury?.gender || '';
+    case 'householdIncome': return merkury?.householdIncome || '';
+    case 'lifestyle':       return merkury?.lifestyleSignals?.join(',') || '';
+    case 'geoRegion':       return merkury?.geoRegion || '';
+    case 'skinType':        return merkury?.skinType || '';
+    case 'skinConcerns':    return merkury?.skinConcerns?.join(',') || '';
+    case 'preferredBrands': return merkury?.preferredBrands?.join(',') || '';
+    case 'identityTier':    return merkury?.identityTier || 'anonymous';
+    default:                return '';
+  }
+}
+
 // ── Public helpers ───────────────────────────────────────────────────────────
 
 /** Check if SF Personalization is configured (env vars present). */
@@ -92,6 +162,66 @@ export function isPersonalizationConfigured(): boolean {
   const configured = !!(SFP_BEACON_URL && SFP_DATASET);
   console.log('[sfp] isPersonalizationConfigured() called:', configured);
   return configured;
+}
+
+/**
+ * Set Merkury appended profile + identity tier as personalization context.
+ * Called by CustomerContext when Merkury resolves or persona changes.
+ * These values become dynamic context variables sent with every
+ * Personalization.fetch() call — enabling first-page personalization.
+ */
+export function setPersonalizationProfile(profile: {
+  interests?: string[];
+  ageRange?: string;
+  gender?: string;
+  householdIncome?: string;
+  lifestyleSignals?: string[];
+  geoRegion?: string;
+  skinType?: string;
+  skinConcerns?: string[];
+  preferredBrands?: string[];
+  identityTier?: string;
+}): void {
+  personalizationContext.interests = (profile.interests || []).join(',');
+  personalizationContext.ageRange = profile.ageRange || '';
+  personalizationContext.gender = profile.gender || '';
+  personalizationContext.householdIncome = profile.householdIncome || '';
+  personalizationContext.lifestyle = (profile.lifestyleSignals || []).join(',');
+  personalizationContext.geoRegion = profile.geoRegion || '';
+  personalizationContext.skinType = profile.skinType || '';
+  personalizationContext.skinConcerns = (profile.skinConcerns || []).join(',');
+  personalizationContext.preferredBrands = (profile.preferredBrands || []).join(',');
+  personalizationContext.identityTier = profile.identityTier || 'anonymous';
+  console.log('[sfp] Personalization profile context updated:', personalizationContext);
+}
+
+/**
+ * Set UTM campaign attribution as personalization context.
+ * Called by useBrowseTracking or CampaignContext when campaign is detected.
+ * These values become dynamic context variables sent with every
+ * Personalization.fetch() call — enabling same-session campaign targeting.
+ */
+export function setPersonalizationCampaign(
+  utmCampaign: string | null,
+  utmSource: string | null,
+  utmMedium: string | null,
+): void {
+  personalizationContext.utmCampaign = utmCampaign || '';
+  personalizationContext.utmSource = utmSource || '';
+  personalizationContext.utmMedium = utmMedium || '';
+  console.log('[sfp] Personalization campaign context updated:', {
+    utmCampaign: personalizationContext.utmCampaign,
+    utmSource: personalizationContext.utmSource,
+    utmMedium: personalizationContext.utmMedium,
+  });
+}
+
+/**
+ * Clear all personalization context (on sign-out / persona switch).
+ */
+export function clearPersonalizationContext(): void {
+  personalizationContext = { ...EMPTY_CONTEXT };
+  console.log('[sfp] Personalization context cleared');
 }
 
 // ── SDK helpers ──────────────────────────────────────────────────────────────
@@ -258,10 +388,50 @@ async function waitForSdk(): Promise<any> {
 function buildSitemapConfig() {
   return {
     global: {
+      // ── Dynamic context variables ──────────────────────────────────
+      // Sent with every Personalization.fetch() call as request-time context.
+      // SF Personalization targeting rules can reference these directly,
+      // enabling first-page personalization without Data Cloud ingestion delay.
+      // Dynamic context variables — resolved from dataLayer (Merkury tag) first,
+      // then module state (React contexts). Uses resolveCtx() for priority:
+      //   window.dataLayer.merkury (pre-React) → personalizationContext (React state)
+      contextVariables: [
+        // UTM campaign attribution (from current URL / ad click)
+        { name: 'utm_campaign', value: () => resolveCtx('utmCampaign') },
+        { name: 'utm_source',   value: () => resolveCtx('utmSource') },
+        { name: 'utm_medium',   value: () => resolveCtx('utmMedium') },
+        // Merkury appended profile (3P enrichment — available on page load)
+        { name: 'interests',        value: () => resolveCtx('interests') },
+        { name: 'age_range',        value: () => resolveCtx('ageRange') },
+        { name: 'gender',           value: () => resolveCtx('gender') },
+        { name: 'household_income', value: () => resolveCtx('householdIncome') },
+        { name: 'lifestyle',        value: () => resolveCtx('lifestyle') },
+        { name: 'geo_region',       value: () => resolveCtx('geoRegion') },
+        // Beauty profile (Merkury hints or CRM contact fields)
+        { name: 'skin_type',        value: () => resolveCtx('skinType') },
+        { name: 'skin_concerns',    value: () => resolveCtx('skinConcerns') },
+        { name: 'preferred_brands', value: () => resolveCtx('preferredBrands') },
+        // Identity resolution tier
+        { name: 'identity_tier',    value: () => resolveCtx('identityTier') },
+      ],
       onActionEvent: (event: any) => {
         // Enrich all events with source channel metadata
         event.source = event.source || {};
         event.source.channel = 'beaute-web';
+        // Enrich with Merkury appended data (from dataLayer or React state)
+        // so it flows to Product Browse Engagement as Related Attributes
+        const interests = resolveCtx('interests');
+        const ageRange = resolveCtx('ageRange');
+        const gender = resolveCtx('gender');
+        const lifestyle = resolveCtx('lifestyle');
+        const skinType = resolveCtx('skinType');
+        const idTier = resolveCtx('identityTier');
+        if (interests) event.merkuryInterests = interests;
+        if (ageRange) event.merkuryAgeRange = ageRange;
+        if (gender) event.merkuryGender = gender;
+        if (lifestyle) event.merkuryLifestyle = lifestyle;
+        if (skinType) event.merkurySkinType = skinType;
+        if (idTier) event.identityTier = idTier;
         return event;
       },
     },
@@ -518,7 +688,10 @@ export function syncIdentity(
     : merkury || {};
 
   try {
-    // Send primary identity event with all identifiers
+    // Send primary identity event with all identifiers + Merkury appended data.
+    // Including appended profile on the identity event ensures it flows to the
+    // Individual DMO and is available as Direct Attributes in targeting rules.
+    const ctx = personalizationContext;
     sendSdkEvent(sfp, {
       interaction: { name: 'IdentitySync', eventType: 'identity' },
       user: {
@@ -529,6 +702,17 @@ export function syncIdentity(
           ...(merkuryIds.hid && { merkuryHid: merkuryIds.hid }),
         },
       },
+      // Merkury appended profile — flows to Identity DLO → Individual DMO
+      ...(ctx.interests && { merkuryInterests: ctx.interests }),
+      ...(ctx.ageRange && { merkuryAgeRange: ctx.ageRange }),
+      ...(ctx.gender && { merkuryGender: ctx.gender }),
+      ...(ctx.householdIncome && { merkuryHouseholdIncome: ctx.householdIncome }),
+      ...(ctx.lifestyle && { merkuryLifestyle: ctx.lifestyle }),
+      ...(ctx.geoRegion && { merkuryGeoRegion: ctx.geoRegion }),
+      ...(ctx.skinType && { merkurySkinType: ctx.skinType }),
+      ...(ctx.skinConcerns && { merkurySkinConcerns: ctx.skinConcerns }),
+      ...(ctx.preferredBrands && { merkuryPreferredBrands: ctx.preferredBrands }),
+      ...(ctx.identityTier && { identityTier: ctx.identityTier }),
     });
 
     // Send Party Identification event for Merkury PID (Personal ID)

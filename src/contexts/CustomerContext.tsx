@@ -5,7 +5,7 @@ import { getPersonaById, PERSONAS } from '@/mocks/customerPersonas';
 import { getDataCloudService } from '@/services/datacloud';
 import { getMerkuryArchetypeByMerkuryId, getMerkuryArchetypeById } from '@/mocks/merkuryProfiles';
 import { createContact } from '@/services/demo/contacts';
-import { initPersonalization, isPersonalizationConfigured, syncIdentity } from '@/services/personalization';
+import { initPersonalization, isPersonalizationConfigured, syncIdentity, setPersonalizationProfile, clearPersonalizationContext } from '@/services/personalization';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
@@ -226,6 +226,32 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       );
     }
   }, [customer?.id]);
+
+  // Push Merkury appended data + beauty hints to SF Personalization as context variables.
+  // These travel with every Personalization.fetch() call for first-page decisioning —
+  // no waiting for Data Cloud ingestion or segment evaluation.
+  useEffect(() => {
+    if (!customer) {
+      clearPersonalizationContext();
+      return;
+    }
+    const appended = customer.appendedProfile;
+    // Find matching Merkury archetype for beauty hints
+    const merkuryId = customer.merkuryIdentity?.merkuryId;
+    const archetype = merkuryId ? getMerkuryArchetypeByMerkuryId(merkuryId) : undefined;
+    setPersonalizationProfile({
+      interests: appended?.interests,
+      ageRange: appended?.ageRange,
+      gender: appended?.gender,
+      householdIncome: appended?.householdIncome,
+      lifestyleSignals: appended?.lifestyleSignals,
+      geoRegion: appended?.geoRegion,
+      skinType: archetype?.beautyHints?.skinType,
+      skinConcerns: archetype?.beautyHints?.concerns,
+      preferredBrands: archetype?.beautyHints?.preferredBrands,
+      identityTier: customer.merkuryIdentity?.identityTier,
+    });
+  }, [customer?.id, customer?.appendedProfile]);
 
   /** Identify an anonymous user by email — find existing profile or create a new one.
    *  Uses isRefreshRef so the conversation is NOT reset. */

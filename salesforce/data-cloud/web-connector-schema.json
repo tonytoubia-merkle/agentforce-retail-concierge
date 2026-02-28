@@ -58,7 +58,13 @@
         { "masterLabel": "sourcePageType", "developerName": "sourcePageType", "dataType": "Text", "isDataRequired": false },
         { "masterLabel": "sourceUrl", "developerName": "sourceUrl", "dataType": "Text", "isDataRequired": false },
         { "masterLabel": "sourceUrlReferrer", "developerName": "sourceUrlReferrer", "dataType": "Text", "isDataRequired": false },
-        { "masterLabel": "type", "developerName": "type", "dataType": "Text", "isDataRequired": true }
+        { "masterLabel": "type", "developerName": "type", "dataType": "Text", "isDataRequired": true },
+        { "masterLabel": "merkuryInterests", "developerName": "merkuryInterests", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryAgeRange", "developerName": "merkuryAgeRange", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryGender", "developerName": "merkuryGender", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryLifestyle", "developerName": "merkuryLifestyle", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkurySkinType", "developerName": "merkurySkinType", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "identityTier", "developerName": "identityTier", "dataType": "Text", "isDataRequired": false }
       ]
     },
     {
@@ -209,6 +215,16 @@
         { "masterLabel": "lastName", "developerName": "lastName", "dataType": "Text", "isDataRequired": false },
         { "masterLabel": "merkuryPid", "developerName": "merkuryPid", "dataType": "Text", "isDataRequired": false },
         { "masterLabel": "merkuryHid", "developerName": "merkuryHid", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryInterests", "developerName": "merkuryInterests", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryAgeRange", "developerName": "merkuryAgeRange", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryGender", "developerName": "merkuryGender", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryHouseholdIncome", "developerName": "merkuryHouseholdIncome", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryLifestyle", "developerName": "merkuryLifestyle", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryGeoRegion", "developerName": "merkuryGeoRegion", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkurySkinType", "developerName": "merkurySkinType", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkurySkinConcerns", "developerName": "merkurySkinConcerns", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "merkuryPreferredBrands", "developerName": "merkuryPreferredBrands", "dataType": "Text", "isDataRequired": false },
+        { "masterLabel": "identityTier", "developerName": "identityTier", "dataType": "Text", "isDataRequired": false },
         { "masterLabel": "pageView", "developerName": "pageView", "dataType": "Number", "isDataRequired": false },
         { "masterLabel": "phoneNumber", "developerName": "phoneNumber", "dataType": "Text", "isDataRequired": false },
         { "masterLabel": "postalCode", "developerName": "postalCode", "dataType": "Text", "isDataRequired": false },
