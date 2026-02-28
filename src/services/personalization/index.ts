@@ -737,7 +737,7 @@ export async function getExitIntentDecision(): Promise<ExitIntentDecision | null
   if (!isPersonalizationConfigured() || !initialized) return null;
 
   try {
-    const result = await fetchPersonalizationPoint('exit_intent_offer');
+    const result = await fetchPersonalizationPoint('Exit_Intent_Capture');
     if (!result) return null;
 
     const attrs = result.attributes || result.payload || {};
@@ -746,7 +746,7 @@ export async function getExitIntentDecision(): Promise<ExitIntentDecision | null
       headline: attrs.header_text || attrs.headline || '',
       bodyText: attrs.body_text || attrs.bodyText || '',
       discountCode: attrs.discount_code || attrs.discountCode || '',
-      discountPercent: Number(attrs.discount_percent || attrs.discountPercent) || 0,
+      discountPercent: Number(attrs.discount_value || attrs.discount_percent) || 0,
       imageUrl: attrs.background_image || attrs.imageUrl || '',
       ctaText: attrs.cta || attrs.ctaText || 'Claim Offer',
       backgroundColor: attrs.background_color || '',
