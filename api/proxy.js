@@ -275,6 +275,31 @@ export default async function handler(req, res) {
       return res.end(result.body);
     }
 
+    // --- Delete sObject record ---
+    if (url.startsWith('/api/sf-record/') && req.method === 'DELETE') {
+      const recordId = url.split('/api/sf-record/')[1]?.split('?')[0];
+      const body = await readBody(req);
+      const { sobject, token } = JSON.parse(body.toString());
+      if (!sobject || !recordId || !token) {
+        res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'Missing sobject, recordId, or token' }));
+      }
+      const sfUrl = new URL(SF_INSTANCE);
+      const result = await httpsRequest({
+        hostname: sfUrl.hostname,
+        port: 443,
+        path: `/services/data/v60.0/sobjects/${sobject}/${recordId}`,
+        method: 'DELETE',
+        headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+      });
+      if (result.statusCode === 204) {
+        res.writeHead(204, CORS_HEADERS);
+        return res.end();
+      }
+      res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(result.body);
+    }
+
     // --- CMS Upload via ContentVersion ---
     if (url === '/api/cms-upload' && req.method === 'POST') {
       const body = await readBody(req);

@@ -91,6 +91,7 @@ export interface OrderRecord {
 
 // ─── Summarized Chat Context (Agent-generated) ──────────────────
 export interface ChatSummary {
+  id?: string;  // Salesforce record ID for delete operations
   sessionDate: string;
   summary: string;
   sentiment: 'positive' | 'neutral' | 'negative';
@@ -101,6 +102,7 @@ export interface ChatSummary {
 export type EventUrgency = 'Immediate' | 'This Week' | 'This Month' | 'Future' | 'No Date';
 
 export interface MeaningfulEvent {
+  id?: string;  // Salesforce record ID for delete operations
   eventType: 'preference' | 'milestone' | 'life-event' | 'concern' | 'intent';
   description: string;
   capturedAt: string;

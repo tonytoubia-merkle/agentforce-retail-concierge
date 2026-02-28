@@ -100,6 +100,42 @@ export class DataCloudWriteService {
     }
   }
 
+  /**
+   * Delete multiple Salesforce records by ID. Uses individual DELETE calls
+   * since the Salesforce REST API doesn't support batch delete on sobjects.
+   */
+  async deleteRecords(sobjectType: string, recordIds: string[]): Promise<{ deleted: string[]; failed: string[] }> {
+    if (useMockData) {
+      console.log(`[mock] Would delete ${recordIds.length} ${sobjectType} records`);
+      return { deleted: recordIds, failed: [] };
+    }
+
+    const token = await this.getAccessToken();
+    const deleted: string[] = [];
+    const failed: string[] = [];
+
+    await Promise.all(recordIds.map(async (id) => {
+      try {
+        const response = await fetch(`/api/sf-record/${id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sobject: sobjectType, token }),
+        });
+        if (response.ok || response.status === 204) {
+          deleted.push(id);
+        } else {
+          console.error(`[datacloud] Failed to delete ${sobjectType}/${id}: ${response.status}`);
+          failed.push(id);
+        }
+      } catch (err) {
+        console.error(`[datacloud] Delete error for ${sobjectType}/${id}:`, err);
+        failed.push(id);
+      }
+    }));
+
+    return { deleted, failed };
+  }
+
   async writeChatSummary(
     customerId: string,
     sessionId: string,

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { PERSONA_STUBS } from '@/mocks/customerPersonas';
 import { fetchDemoContacts } from '@/services/demo/contacts';
+import { getDataCloudWriteService } from '@/services/datacloud';
 import type { DemoContact, CustomerProfile } from '@/types/customer';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
@@ -31,7 +32,30 @@ const DetailSection: React.FC<{ title: string; source?: string; children: React.
   </div>
 );
 
-function renderProfileDetail(customer: CustomerProfile) {
+interface ManageOptions {
+  isManageMode: boolean;
+  selectedIds: Set<string>;
+  onToggle: (id: string) => void;
+}
+
+const DeleteCheckbox: React.FC<{ id: string; selected: boolean; onToggle: (id: string) => void }> = ({ id, selected, onToggle }) => (
+  <button
+    onClick={(e) => { e.stopPropagation(); onToggle(id); }}
+    className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${
+      selected
+        ? 'bg-red-500 border-red-500'
+        : 'border-white/30 hover:border-white/50'
+    }`}
+  >
+    {selected && (
+      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+      </svg>
+    )}
+  </button>
+);
+
+function renderProfileDetail(customer: CustomerProfile, manage?: ManageOptions) {
   const sections: React.ReactNode[] = [];
   const bp = customer.beautyProfile;
 
@@ -68,14 +92,19 @@ function renderProfileDetail(customer: CustomerProfile) {
     sections.push(
       <DetailSection key="chat" title={`Chat Summaries (${customer.chatSummaries.length})`} source="Chat_Summary__c">
         {customer.chatSummaries.map((c, i) => (
-          <div key={i} className="py-0.5">
-            <div className="flex justify-between">
-              <span className="text-[10px] text-white/30">{c.sessionDate}</span>
-              <span className={`text-[10px] ${c.sentiment === 'positive' ? 'text-emerald-400/70' : c.sentiment === 'negative' ? 'text-red-400/70' : 'text-white/30'}`}>
-                {c.sentiment}
-              </span>
+          <div key={c.id || i} className={`py-0.5 ${manage?.isManageMode ? 'flex items-start gap-2' : ''}`}>
+            {manage?.isManageMode && c.id && (
+              <DeleteCheckbox id={c.id} selected={manage.selectedIds.has(c.id)} onToggle={manage.onToggle} />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between">
+                <span className="text-[10px] text-white/30">{c.sessionDate}</span>
+                <span className={`text-[10px] ${c.sentiment === 'positive' ? 'text-emerald-400/70' : c.sentiment === 'negative' ? 'text-red-400/70' : 'text-white/30'}`}>
+                  {c.sentiment}
+                </span>
+              </div>
+              <p className="text-[10px] text-white/60 mt-0.5 leading-snug">{c.summary}</p>
             </div>
-            <p className="text-[10px] text-white/60 mt-0.5 leading-snug">{c.summary}</p>
           </div>
         ))}
       </DetailSection>
@@ -86,12 +115,17 @@ function renderProfileDetail(customer: CustomerProfile) {
     sections.push(
       <DetailSection key="events" title={`Meaningful Events (${customer.meaningfulEvents.length})`} source="Meaningful_Event__c">
         {customer.meaningfulEvents.map((e, i) => (
-          <div key={i} className="py-0.5">
-            <div className="flex justify-between">
-              <span className="text-[10px] px-1 rounded bg-white/10 text-white/50">{e.eventType}</span>
-              <span className="text-[10px] text-white/30">{e.capturedAt}</span>
+          <div key={e.id || i} className={`py-0.5 ${manage?.isManageMode ? 'flex items-start gap-2' : ''}`}>
+            {manage?.isManageMode && e.id && (
+              <DeleteCheckbox id={e.id} selected={manage.selectedIds.has(e.id)} onToggle={manage.onToggle} />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between">
+                <span className="text-[10px] px-1 rounded bg-white/10 text-white/50">{e.eventType}</span>
+                <span className="text-[10px] text-white/30">{e.capturedAt}</span>
+              </div>
+              <p className="text-[10px] text-white/60 mt-0.5 leading-snug">{e.description}</p>
             </div>
-            <p className="text-[10px] text-white/60 mt-0.5 leading-snug">{e.description}</p>
           </div>
         ))}
       </DetailSection>
@@ -175,7 +209,10 @@ export const DemoPanel: React.FC = () => {
   const [view, setView] = useState<PanelView>('list');
   const [crmContacts, setCrmContacts] = useState<DemoContact[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
-  const { customer, selectedPersonaId, selectPersona, isResolving, isLoading } = useCustomer();
+  const { customer, selectedPersonaId, selectPersona, isResolving, isLoading, refreshProfile } = useCustomer();
+  const [isManageMode, setIsManageMode] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch CRM contacts when panel opens (real mode only)
   useEffect(() => {
@@ -186,13 +223,59 @@ export const DemoPanel: React.FC = () => {
       .finally(() => setContactsLoading(false));
   }, [isOpen]);
 
-  // Reset to list view when panel closes
+  // Reset to list view and manage mode when panel closes
   useEffect(() => {
-    if (!isOpen) setView('list');
+    if (!isOpen) {
+      setView('list');
+      setIsManageMode(false);
+      setSelectedForDelete(new Set());
+    }
   }, [isOpen]);
 
   const handleSelect = async (personaId: string) => {
     await selectPersona(personaId);
+  };
+
+  const toggleDeleteSelection = (id: string) => {
+    setSelectedForDelete((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedForDelete.size === 0 || !customer) return;
+    setIsDeleting(true);
+    try {
+      const writeService = getDataCloudWriteService();
+      // Separate IDs by sObject type
+      const chatIds = customer.chatSummaries
+        ?.filter((c) => c.id && selectedForDelete.has(c.id))
+        .map((c) => c.id!) || [];
+      const eventIds = customer.meaningfulEvents
+        ?.filter((e) => e.id && selectedForDelete.has(e.id))
+        .map((e) => e.id!) || [];
+
+      const results = await Promise.all([
+        chatIds.length > 0 ? writeService.deleteRecords('Chat_Summary__c', chatIds) : { deleted: [], failed: [] },
+        eventIds.length > 0 ? writeService.deleteRecords('Meaningful_Event__c', eventIds) : { deleted: [], failed: [] },
+      ]);
+
+      const totalDeleted = results[0].deleted.length + results[1].deleted.length;
+      const totalFailed = results[0].failed.length + results[1].failed.length;
+      console.log(`[demo] Deleted ${totalDeleted} records${totalFailed > 0 ? `, ${totalFailed} failed` : ''}`);
+
+      // Exit manage mode and refresh profile once
+      setIsManageMode(false);
+      setSelectedForDelete(new Set());
+      await refreshProfile();
+    } catch (err) {
+      console.error('[demo] Batch delete failed:', err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Group CRM contacts by demoProfile type
@@ -510,7 +593,7 @@ export const DemoPanel: React.FC = () => {
                           }`}>
                             {(customer.name || 'G').charAt(0).toUpperCase()}
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="text-sm font-medium text-white/90 truncate">
                               {customer.name || 'Guest'}
                             </div>
@@ -518,14 +601,45 @@ export const DemoPanel: React.FC = () => {
                               {tierLabel}
                             </div>
                           </div>
+                          {/* Manage (trash) toggle — only when there are deletable records */}
+                          {((customer.chatSummaries && customer.chatSummaries.length > 0) ||
+                            (customer.meaningfulEvents && customer.meaningfulEvents.length > 0)) && (
+                            <button
+                              onClick={() => {
+                                setIsManageMode(!isManageMode);
+                                if (isManageMode) setSelectedForDelete(new Set());
+                              }}
+                              className={`p-1.5 rounded-lg transition-colors ${
+                                isManageMode
+                                  ? 'bg-red-500/20 text-red-400'
+                                  : 'text-white/30 hover:text-white/60 hover:bg-white/5'
+                              }`}
+                              title={isManageMode ? 'Cancel manage' : 'Manage records'}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Manage mode banner */}
+                    {isManageMode && (
+                      <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20">
+                        <p className="text-[10px] text-red-400">Select chat summaries and events to delete</p>
                       </div>
                     )}
 
                     {/* Profile data sections */}
                     <div className="px-4 py-3 max-h-80 overflow-y-auto">
                       {customer ? (
-                        renderProfileDetail(customer)
+                        renderProfileDetail(customer, {
+                          isManageMode,
+                          selectedIds: selectedForDelete,
+                          onToggle: toggleDeleteSelection,
+                        })
                       ) : (
                         <p className="text-xs text-white/30 text-center py-4">
                           No profile loaded
@@ -533,18 +647,43 @@ export const DemoPanel: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Switch profiles button */}
-                    <div className="px-3 py-2 border-t border-white/5">
-                      <button
-                        onClick={() => setView('list')}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-white/50 hover:text-white text-xs transition-all"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                        Switch Profiles
-                      </button>
-                    </div>
+                    {/* Delete confirmation footer (manage mode) */}
+                    {isManageMode && selectedForDelete.size > 0 ? (
+                      <div className="px-3 py-2 border-t border-red-500/20 bg-red-500/5">
+                        <button
+                          onClick={handleBatchDelete}
+                          disabled={isDeleting}
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition-colors disabled:opacity-50"
+                        >
+                          {isDeleting ? (
+                            <>
+                              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete {selectedForDelete.size} selected
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      /* Switch profiles button */
+                      <div className="px-3 py-2 border-t border-white/5">
+                        <button
+                          onClick={() => { setView('list'); setIsManageMode(false); setSelectedForDelete(new Set()); }}
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-white/50 hover:text-white text-xs transition-all"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                          Switch Profiles
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

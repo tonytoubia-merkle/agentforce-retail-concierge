@@ -321,10 +321,11 @@ export class DataCloudCustomerService {
 
   async getCustomerChatSummaries(customerId: string): Promise<ChatSummary[]> {
     const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Session_Date__c,Summary_Text__c,Sentiment__c,Topics_Discussed__c+FROM+Chat_Summary__c+WHERE+Customer_Id__c='${customerId}'+ORDER+BY+Session_Date__c+DESC+LIMIT+5`
+      `/services/data/v60.0/query/?q=SELECT+Id,Session_Date__c,Summary_Text__c,Sentiment__c,Topics_Discussed__c+FROM+Chat_Summary__c+WHERE+Customer_Id__c='${customerId}'+ORDER+BY+Session_Date__c+DESC+LIMIT+5`
     );
 
     return (data.records || []).map((r: any) => ({
+      id: r.Id,
       sessionDate: r.Session_Date__c,
       summary: r.Summary_Text__c,
       sentiment: r.Sentiment__c || 'neutral',
@@ -334,10 +335,11 @@ export class DataCloudCustomerService {
 
   async getCustomerMeaningfulEvents(customerId: string): Promise<MeaningfulEvent[]> {
     const data = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c+FROM+Meaningful_Event__c+WHERE+Customer_Id__c='${customerId}'+ORDER+BY+Captured_At__c+DESC`
+      `/services/data/v60.0/query/?q=SELECT+Id,Event_Type__c,Description__c,Captured_At__c,Agent_Note__c,Metadata_JSON__c+FROM+Meaningful_Event__c+WHERE+Customer_Id__c='${customerId}'+ORDER+BY+Captured_At__c+DESC`
     );
 
     return (data.records || []).map((r: any) => ({
+      id: r.Id,
       eventType: r.Event_Type__c,
       description: r.Description__c,
       capturedAt: r.Captured_At__c,
