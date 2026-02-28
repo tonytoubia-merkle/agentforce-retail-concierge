@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useExitIntent } from '@/hooks/useExitIntent';
+import { useCampaign } from '@/contexts/CampaignContext';
+import { getUtmFromDataLayer } from '@/services/merkury/dataLayer';
 import {
   isPersonalizationConfigured,
   getExitIntentDecision,
   trackPersonalizationEngagement,
 } from '@/services/personalization';
 import type { ExitIntentDecision } from '@/services/personalization';
+import type { CampaignAttribution } from '@/types/campaign';
 
 const FALLBACK_DECISION: ExitIntentDecision = {
   headline: "Wait! Here's a special offer",
@@ -16,13 +19,79 @@ const FALLBACK_DECISION: ExitIntentDecision = {
   ctaText: 'Claim My Discount',
 };
 
+/** UTM source → exit intent decision map — mirrors what SF Personalization targeting rules would return. */
+const SOURCE_DECISIONS: Record<string, ExitIntentDecision> = {
+  instagram: {
+    headline: "Loved what you saw on Instagram?",
+    bodyText: "Get 15% off the looks from our Instagram collection \u2014 today only.",
+    discountCode: 'INSTA15',
+    discountPercent: 15,
+    ctaText: 'Shop the Insta Edit',
+  },
+  tiktok: {
+    headline: "Going viral for a reason",
+    bodyText: "The products TikTok can\u2019t stop talking about \u2014 now 15% off.",
+    discountCode: 'TIKTOK15',
+    discountPercent: 15,
+    ctaText: 'Get the TikTok Faves',
+  },
+  google: {
+    headline: "Found exactly what you need?",
+    bodyText: "Complete your search with 10% off your first order today.",
+    discountCode: 'SEARCH10',
+    discountPercent: 10,
+    ctaText: 'Claim Your Discount',
+  },
+  youtube: {
+    headline: "Seen it on YouTube?",
+    bodyText: "Get the products your favorite creators swear by \u2014 15% off.",
+    discountCode: 'YOUTUBE15',
+    discountPercent: 15,
+    ctaText: 'Shop Creator Picks',
+  },
+  pinterest: {
+    headline: "From your Pinterest board to your door",
+    bodyText: "The beauty inspo you pinned is 10% off right now.",
+    discountCode: 'PIN10',
+    discountPercent: 10,
+    ctaText: 'Shop Your Pins',
+  },
+  hulu: {
+    headline: "Back from the break?",
+    bodyText: "The beauty essentials from our Hulu spot \u2014 15% off today.",
+    discountCode: 'STREAM15',
+    discountPercent: 15,
+    ctaText: 'Shop the Collection',
+  },
+  email: {
+    headline: "Welcome back, VIP",
+    bodyText: "As a subscriber, enjoy an exclusive 20% off your next order.",
+    discountCode: 'VIP20',
+    discountPercent: 20,
+    ctaText: 'Redeem My Offer',
+  },
+};
+
+/**
+ * Resolve an exit intent decision based on UTM source.
+ * Priority: campaign context (React state) → window.dataLayer (pre-React) → generic fallback.
+ */
+function getUtmSourceDecision(campaign: CampaignAttribution | null): ExitIntentDecision {
+  const source = campaign?.adCreative?.utmParams?.utm_source
+    || getUtmFromDataLayer()?.source
+    || '';
+  return SOURCE_DECISIONS[source.toLowerCase()] || FALLBACK_DECISION;
+}
+
 export const ExitIntentOverlay: React.FC = () => {
   const { triggered, dismiss } = useExitIntent();
+  const { campaign } = useCampaign();
   const [decision, setDecision] = useState<ExitIntentDecision | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Fetch personalization decision when exit intent triggers
+  // Priority: SF Personalization → UTM source mock → generic fallback
   useEffect(() => {
     if (!triggered) return;
 
@@ -44,17 +113,17 @@ export const ExitIntentOverlay: React.FC = () => {
           }
         }
       } catch {
-        // Fall through to fallback
+        // Fall through to UTM source fallback
       }
       if (!cancelled) {
-        setDecision(FALLBACK_DECISION);
+        setDecision(getUtmSourceDecision(campaign));
         setLoading(false);
       }
     }
 
     fetchDecision();
     return () => { cancelled = true; };
-  }, [triggered]);
+  }, [triggered, campaign]);
 
   const handleCopyCode = useCallback(() => {
     if (!decision?.discountCode) return;
