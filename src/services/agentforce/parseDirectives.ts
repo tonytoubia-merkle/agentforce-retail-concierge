@@ -1,6 +1,7 @@
 import type { UIDirective, UIAction } from '@/types/agent';
 import type { Product } from '@/types/product';
 import type { RawAgentResponse } from './types';
+import { MOCK_PRODUCTS } from '@/mocks/products';
 
 /**
  * Strip invisible/control characters that Agentforce sometimes injects,
@@ -11,13 +12,44 @@ function sanitize(raw: string): string {
   return raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u200B-\u200F\uFEFF]/g, '').trim();
 }
 
-/** Ensure every product has an `id` — agent responses may use different field names. */
+/** Lookup maps for resolving agent products to local catalog entries */
+const sfIdMap = new Map<string, Product>();
+const nameMap = new Map<string, Product>();
+for (const p of MOCK_PRODUCTS) {
+  if (p.salesforceId) sfIdMap.set(p.salesforceId, p);
+  nameMap.set(p.name.toLowerCase(), p);
+}
+
+/**
+ * Ensure every product has an `id` and valid `imageUrl`.
+ * The agent often returns Salesforce Product2 record IDs instead of local
+ * catalog IDs, so we resolve them against the mock product catalog.
+ */
 function normalizeProducts(products: unknown[]): Product[] {
   return products.map((p, i) => {
     const raw = p as Record<string, unknown>;
     if (!raw.id) {
       raw.id = raw.productId || raw.sku || raw.productCode || `product-${i}`;
     }
+
+    // Try to resolve to a local catalog product for correct imageUrl
+    const catalogProduct =
+      sfIdMap.get(raw.id as string) ||
+      sfIdMap.get(raw.productId as string) ||
+      sfIdMap.get(raw.salesforceId as string) ||
+      nameMap.get(((raw.name as string) || '').toLowerCase());
+
+    if (catalogProduct) {
+      raw.id = catalogProduct.id;
+      raw.imageUrl = catalogProduct.imageUrl;
+      raw.images = catalogProduct.images;
+      if (!raw.brand) raw.brand = catalogProduct.brand;
+      if (!raw.category) raw.category = catalogProduct.category;
+      if (!raw.price && catalogProduct.price) raw.price = catalogProduct.price;
+      if (!raw.shortDescription) raw.shortDescription = catalogProduct.shortDescription;
+      if (!raw.salesforceId) raw.salesforceId = catalogProduct.salesforceId;
+    }
+
     return raw as unknown as Product;
   });
 }

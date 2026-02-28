@@ -729,6 +729,62 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // DELETE /api/sf-record/{id} — delete a record
+  if (req.url.startsWith('/api/sf-record/') && req.method === 'DELETE') {
+    const parts = req.url.split('/api/sf-record/')[1]?.split('?');
+    const recordId = parts?.[0];
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      try {
+        const { sobject, token } = JSON.parse(Buffer.concat(chunks).toString());
+        if (!sobject || !recordId || !token) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Missing sobject, recordId, or token' }));
+          return;
+        }
+        const sfUrl = new URL(SF_INSTANCE);
+        const opts = {
+          hostname: sfUrl.hostname,
+          port: 443,
+          path: `/services/data/v60.0/sobjects/${sobject}/${recordId}`,
+          method: 'DELETE',
+          headers: {
+            host: sfUrl.hostname,
+            authorization: `Bearer ${token}`,
+            accept: 'application/json',
+          },
+        };
+        console.log(`[sf-record] Deleting ${sobject}/${recordId}`);
+        const proxyReq = https.request(opts, (proxyRes) => {
+          if (proxyRes.statusCode === 204) {
+            res.writeHead(204, { 'access-control-allow-origin': '*' });
+            res.end();
+          } else {
+            const resChunks = [];
+            proxyRes.on('data', (c) => resChunks.push(c));
+            proxyRes.on('end', () => {
+              const resBody = Buffer.concat(resChunks);
+              res.writeHead(proxyRes.statusCode, { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'content-length': resBody.length });
+              res.end(resBody);
+            });
+          }
+        });
+        proxyReq.on('error', (err) => {
+          if (!res.headersSent) {
+            res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+        });
+        proxyReq.end();
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Invalid request body' }));
+      }
+    });
+    return;
+  }
+
   // --- Upload image via Salesforce ContentVersion API (works with any org) ---
   if (req.url === '/api/cms-upload' && req.method === 'POST') {
     const chunks = [];

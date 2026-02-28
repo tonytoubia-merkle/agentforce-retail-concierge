@@ -110,7 +110,9 @@ export class DataCloudWriteService {
       return { deleted: recordIds, failed: [] };
     }
 
-    const token = await this.getAccessToken();
+    // Try to get a client-side token, but let the proxy fall back to server-side auth
+    let token: string | null = null;
+    try { token = await this.getAccessToken(); } catch { /* proxy will use server token */ }
     const deleted: string[] = [];
     const failed: string[] = [];
 
@@ -119,7 +121,7 @@ export class DataCloudWriteService {
         const response = await fetch(`/api/sf-record/${id}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sobject: sobjectType, token }),
+          body: JSON.stringify({ sobject: sobjectType, ...(token && { token }) }),
         });
         if (response.ok || response.status === 204) {
           deleted.push(id);

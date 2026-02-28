@@ -231,8 +231,9 @@ export default async function handler(req, res) {
     // --- Create sObject record ---
     if (url === '/api/sf-record' && req.method === 'POST') {
       const body = await readBody(req);
-      const { sobject, fields, token } = JSON.parse(body.toString());
-      if (!sobject || !fields || !token) {
+      const { sobject, fields, token: clientToken } = JSON.parse(body.toString());
+      const authToken = clientToken || await getServerToken();
+      if (!sobject || !fields || !authToken) {
         res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
         return res.end(JSON.stringify({ error: 'Missing sobject, fields, or token' }));
       }
@@ -243,7 +244,7 @@ export default async function handler(req, res) {
         port: 443,
         path: `/services/data/v60.0/sobjects/${sobject}`,
         method: 'POST',
-        headers: { host: sfUrl.hostname, 'content-type': 'application/json', 'content-length': Buffer.byteLength(jsonBody), authorization: `Bearer ${token}`, accept: 'application/json' },
+        headers: { host: sfUrl.hostname, 'content-type': 'application/json', 'content-length': Buffer.byteLength(jsonBody), authorization: `Bearer ${authToken}`, accept: 'application/json' },
       }, jsonBody);
       res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
       return res.end(result.body);
@@ -253,8 +254,9 @@ export default async function handler(req, res) {
     if (url.startsWith('/api/sf-record/') && req.method === 'PATCH') {
       const recordId = url.split('/api/sf-record/')[1]?.split('?')[0];
       const body = await readBody(req);
-      const { sobject, fields, token } = JSON.parse(body.toString());
-      if (!sobject || !recordId || !token) {
+      const { sobject, fields, token: clientToken } = JSON.parse(body.toString());
+      const authToken = clientToken || await getServerToken();
+      if (!sobject || !recordId || !authToken) {
         res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
         return res.end(JSON.stringify({ error: 'Missing sobject, recordId, or token' }));
       }
@@ -265,7 +267,7 @@ export default async function handler(req, res) {
         port: 443,
         path: `/services/data/v60.0/sobjects/${sobject}/${recordId}`,
         method: 'PATCH',
-        headers: { host: sfUrl.hostname, 'content-type': 'application/json', 'content-length': Buffer.byteLength(jsonBody), authorization: `Bearer ${token}`, accept: 'application/json' },
+        headers: { host: sfUrl.hostname, 'content-type': 'application/json', 'content-length': Buffer.byteLength(jsonBody), authorization: `Bearer ${authToken}`, accept: 'application/json' },
       }, jsonBody);
       if (result.statusCode === 204) {
         res.writeHead(204, CORS_HEADERS);
@@ -279,8 +281,9 @@ export default async function handler(req, res) {
     if (url.startsWith('/api/sf-record/') && req.method === 'DELETE') {
       const recordId = url.split('/api/sf-record/')[1]?.split('?')[0];
       const body = await readBody(req);
-      const { sobject, token } = JSON.parse(body.toString());
-      if (!sobject || !recordId || !token) {
+      const { sobject, token: clientToken } = JSON.parse(body.toString());
+      const authToken = clientToken || await getServerToken();
+      if (!sobject || !recordId || !authToken) {
         res.writeHead(400, { 'Content-Type': 'application/json', ...CORS_HEADERS });
         return res.end(JSON.stringify({ error: 'Missing sobject, recordId, or token' }));
       }
@@ -290,7 +293,7 @@ export default async function handler(req, res) {
         port: 443,
         path: `/services/data/v60.0/sobjects/${sobject}/${recordId}`,
         method: 'DELETE',
-        headers: { host: sfUrl.hostname, authorization: `Bearer ${token}`, accept: 'application/json' },
+        headers: { host: sfUrl.hostname, authorization: `Bearer ${authToken}`, accept: 'application/json' },
       });
       if (result.statusCode === 204) {
         res.writeHead(204, CORS_HEADERS);
