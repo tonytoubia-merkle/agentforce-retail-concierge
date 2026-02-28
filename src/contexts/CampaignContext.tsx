@@ -5,7 +5,6 @@ interface CampaignContextValue {
   campaign: CampaignAttribution | null;
   setCampaign: (campaign: CampaignAttribution) => void;
   clearCampaign: () => void;
-  navigateToMediaWall: (() => void) | null;
 }
 
 const CampaignContext = createContext<CampaignContextValue | null>(null);
@@ -13,13 +12,11 @@ const CampaignContext = createContext<CampaignContextValue | null>(null);
 interface CampaignProviderProps {
   children: React.ReactNode;
   initialCampaign?: CampaignAttribution | null;
-  onNavigateToMediaWall?: () => void;
 }
 
 export const CampaignProvider: React.FC<CampaignProviderProps> = ({
   children,
   initialCampaign,
-  onNavigateToMediaWall,
 }) => {
   const [campaign, setCampaignState] = useState<CampaignAttribution | null>(initialCampaign ?? null);
 
@@ -37,7 +34,6 @@ export const CampaignProvider: React.FC<CampaignProviderProps> = ({
         campaign,
         setCampaign,
         clearCampaign,
-        navigateToMediaWall: onNavigateToMediaWall || null,
       }}
     >
       {children}

@@ -3,12 +3,8 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { ProductImage } from './ProductImage';
 
-interface CartPageProps {
-  onContinueShopping: () => void;
-}
-
-export const CartPage: React.FC<CartPageProps> = ({ onContinueShopping }) => {
-  const { navigateToCheckout, navigateToProduct } = useStore();
+export const CartPage: React.FC = () => {
+  const { navigateToCheckout, navigateToProduct, navigateHome } = useStore();
   const { items, subtotal, updateQuantity, removeItem } = useCart();
 
   const shipping = subtotal >= 50 ? 0 : 5.99;
@@ -33,7 +29,7 @@ export const CartPage: React.FC<CartPageProps> = ({ onContinueShopping }) => {
               <h2 className="text-xl font-medium text-stone-900 mb-2">Your bag is empty</h2>
               <p className="text-stone-500 mb-8">Looks like you haven't added anything yet.</p>
               <button
-                onClick={onContinueShopping}
+                onClick={navigateHome}
                 className="px-8 py-3 bg-stone-900 text-white font-medium rounded-full hover:bg-stone-800 transition-colors"
               >
                 Continue Shopping
@@ -124,7 +120,7 @@ export const CartPage: React.FC<CartPageProps> = ({ onContinueShopping }) => {
 
                 {/* Continue shopping link */}
                 <button
-                  onClick={onContinueShopping}
+                  onClick={navigateHome}
                   className="flex items-center gap-2 text-stone-600 hover:text-stone-900 transition-colors mt-4"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

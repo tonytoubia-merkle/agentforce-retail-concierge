@@ -4,7 +4,8 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/api/generate-journey-image", "destination": "/api/generate-journey-image" },
-    { "source": "/api/(.*)", "destination": "/api/proxy" }
+    { "source": "/api/(.*)", "destination": "/api/proxy" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
     "api/proxy.js": {

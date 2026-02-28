@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Inferred_Interests__c</fullName>
+    <description>Semicolon-delimited product interests inferred from the campaign creative and audience (e.g. skincare; serums; radiance; summer beauty)</description>
+    <externalId>false</externalId>
+    <label>Inferred Interests</label>
+    <length>500</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { StoreHeader } from './StoreHeader';
 import { HeroBanner } from './HeroBanner';
 import { ProductSection } from './ProductSection';
@@ -17,15 +18,15 @@ import type { Product, ProductCategory } from '@/types/product';
 
 interface StorefrontPageProps {
   products: Product[];
-  onBeautyAdvisorClick: () => void;
 }
 
 export const StorefrontPage: React.FC<StorefrontPageProps> = ({
   products,
-  onBeautyAdvisorClick,
 }) => {
   const { view, selectedCategory, selectedProduct, navigateHome, navigateToCategory } = useStore();
   const { customer, isAuthenticated } = useCustomer();
+  const navigate = useNavigate();
+  const navigateToAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
   useBrowseTracking();
 
   // Group products by category for home page sections
@@ -91,18 +92,17 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
         return (
           <ProductDetailPage
             product={selectedProduct}
-            onBeautyAdvisor={onBeautyAdvisorClick}
           />
         );
 
       case 'cart':
-        return <CartPage onContinueShopping={navigateHome} />;
+        return <CartPage />;
 
       case 'checkout':
         return <CheckoutPage />;
 
       case 'order-confirmation':
-        return <OrderConfirmationPage onBeautyAdvisor={onBeautyAdvisorClick} />;
+        return <OrderConfirmationPage />;
 
       case 'account':
         return <AccountPage />;
@@ -116,7 +116,6 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
           <>
             <HeroBanner
               onShopNow={() => navigateToCategory('moisturizer' as ProductCategory)}
-              onBeautyAdvisor={onBeautyAdvisorClick}
               customer={customer}
               isAuthenticated={isAuthenticated}
             />
@@ -241,7 +240,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
                   concerns, and preferences.
                 </p>
                 <button
-                  onClick={onBeautyAdvisorClick}
+                  onClick={() => navigateToAdvisor()}
                   className="px-8 py-4 bg-gradient-to-r from-rose-500 to-purple-500 text-white font-medium rounded-full hover:shadow-xl hover:shadow-rose-500/30 transition-all text-lg"
                 >
                   Talk to Beauty Advisor
@@ -359,7 +358,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
 
   return (
     <div className="min-h-screen bg-white">
-      <StoreHeader onBeautyAdvisorClick={onBeautyAdvisorClick} />
+      <StoreHeader />
       {renderContent()}
     </div>
   );

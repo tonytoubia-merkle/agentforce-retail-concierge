@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import type { CustomerProfile } from '@/types/customer';
 import type { CampaignAttribution } from '@/types/campaign';
@@ -7,7 +8,6 @@ import { isPersonalizationConfigured, getHeroCampaignDecision, type Personalizat
 
 interface HeroBannerProps {
   onShopNow: () => void;
-  onBeautyAdvisor: () => void;
   customer?: CustomerProfile | null;
   isAuthenticated?: boolean;
 }
@@ -126,9 +126,11 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
   };
 }
 
-export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, onBeautyAdvisor, customer, isAuthenticated }) => {
+export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isAuthenticated }) => {
   const [sfpDecision, setSfpDecision] = useState<PersonalizationDecision | null>(null);
   const { campaign } = useCampaign();
+  const navigate = useNavigate();
+  const onBeautyAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
 
   // Try SF Personalization campaign decision when customer changes
   useEffect(() => {

@@ -1,15 +1,14 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 
 const API_BASE = '';
 
-interface OrderConfirmationPageProps {
-  onBeautyAdvisor: () => void;
-}
-
-export const OrderConfirmationPage: React.FC<OrderConfirmationPageProps> = ({ onBeautyAdvisor }) => {
+export const OrderConfirmationPage: React.FC = () => {
+  const navigate = useNavigate();
+  const onBeautyAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
   const { lastOrderId, lastOrderResult, navigateHome } = useStore();
   const { customer } = useCustomer();
   const [shipmentStatus, setShipmentStatus] = useState(lastOrderResult?.shippingStatus || 'Processing');

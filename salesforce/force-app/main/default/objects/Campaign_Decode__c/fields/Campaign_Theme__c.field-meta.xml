@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Campaign_Theme__c</fullName>
+    <description>High-level campaign theme slug (e.g. summer-glow, anti-aging, bridal-beauty)</description>
+    <externalId>false</externalId>
+    <label>Campaign Theme</label>
+    <length>100</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

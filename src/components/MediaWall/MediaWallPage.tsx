@@ -1,19 +1,13 @@
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AD_CREATIVES } from '@/mocks/adCreatives';
 import { useCampaign } from '@/contexts/CampaignContext';
 import { AdCard } from './AdCard';
 import type { AdCreative, CampaignAttribution } from '@/types/campaign';
 
-interface MediaWallPageProps {
-  onAdClick: () => void;
-  onBackToStore: () => void;
-}
-
-export const MediaWallPage: React.FC<MediaWallPageProps> = ({
-  onAdClick,
-  onBackToStore,
-}) => {
+export const MediaWallPage: React.FC = () => {
   const { setCampaign } = useCampaign();
+  const navigate = useNavigate();
 
   const handleAdClick = (ad: AdCreative) => {
     const attribution: CampaignAttribution = {
@@ -22,7 +16,7 @@ export const MediaWallPage: React.FC<MediaWallPageProps> = ({
       entrySource: 'media-wall',
     };
     setCampaign(attribution);
-    onAdClick();
+    navigate('/');
   };
 
   return (
@@ -49,7 +43,7 @@ export const MediaWallPage: React.FC<MediaWallPageProps> = ({
             </div>
 
             <button
-              onClick={onBackToStore}
+              onClick={() => navigate('/')}
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white/70 hover:text-white text-sm font-medium transition-all"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

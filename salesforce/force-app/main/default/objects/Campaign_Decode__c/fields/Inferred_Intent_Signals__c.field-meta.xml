@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Inferred_Intent_Signals__c</fullName>
+    <description>Semicolon-delimited intent signals inferred from campaign context (e.g. discovery; seasonal purchase; mid-funnel consideration)</description>
+    <externalId>false</externalId>
+    <label>Inferred Intent Signals</label>
+    <length>500</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

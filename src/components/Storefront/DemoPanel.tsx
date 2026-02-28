@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useCampaign } from '@/contexts/CampaignContext';
@@ -289,7 +290,8 @@ export const DemoPanel: React.FC = () => {
   const [crmContacts, setCrmContacts] = useState<DemoContact[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
   const { customer, selectedPersonaId, selectPersona, isResolving, isLoading, refreshProfile } = useCustomer();
-  const { campaign, clearCampaign, navigateToMediaWall } = useCampaign();
+  const { campaign, clearCampaign } = useCampaign();
+  const navigate = useNavigate();
   const [isManageMode, setIsManageMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
@@ -679,17 +681,15 @@ export const DemoPanel: React.FC = () => {
 
                     {/* Footer: Media Wall link + hint */}
                     <div className="px-3 py-2 border-t border-white/5 space-y-1.5">
-                      {navigateToMediaWall && (
-                        <button
-                          onClick={() => { setIsOpen(false); navigateToMediaWall(); }}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400/80 hover:text-cyan-400 text-[10px] font-medium transition-all"
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                          Merkury Media Wall
-                        </button>
-                      )}
+                      <button
+                        onClick={() => { setIsOpen(false); navigate('/media-wall'); }}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400/80 hover:text-cyan-400 text-[10px] font-medium transition-all"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Merkury Media Wall
+                      </button>
                       <p className="text-white/20 text-[9px] leading-relaxed text-center">
                         Switch identities to simulate Merkury resolution
                       </p>

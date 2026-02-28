@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SceneProvider } from '@/contexts/SceneContext';
 import { ConversationProvider } from '@/contexts/ConversationContext';
@@ -16,11 +17,69 @@ import type { CampaignAttribution } from '@/types/campaign';
 import { MOCK_PRODUCTS } from '@/mocks/products';
 
 /**
- * AppShell — owns mode state and the CampaignProvider so it can
- * pass handleOpenMediaWall directly as a prop.
+ * AdvisorWrapper — wraps AdvisorPage with ConversationProvider + back button.
+ */
+function AdvisorWrapper() {
+  const navigate = useNavigate();
+  return (
+    <div className="relative">
+      <ConversationProvider>
+        <AdvisorPage />
+      </ConversationProvider>
+
+      <motion.button
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.3 }}
+        onClick={() => navigate('/')}
+        className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm text-stone-700 text-sm font-medium rounded-full shadow-lg border border-stone-200 hover:bg-white hover:shadow-xl transition-all"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Store
+      </motion.button>
+    </div>
+  );
+}
+
+/**
+ * AnimatedRoutes — wraps Routes in AnimatePresence.
+ * Uses a section-level key so only storefront ↔ advisor ↔ media transitions fade.
+ */
+function AnimatedRoutes({ products }: { products: Product[] }) {
+  const location = useLocation();
+
+  const animationKey = useMemo(() => {
+    if (location.pathname === '/advisor') return 'advisor';
+    if (location.pathname === '/media-wall') return 'media';
+    return 'storefront';
+  }, [location.pathname]);
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={animationKey}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className={animationKey === 'advisor' ? 'relative' : undefined}
+      >
+        <Routes location={location}>
+          <Route path="/advisor" element={<AdvisorWrapper />} />
+          <Route path="/media-wall" element={<MediaWallPage />} />
+          <Route path="*" element={<StorefrontPage products={products} />} />
+        </Routes>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+/**
+ * AppShell — provider tree + animated routes.
  */
 function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | null }) {
-  const [mode, setMode] = useState<'storefront' | 'advisor' | 'media'>('storefront');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,11 +87,6 @@ function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | 
     setProducts(MOCK_PRODUCTS);
     setLoading(false);
   }, []);
-
-  const handleOpenAdvisor = useCallback(() => setMode('advisor'), []);
-  const handleCloseAdvisor = useCallback(() => setMode('storefront'), []);
-  const handleBackToStore = useCallback(() => setMode('storefront'), []);
-  const handleOpenMediaWall = useCallback(() => setMode('media'), []);
 
   if (loading) {
     return (
@@ -51,71 +105,12 @@ function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | 
   }
 
   return (
-    <CampaignProvider
-      initialCampaign={initialCampaign}
-      onNavigateToMediaWall={handleOpenMediaWall}
-    >
+    <CampaignProvider initialCampaign={initialCampaign}>
       <CartProvider>
         <StoreProvider>
           <SceneProvider>
             <ActivityToastProvider>
-              <AnimatePresence mode="wait">
-                {mode === 'storefront' && (
-                  <motion.div
-                    key="storefront"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <StorefrontPage
-                      products={products}
-                      onBeautyAdvisorClick={handleOpenAdvisor}
-                    />
-                  </motion.div>
-                )}
-                {mode === 'advisor' && (
-                  <motion.div
-                    key="advisor"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="relative"
-                  >
-                    <ConversationProvider>
-                      <AdvisorPage />
-                    </ConversationProvider>
-
-                    <motion.button
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                      onClick={handleCloseAdvisor}
-                      className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm text-stone-700 text-sm font-medium rounded-full shadow-lg border border-stone-200 hover:bg-white hover:shadow-xl transition-all"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      Back to Store
-                    </motion.button>
-                  </motion.div>
-                )}
-                {mode === 'media' && (
-                  <motion.div
-                    key="media"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <MediaWallPage
-                      onAdClick={handleBackToStore}
-                      onBackToStore={handleBackToStore}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <AnimatedRoutes products={products} />
             </ActivityToastProvider>
           </SceneProvider>
         </StoreProvider>

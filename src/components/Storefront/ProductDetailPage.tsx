@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
@@ -8,10 +9,11 @@ import type { Product } from '@/types/product';
 
 interface ProductDetailPageProps {
   product: Product;
-  onBeautyAdvisor: () => void;
 }
 
-export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, onBeautyAdvisor }) => {
+export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product }) => {
+  const navigate = useNavigate();
+  const onBeautyAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
   const { goBack, navigateToCart } = useStore();
   const { addItem, isInCart, items } = useCart();
   const [quantity, setQuantity] = useState(1);

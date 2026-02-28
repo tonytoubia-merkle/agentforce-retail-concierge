@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
@@ -19,12 +20,10 @@ const CATEGORIES: { label: string; value: ProductCategory }[] = [
   { label: 'Haircare', value: 'shampoo' },
 ];
 
-interface StoreHeaderProps {
-  onBeautyAdvisorClick: () => void;
-}
-
-export const StoreHeader: React.FC<StoreHeaderProps> = ({ onBeautyAdvisorClick }) => {
+export const StoreHeader: React.FC = () => {
   const { navigateHome, navigateToCategory, navigateToCart, navigateToAccount, searchQuery, setSearchQuery } = useStore();
+  const navigate = useNavigate();
+  const onBeautyAdvisorClick = useCallback(() => navigate('/advisor'), [navigate]);
   const { itemCount } = useCart();
   const { isAuthenticated, customer, signIn } = useCustomer();
   const [showSearch, setShowSearch] = useState(false);
