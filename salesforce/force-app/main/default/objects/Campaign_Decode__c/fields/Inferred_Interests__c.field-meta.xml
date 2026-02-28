@@ -4,9 +4,9 @@
     <description>Semicolon-delimited product interests inferred from the campaign creative and audience (e.g. skincare; serums; radiance; summer beauty)</description>
     <externalId>false</externalId>
     <label>Inferred Interests</label>
-    <length>500</length>
+    <length>1000</length>
     <required>false</required>
     <trackHistory>false</trackHistory>
-    <type>Text</type>
-    <unique>false</unique>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
 </CustomField>
