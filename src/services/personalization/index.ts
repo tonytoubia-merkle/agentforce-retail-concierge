@@ -709,16 +709,21 @@ export async function getHeroCampaignDecision(): Promise<PersonalizationDecision
   if (!isPersonalizationConfigured() || !initialized) return null;
 
   try {
-    const result = await fetchPersonalizationPoint('hero_banner');
+    const result = await fetchPersonalizationPoint('Hero_Banner');
     if (!result) return null;
 
-    // Native SF Personalization response: attributes at top level
+    // Map from SF response template API names (snake_case) to our interface
     const attrs = result.attributes || result.payload || {};
+    // header_text may contain both lines separated by \n, or we split on comma
+    const headerText = attrs.header_text || '';
+    const [topLine, ...rest] = headerText.split('\n');
     return {
-      badge: attrs.badge || '',
-      headlineTop: attrs.headlineTop || '',
-      headlineBottom: attrs.headlineBottom || '',
-      subtitle: attrs.subtitle || '',
+      badge: attrs.badge || attrs.cta || '',
+      headlineTop: topLine || attrs.headlineTop || '',
+      headlineBottom: rest.join('\n') || attrs.headlineBottom || '',
+      subtitle: attrs.body_text || attrs.subtitle || '',
+      heroImage: attrs.background_image || '',
+      imageAlt: attrs.imageAlt || '',
       campaignId: result.personalizationId || result.campaignId,
       experienceId: result.personalizationContentId || result.experienceId,
     };
