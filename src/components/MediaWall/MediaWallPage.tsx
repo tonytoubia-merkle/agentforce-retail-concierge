@@ -16,7 +16,14 @@ export const MediaWallPage: React.FC = () => {
       entrySource: 'media-wall',
     };
     setCampaign(attribution);
-    navigate('/');
+    // Include UTM params in the URL so the SF Personalization beacon
+    // can read them for targeting rules (UTM Parameter > Source, etc.)
+    const { utm_campaign, utm_source, utm_medium } = ad.utmParams;
+    const params = new URLSearchParams();
+    if (utm_campaign) params.set('utm_campaign', utm_campaign);
+    if (utm_source) params.set('utm_source', utm_source);
+    if (utm_medium) params.set('utm_medium', utm_medium);
+    navigate(`/?${params.toString()}`);
   };
 
   return (
