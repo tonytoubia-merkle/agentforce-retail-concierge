@@ -11,6 +11,7 @@ import { OrderConfirmationPage } from './OrderConfirmationPage';
 import { AccountPage } from './AccountPage';
 import { AppointmentBooking } from './AppointmentBooking';
 import { EmailSignup } from './EmailSignup';
+import { ExitIntentOverlay } from './ExitIntentOverlay';
 import { useStore } from '@/contexts/StoreContext';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useBrowseTracking } from '@/hooks/useBrowseTracking';
@@ -360,6 +361,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
     <div className="min-h-screen bg-white">
       <StoreHeader />
       {renderContent()}
+      <ExitIntentOverlay />
     </div>
   );
 };

@@ -44,6 +44,17 @@ export interface PersonalizationDecision {
   experienceId?: string;
 }
 
+export interface ExitIntentDecision {
+  headline: string;
+  bodyText: string;
+  discountCode: string;
+  discountPercent: number;
+  imageUrl?: string;
+  ctaText: string;
+  personalizationId?: string;
+  personalizationContentId?: string;
+}
+
 /** Navigation state shared between StoreContext and the sitemap's isMatch fns. */
 interface NavState {
   view: string;
@@ -636,7 +647,57 @@ export function trackPurchase(
   }
 }
 
-// ── Campaign decisions ───────────────────────────────────────────────────────
+// ── Personalization decisions ────────────────────────────────────────────────
+
+/**
+ * Fetch a personalization decision from SF Personalization.
+ * Tries native Personalization.fetch() first (SF Personalization),
+ * falls back to mcis.getDecision() (legacy MCP/Interaction Studio).
+ */
+async function fetchPersonalizationPoint(pointName: string): Promise<any | null> {
+  const sfp = await waitForSdk();
+  if (!sfp) return null;
+
+  // Native SF Personalization API (Data Cloud Web SDK)
+  if (sfp.Personalization?.fetch) {
+    try {
+      const response = await sfp.Personalization.fetch([pointName]);
+      console.log('[sfp] Personalization.fetch() response:', response);
+      const personalization = response?.personalizations?.[0];
+      return personalization || null;
+    } catch (err) {
+      console.warn('[sfp] Personalization.fetch() failed:', err);
+    }
+  }
+
+  // Also check SalesforceInteractions global (may be separate from c360a SDK)
+  const w = window as any;
+  if (w.SalesforceInteractions?.Personalization?.fetch) {
+    try {
+      const response = await w.SalesforceInteractions.Personalization.fetch([pointName]);
+      console.log('[sfp] SalesforceInteractions.Personalization.fetch() response:', response);
+      const personalization = response?.personalizations?.[0];
+      return personalization || null;
+    } catch (err) {
+      console.warn('[sfp] SalesforceInteractions.Personalization.fetch() failed:', err);
+    }
+  }
+
+  // Legacy MCP / Interaction Studio fallback
+  if (sfp.mcis?.getDecision) {
+    try {
+      const decision = await sfp.mcis.getDecision({ campaignName: pointName });
+      console.log('[sfp] mcis.getDecision() response:', decision);
+      return decision || null;
+    } catch (err) {
+      console.warn('[sfp] mcis.getDecision() failed:', err);
+    }
+  }
+
+  console.warn('[sfp] No decision API available on SDK. Methods:',
+    Object.keys(sfp).filter(k => typeof sfp[k] === 'function' || typeof sfp[k] === 'object'));
+  return null;
+}
 
 /**
  * Fetch hero campaign decision from SF Personalization.
@@ -646,26 +707,74 @@ export function trackPurchase(
 export async function getHeroCampaignDecision(): Promise<PersonalizationDecision | null> {
   if (!isPersonalizationConfigured() || !initialized) return null;
 
-  const sfp = await waitForSdk();
-  if (!sfp?.mcis?.getDecision) return null;
-
   try {
-    const decision = await sfp.mcis.getDecision({
-      campaignName: 'hero-banner',
-    });
+    const result = await fetchPersonalizationPoint('hero_banner');
+    if (!result) return null;
 
-    if (!decision?.payload) return null;
-
+    // Native SF Personalization response: attributes at top level
+    const attrs = result.attributes || result.payload || {};
     return {
-      badge: decision.payload.badge || '',
-      headlineTop: decision.payload.headlineTop || '',
-      headlineBottom: decision.payload.headlineBottom || '',
-      subtitle: decision.payload.subtitle || '',
-      campaignId: decision.campaignId,
-      experienceId: decision.experienceId,
+      badge: attrs.badge || '',
+      headlineTop: attrs.headlineTop || '',
+      headlineBottom: attrs.headlineBottom || '',
+      subtitle: attrs.subtitle || '',
+      campaignId: result.personalizationId || result.campaignId,
+      experienceId: result.personalizationContentId || result.experienceId,
     };
   } catch (err) {
     console.warn('[sfp] Hero campaign decision failed, using fallback:', err);
     return null;
+  }
+}
+
+/**
+ * Fetch exit intent decision from SF Personalization.
+ * Called when exit intent is detected (mouse leaves viewport from top).
+ * Returns null if not configured, not initialized, or no decision matches.
+ */
+export async function getExitIntentDecision(): Promise<ExitIntentDecision | null> {
+  if (!isPersonalizationConfigured() || !initialized) return null;
+
+  try {
+    const result = await fetchPersonalizationPoint('exit_intent_offer');
+    if (!result) return null;
+
+    const attrs = result.attributes || result.payload || {};
+    return {
+      headline: attrs.headline || attrs.introText || '',
+      bodyText: attrs.bodyText || attrs.body || '',
+      discountCode: attrs.discountCode || attrs.promoCode || '',
+      discountPercent: Number(attrs.discountPercent) || 0,
+      imageUrl: attrs.imageUrl || '',
+      ctaText: attrs.ctaText || 'Claim Offer',
+      personalizationId: result.personalizationId,
+      personalizationContentId: result.personalizationContentId,
+    };
+  } catch (err) {
+    console.warn('[sfp] Exit intent decision failed:', err);
+    return null;
+  }
+}
+
+/**
+ * Track engagement with a personalization decision.
+ * Call after rendering personalized content to close the attribution loop.
+ */
+export function trackPersonalizationEngagement(
+  personalizationId?: string,
+  personalizationContentId?: string,
+): void {
+  if (!personalizationId || !isPersonalizationConfigured() || !initialized) return;
+
+  const sfp = getSdk();
+  if (!sfp) return;
+
+  try {
+    sendSdkEvent(sfp, {
+      personalizationId,
+      personalizationContentId,
+    });
+  } catch (err) {
+    console.warn('[sfp] Personalization engagement tracking failed:', err);
   }
 }
