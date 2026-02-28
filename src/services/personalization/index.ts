@@ -51,6 +51,7 @@ export interface ExitIntentDecision {
   discountPercent: number;
   imageUrl?: string;
   ctaText: string;
+  backgroundColor?: string;
   personalizationId?: string;
   personalizationContentId?: string;
 }
@@ -741,12 +742,14 @@ export async function getExitIntentDecision(): Promise<ExitIntentDecision | null
 
     const attrs = result.attributes || result.payload || {};
     return {
-      headline: attrs.headline || attrs.introText || '',
-      bodyText: attrs.bodyText || attrs.body || '',
-      discountCode: attrs.discountCode || attrs.promoCode || '',
-      discountPercent: Number(attrs.discountPercent) || 0,
-      imageUrl: attrs.imageUrl || '',
-      ctaText: attrs.ctaText || 'Claim Offer',
+      // Map from SF response template API names (snake_case) to our interface
+      headline: attrs.header_text || attrs.headline || '',
+      bodyText: attrs.body_text || attrs.bodyText || '',
+      discountCode: attrs.discount_code || attrs.discountCode || '',
+      discountPercent: Number(attrs.discount_percent || attrs.discountPercent) || 0,
+      imageUrl: attrs.background_image || attrs.imageUrl || '',
+      ctaText: attrs.cta || attrs.ctaText || 'Claim Offer',
+      backgroundColor: attrs.background_color || '',
       personalizationId: result.personalizationId,
       personalizationContentId: result.personalizationContentId,
     };

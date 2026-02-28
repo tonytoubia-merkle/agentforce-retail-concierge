@@ -88,8 +88,17 @@ export const ExitIntentOverlay: React.FC = () => {
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
+            style={decision.backgroundColor ? { backgroundColor: decision.backgroundColor } : undefined}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Background image from SF Personalization */}
+            {decision.imageUrl && (
+              <div
+                className="absolute inset-0 bg-cover bg-center opacity-10"
+                style={{ backgroundImage: `url(${decision.imageUrl})` }}
+              />
+            )}
+
             {/* Top gradient accent */}
             <div className="h-1.5 bg-gradient-to-r from-rose-400 via-pink-400 to-amber-400" />
 
