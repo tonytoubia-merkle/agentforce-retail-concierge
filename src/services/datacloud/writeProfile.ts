@@ -211,6 +211,9 @@ export class DataCloudWriteService {
       Products_Viewed__c: session.productsViewed.join(';'),
       Duration_Minutes__c: session.durationMinutes,
       Device__c: session.device,
+      ...(session.utmCampaign && { UTM_Campaign__c: session.utmCampaign }),
+      ...(session.utmSource && { UTM_Source__c: session.utmSource }),
+      ...(session.utmMedium && { UTM_Medium__c: session.utmMedium }),
     });
   }
 

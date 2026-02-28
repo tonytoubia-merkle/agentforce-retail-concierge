@@ -121,6 +121,9 @@ export interface BrowseSession {
   productsViewed: string[];   // product IDs
   durationMinutes: number;
   device: 'desktop' | 'mobile' | 'tablet';
+  utmCampaign?: string;
+  utmSource?: string;
+  utmMedium?: string;
 }
 
 // ─── 1P Profile Data (Preference Center) ────────────────────────

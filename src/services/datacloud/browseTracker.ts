@@ -18,6 +18,9 @@ class BrowseSessionTracker {
   private device: BrowseSession['device'];
   private isFlushing = false;
   private intervalId: ReturnType<typeof setInterval> | null = null;
+  private utmCampaign: string | null = null;
+  private utmSource: string | null = null;
+  private utmMedium: string | null = null;
 
   constructor() {
     this.device = detectDevice();
@@ -40,6 +43,12 @@ class BrowseSessionTracker {
     this.flush();
     this.customerId = id;
     this.reset();
+  }
+
+  setCampaign(utmCampaign: string | null, utmSource: string | null, utmMedium: string | null) {
+    this.utmCampaign = utmCampaign;
+    this.utmSource = utmSource;
+    this.utmMedium = utmMedium;
   }
 
   trackProductView(productId: string, category?: string) {
@@ -76,6 +85,9 @@ class BrowseSessionTracker {
       productsViewed: snapshot.products,
       durationMinutes,
       device: this.device,
+      ...(this.utmCampaign && { utmCampaign: this.utmCampaign }),
+      ...(this.utmSource && { utmSource: this.utmSource }),
+      ...(this.utmMedium && { utmMedium: this.utmMedium }),
     };
 
     getDataCloudWriteService()
