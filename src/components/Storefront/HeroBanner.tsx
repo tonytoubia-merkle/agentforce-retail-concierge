@@ -29,6 +29,8 @@ interface HeroVariant {
   subtitle: string;
   heroImage: string;
   imageAlt: string;
+  /** Where the variant was resolved from — 'default' means no specific context matched */
+  source: 'campaign' | 'authenticated' | 'appended' | 'default';
 }
 
 // Map campaign themes to hero badge + copy overrides
@@ -56,6 +58,7 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
         ...themeOverride,
         heroImage: HERO_IMAGES.default,
         imageAlt: `${themeOverride.badge} campaign`,
+        source: 'campaign' as const,
       };
     }
   }
@@ -74,6 +77,7 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
         : 'Curated skincare and beauty essentials, just for you.',
       heroImage: HERO_IMAGES.authenticated,
       imageAlt: 'Radiant glowing skin',
+      source: 'authenticated' as const,
     };
   }
 
@@ -91,6 +95,7 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
         subtitle: 'Curated clean and natural beauty essentials for a conscious routine.',
         heroImage: HERO_IMAGES.cleanBeauty,
         imageAlt: 'Natural botanical ingredients',
+        source: 'appended' as const,
       };
     }
     if (interests.some((i) => i.includes('luxury') || i.includes('premium'))) {
@@ -101,6 +106,7 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
         subtitle: 'Premium skincare and beauty from the brands you love.',
         heroImage: HERO_IMAGES.luxury,
         imageAlt: 'Luxurious beauty textures',
+        source: 'appended' as const,
       };
     }
     if (interests.some((i) => i.includes('wellness') || i.includes('yoga') || i.includes('fitness'))) {
@@ -111,6 +117,7 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
         subtitle: 'Skincare and beauty that complements your active lifestyle.',
         heroImage: HERO_IMAGES.wellness,
         imageAlt: 'Wellness and self-care lifestyle',
+        source: 'appended' as const,
       };
     }
   }
@@ -123,6 +130,7 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
     subtitle: 'Curated skincare and beauty essentials, personalized to your unique needs. Experience the future of beauty with our AI-powered recommendations.',
     heroImage: HERO_IMAGES.default,
     imageAlt: 'Luxurious spa treatment',
+    source: 'default' as const,
   };
 }
 
@@ -132,17 +140,26 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
   const navigate = useNavigate();
   const onBeautyAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
 
-  // Try SF Personalization campaign decision when customer changes
+  // Try SF Personalization campaign decision when customer changes.
+  // Only adopt the decision if it carries at least one meaningful display field —
+  // an empty-but-structurally-valid response (e.g. campaignId set, display fields blank)
+  // should NOT override the local campaign/identity-driven variant.
   useEffect(() => {
     if (!isPersonalizationConfigured()) return;
-    getHeroCampaignDecision().then(setSfpDecision);
+    getHeroCampaignDecision().then((d) => {
+      if (d && (d.badge || d.headlineTop || d.headlineBottom || d.subtitle)) {
+        setSfpDecision(d);
+      }
+    });
   }, [customer]);
 
-  // SF Personalization decision takes priority, then campaign, then local logic
-  // Only override local fields when the SF decision has non-empty values
+  // Priority: campaign/identity/appended variants (local) > SF Personalization > default.
+  // SF Personalization only overrides when the local logic has no specific context
+  // (i.e. source === 'default'). Campaign-driven and identity-driven variants are
+  // more specific than a generic SF Personalization decision.
   const variant = useMemo(() => {
     const localVariant = getHeroVariant(customer, isAuthenticated, campaign);
-    if (sfpDecision) {
+    if (sfpDecision && localVariant.source === 'default') {
       return {
         ...localVariant,
         ...(sfpDecision.badge ? { badge: sfpDecision.badge } : {}),
