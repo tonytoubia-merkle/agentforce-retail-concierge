@@ -50,8 +50,8 @@ steps.add(new Journey_Approval__c(
     Journey_Id__c=jid, Step_Number__c=2, Total_Steps__c=3, Channel__c='SMS', Send_Delay_Days__c=3,
     Journey_Guardrails__c=guard, Recommended_Products__c=prods,
     Suggested_Subject__c='Paris Reminder',
-    SMS_Body__c='Hi Sarah! Your Paris trip is coming up! Get your travel skincare: lumiere.co/travel',
-    Suggested_Body__c='Hi Sarah! Your Paris trip is coming up! Get your travel skincare: lumiere.co/travel'
+    SMS_Body__c='Hi Sarah! Your Paris trip is coming up! Get your travel skincare: beaute.co/shop',
+    Suggested_Body__c='Hi Sarah! Your Paris trip is coming up! Get your travel skincare: beaute.co/shop'
 ));
 
 // Step 3: Email

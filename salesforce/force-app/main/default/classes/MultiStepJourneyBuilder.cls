@@ -563,9 +563,9 @@ public with sharing class MultiStepJourneyBuilder {
         String prefix = String.isNotBlank(name) ? 'Hi ' + name + '! ' : '';
 
         if (stepNum == totalSteps) {
-            return prefix + 'Your ' + config.eventDescription + ' is almost here! Tap to shop last-minute essentials: lumiere.co/shop';
+            return prefix + 'Your ' + config.eventDescription + ' is almost here! Tap to shop last-minute essentials: beaute.co/shop';
         } else {
-            return prefix + 'Quick reminder about your beauty essentials for ' + config.eventDescription + '. Shop now: lumiere.co/shop';
+            return prefix + 'Quick reminder about your beauty essentials for ' + config.eventDescription + '. Shop now: beaute.co/shop';
         }
     }
 
