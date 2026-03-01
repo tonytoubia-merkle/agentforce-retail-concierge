@@ -229,7 +229,10 @@ function buildWelcomeMessage(ctx: CustomerSessionContext): string {
     lines.push(`Identity: anonymous`);
   } else {
     lines.push(`Customer: ${ctx.name} (greet by first name)`, `Email: ${ctx.email || 'unknown'}`, `Identity: ${ctx.identityTier}`);
-    if (ctx.email) lines.push(`[INSTRUCTION] The customer has been identified via their email address (${ctx.email}). Call Identify Customer By Email with this address to resolve their contactId before performing any profile updates or event captures.`);
+    if (ctx.contactId) lines.push(`Salesforce Contact ID: ${ctx.contactId}`);
+    if (ctx.email) {
+      lines.push(`[INSTRUCTION] REQUIRED FIRST ACTION: Before responding, you MUST call "Identify Customer By Email" with customerEmail="${ctx.email}". This resolves the Salesforce Contact record and makes the contactId available for all subsequent actions (Create Meaningful Event, Update Contact Profile, etc.). The contactId returned by this action MUST be used whenever an action requires a contactId input. Do NOT skip this step.`);
+    }
     lines.push(`[INSTRUCTION] Keep your welcome greeting SHORT — 2 sentences maximum. Greet by first name. If there is ONE standout context item (an upcoming trip, a recent life event, a loyalty milestone), acknowledge it briefly in a warm, natural way. Do NOT list multiple preferences, product types, or questions. End with a single warm invitation or open question. Be conversational, not encyclopedic.`);
   }
 
