@@ -690,18 +690,28 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (skinConcernKeywords.test(userLower) && agentAdviceSignals.test(agentLower)) {
           console.log('[conversation] Skin concern detected — creating skincare-video event');
           const concernDescription = content.length > 500 ? content.substring(0, 500) : content;
-          getDataCloudWriteService().writeMeaningfulEvent(
-            customer.id,
-            `skincare-video-capture-${Date.now()}`,
-            {
-              eventType: 'skincare-video',
-              description: concernDescription,
-              capturedAt: new Date().toISOString(),
-              agentNote: 'Auto-captured skin concern from Beauty Concierge conversation. Personalized video journey triggered.',
-              urgency: 'Immediate',
-            },
-            customer.id,
-          ).then(() => {
+          fetch('/api/sf-record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sobject: 'Meaningful_Event__c',
+              fields: {
+                Customer_Id__c: customer.id,
+                Contact__c: customer.id,
+                Event_Type__c: 'skincare-video',
+                Description__c: concernDescription,
+                Agent_Note__c: 'Auto-captured skin concern from Beauty Concierge conversation. Personalized video journey triggered.',
+                Event_Date__c: new Date().toISOString().split('T')[0],
+                Journey_Start_Date__c: new Date().toISOString().split('T')[0],
+                Urgency__c: 'Immediate',
+                Approval_Status__c: 'Pending Review',
+              },
+            }),
+          }).then(async (resp) => {
+            if (!resp.ok) {
+              const errBody = await resp.text();
+              throw new Error(`SF write failed (${resp.status}): ${errBody}`);
+            }
             console.log('[conversation] Skincare-video event created successfully');
             showCapture({ type: 'meaningful_event', label: 'Skin Concern Captured — Video Journey Triggered' });
           }).catch((err) => {
