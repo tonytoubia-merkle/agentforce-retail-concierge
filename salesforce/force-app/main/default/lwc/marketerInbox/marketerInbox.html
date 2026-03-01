@@ -100,9 +100,9 @@
             <!-- Empty State -->
             <template if:false={isLoading}>
                 <template if:false={hasApprovals}>
-                    <div class="slds-illustration slds-illustration_small slds-align_absolute-center empty-state">
+                    <div class="empty-state">
                         <lightning-icon icon-name="utility:like" size="large" class="slds-m-bottom_small"></lightning-icon>
-                        <h3 class="slds-text-heading_small">All caught up!</h3>
+                        <h3 class="slds-text-heading_small slds-m-bottom_x-small">All caught up!</h3>
                         <p class="slds-text-body_regular slds-text-color_weak">
                             No pending opportunities in your inbox.
                         </p>

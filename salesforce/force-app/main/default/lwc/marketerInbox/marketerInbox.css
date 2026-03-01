@@ -260,6 +260,7 @@
 
 /* Empty State */
 .empty-state {
+    display: block;
     padding: 48px;
     text-align: center;
 }

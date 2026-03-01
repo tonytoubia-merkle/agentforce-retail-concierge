@@ -174,10 +174,16 @@ function buildSessionContext(customer: CustomerProfile, campaignAttribution?: im
     }
   }
 
+  // Detect Salesforce Contact IDs (15-18 char alphanumeric starting with '003')
+  const isSalesforceId = /^[a-zA-Z0-9]{15,18}$/.test(customer.id) && customer.id.startsWith('003');
+
   return {
-    customerId: customer.id,
+    customerId: customer.email || customer.id,
     name: customer.name,
     email: customer.email,
+    // Pass the actual Salesforce Contact ID when available so the agent can use it
+    // for action inputs (Create_Meaningful_Event, Update_Contact_Profile, etc.)
+    contactId: isSalesforceId ? customer.id : customer.email,
     identityTier: customer.merkuryIdentity?.identityTier || 'anonymous',
     skinType: customer.beautyProfile?.skinType,
     concerns: customer.beautyProfile?.concerns,
@@ -642,10 +648,11 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (captures?.length) {
           for (const c of captures) {
             showCapture(c);
-            // Write client-detected meaningful events to Salesforce (best-effort)
-            if (c.type === 'meaningful_event' && customer?.id) {
+            // Write client-detected meaningful events to Salesforce (best-effort).
+            // Use email as customerId so Apex can look up the Contact record.
+            if (c.type === 'meaningful_event' && (customer?.email || customer?.id)) {
               getDataCloudWriteService().writeMeaningfulEvent(
-                customer.id,
+                customer.email || customer.id,
                 uuidv4(),
                 {
                   eventType: 'life-event',

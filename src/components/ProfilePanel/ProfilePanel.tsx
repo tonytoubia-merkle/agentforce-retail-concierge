@@ -1,7 +1,16 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
 import type { CustomerProfile } from '@/types/customer';
+
+const RefreshIcon: React.FC<{ spinning?: boolean }> = ({ spinning }) => (
+  <svg
+    className={`w-3.5 h-3.5 ${spinning ? 'animate-spin' : ''}`}
+    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
 
 const Section: React.FC<{ title: string; source: string; children: React.ReactNode; defaultOpen?: boolean }> = ({
   title, source, children, defaultOpen = true,
@@ -163,8 +172,18 @@ function formatProfile(customer: CustomerProfile) {
 }
 
 export const ProfilePanel: React.FC = () => {
-  const { customer } = useCustomer();
+  const { customer, refreshProfile } = useCustomer();
   const [isOpen, setIsOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshProfile();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshProfile]);
 
   if (!customer) return null;
 
@@ -189,7 +208,17 @@ export const ProfilePanel: React.FC = () => {
             <div className="px-3 py-2 border-b border-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-white">{customer.name}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Salesforce CRM</span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="p-1 rounded hover:bg-white/10 text-white/40 hover:text-white/70 transition-colors disabled:opacity-50"
+                    title="Refresh profile data"
+                  >
+                    <RefreshIcon spinning={isRefreshing} />
+                  </button>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Salesforce CRM</span>
+                </div>
               </div>
               <div className="text-[11px] text-white/50 mt-0.5">{customer.email} — {customer.id}</div>
             </div>

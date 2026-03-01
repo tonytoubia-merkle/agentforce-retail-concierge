@@ -69,7 +69,11 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
                 }
             } catch (Exception e) {
                 System.debug(LoggingLevel.ERROR, 'Failed to process event ' + event.Id + ': ' + e.getMessage());
-                // Continue processing other events
+                // Mark as error so it doesn't get stuck in an infinite retry loop
+                event.Approval_Status__c = 'Processing Error';
+                event.Agent_Note__c = (String.isNotBlank(event.Agent_Note__c) ? event.Agent_Note__c + '\n' : '')
+                    + '[Batch Error] ' + e.getMessage();
+                eventsToUpdate.add(event);
             }
         }
 

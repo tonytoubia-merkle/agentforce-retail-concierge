@@ -299,14 +299,14 @@ export const IdentityPanel: React.FC = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
                           <span className="text-white text-sm font-medium">{getLabel(activeStub)}</span>
-                          <span className="flex items-center gap-1.5">
+                          <span className="flex items-center gap-2">
                             <button
                               onClick={(e) => { e.stopPropagation(); refreshProfile(); }}
                               disabled={isLoading || isResolving}
                               title="Refresh profile data"
-                              className="text-white/40 hover:text-white/80 transition-colors disabled:opacity-30"
+                              className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white transition-colors disabled:opacity-30"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                                 <path fillRule="evenodd" d="M13.836 2.477a.75.75 0 0 1 .75.75v3.182a.75.75 0 0 1-.75.75h-3.182a.75.75 0 0 1 0-1.5h1.37l-.84-.841a4.5 4.5 0 0 0-7.08.681.75.75 0 0 1-1.3-.75 6 6 0 0 1 9.44-.908l.84.841V3.227a.75.75 0 0 1 .75-.75Zm-.911 7.5A.75.75 0 0 1 13.199 11a6 6 0 0 1-9.44.908l-.84-.841v1.255a.75.75 0 0 1-1.5 0V9.14a.75.75 0 0 1 .75-.75h3.182a.75.75 0 0 1 0 1.5H3.98l.841.841a4.5 4.5 0 0 0 7.08-.681.75.75 0 0 1 1.025-.274Z" clipRule="evenodd" />
                               </svg>
                             </button>
@@ -314,9 +314,9 @@ export const IdentityPanel: React.FC = () => {
                               onClick={(e) => { e.stopPropagation(); resetPersonaSession(activeStub!.id); }}
                               disabled={isLoading || isResolving}
                               title="Reset this session"
-                              className="text-white/40 hover:text-red-400/80 transition-colors disabled:opacity-30"
+                              className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-red-400/80 transition-colors disabled:opacity-30"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
                                 <path fillRule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z" clipRule="evenodd" />
                               </svg>
                             </button>

@@ -70,9 +70,14 @@ export class AgentforceClient {
         Array.isArray(v) ? v.join('; ') : String(v ?? '');
 
       sessionBody.variables = [
-        { name: 'customerId', type: 'Text', value: toStr(customerContext.customerId) },
+        // Use email as customerId so Apex CaptureKeyEventsService can look up Contact
+        { name: 'customerId', type: 'Text', value: toStr(customerContext.email || customerContext.customerId) },
         { name: 'customerEmail', type: 'Text', value: toStr(customerContext.email) },
-        { name: 'sessionId', type: 'Text', value: toStr(customerContext.customerId) }, // placeholder; Agentforce may also use its internal session ID
+        // VerifiedCustomerId: The only Custom-sourced agent variable (Messaging Session vars are null for API sessions).
+        // The planner uses this to pass contactId to Create_Meaningful_Event and other actions.
+        { name: 'VerifiedCustomerId', type: 'Text', value: toStr(customerContext.contactId || customerContext.email || customerContext.customerId) },
+        { name: 'contactId', type: 'Text', value: toStr(customerContext.contactId || customerContext.email || customerContext.customerId) },
+        { name: 'sessionId', type: 'Text', value: toStr(customerContext.email || customerContext.customerId) },
         { name: 'customerName', type: 'Text', value: toStr(customerContext.name) },
         { name: 'identityTier', type: 'Text', value: toStr(customerContext.identityTier || 'anonymous') },
         { name: 'skinType', type: 'Text', value: toStr(customerContext.skinType) },
@@ -203,10 +208,18 @@ export class AgentforceClient {
     }
 
     // Strip any text parts that look like raw JSON (failed parse but still JSON-like)
-    const cleanTextParts = textParts.filter((t) => {
-      const trimmed = t.trim();
-      return !(trimmed.startsWith('{') && trimmed.endsWith('}'));
-    });
+    const cleanTextParts = textParts
+      .filter((t) => {
+        const trimmed = t.trim();
+        return !(trimmed.startsWith('{') && trimmed.endsWith('}'));
+      })
+      // Strip embedded JSON blocks from within prose text (e.g., agent leaking
+      // capture JSON like {"captured": true, "eventType": "Travel", ...})
+      .map((t) => t
+        .replace(/\{[^{}]*"(?:captured|eventType|captureNotification|uiDirective)"[^}]*\}/g, '')
+        .trim()
+      )
+      .filter(Boolean);
 
     // If we found a directive but no separate text, generate a friendly message from the directive
     let displayMessage = cleanTextParts.join('\n');
@@ -243,11 +256,33 @@ export class AgentforceClient {
       }
     }
 
+    // ─── Detect capture JSON in the raw response text ──────────
+    // The prompt template may output {"captured": true, "eventType": ...}
+    // which isn't a uiDirective but indicates a server-side capture happened.
+    const captureJsonMatch = fullText.match(/\{\s*"captured"\s*:\s*true[^}]*"eventType"\s*:\s*"([^"]+)"[^}]*\}/);
+    if (captureJsonMatch) {
+      const captureType = captureJsonMatch[1];
+      console.log('[agentforce] Detected capture JSON in response for event type:', captureType);
+      // Try to extract the notification label from the JSON
+      const labelMatch = captureJsonMatch[0].match(/"label"\s*:\s*"([^"]+)"/);
+      const label = labelMatch ? labelMatch[1] : `Event Captured: ${captureType}`;
+      // Ensure we have a directive to carry this capture
+      if (!uiDirective) {
+        uiDirective = {
+          action: 'CAPTURE_ONLY' as UIAction,
+          payload: { captures: [{ type: 'meaningful_event', label }] } as unknown as UIDirective['payload'],
+        };
+      } else {
+        const existing = (uiDirective.payload as Record<string, unknown>)?.captures as unknown[] || [];
+        (uiDirective.payload as Record<string, unknown>).captures = [...existing, { type: 'meaningful_event', label }];
+      }
+    }
+
     // ─── Client-side event capture detection ─────────────────────
     // Detect captures from multiple sources and surface as toast notifications.
     const detectedCaptures: Array<{ type: 'meaningful_event' | 'profile_enrichment'; label: string }> = [];
 
-    // 1. Parenthetical notation: (Event Captured: ...) or (Profile Updated: ...)
+    // 1a. Parenthetical notation: (Event Captured: ...) or (Profile Updated: ...)
     const captureRegex = /\((?:Event [Cc]aptured|event captured|Captured|captured):\s*(.+?)\)/g;
     let captureMatch;
     while ((captureMatch = captureRegex.exec(displayMessage)) !== null) {
@@ -256,6 +291,17 @@ export class AgentforceClient {
     const profileRegex = /\((?:Profile [Uu]pdated|profile updated|Updated|Saved):\s*(.+?)\)/g;
     while ((captureMatch = profileRegex.exec(displayMessage)) !== null) {
       detectedCaptures.push({ type: 'profile_enrichment', label: `Profile Updated: ${captureMatch[1]}` });
+    }
+
+    // 1b. Bare text notation: "Event Captured: Anniversary trip" (no parentheses)
+    //     Match "Event Captured: <summary>" that appears as a standalone fragment in the text
+    const bareEventRegex = /(?:^|\s)Event\s+Captured:\s*([^\n.!?]+)/gi;
+    while ((captureMatch = bareEventRegex.exec(displayMessage)) !== null) {
+      const label = `Event Captured: ${captureMatch[1].trim()}`;
+      // Avoid duplicate if already detected from parenthetical notation
+      if (!detectedCaptures.some(c => c.label === label)) {
+        detectedCaptures.push({ type: 'meaningful_event', label });
+      }
     }
 
     // 2. Scan raw API messages for action invocations (Inform messages from
@@ -308,16 +354,23 @@ export class AgentforceClient {
 
     if (detectedCaptures.length > 0) {
       console.log('[agentforce] Detected captures:', detectedCaptures);
-      // Inject into directive so ConversationContext shows toasts
-      if (uiDirective) {
-        const existing = (uiDirective.payload as Record<string, unknown>)?.captures as unknown[] || [];
-        (uiDirective.payload as Record<string, unknown>).captures = [...existing, ...detectedCaptures];
-      } else {
-        // Create a minimal CAPTURE_ONLY directive to carry the captures
-        uiDirective = {
-          action: 'CAPTURE_ONLY' as UIAction,
-          payload: { captures: detectedCaptures } as unknown as UIDirective['payload'],
-        };
+      // Merge into directive, but avoid duplicates from the JSON capture detection phase above
+      const existingCaptures = ((uiDirective?.payload as Record<string, unknown>)?.captures as Array<{ type: string; label: string }>) || [];
+      const hasExistingEvent = existingCaptures.some(c => c.type === 'meaningful_event');
+      const deduped = detectedCaptures.filter(c => {
+        // If we already have a meaningful_event from JSON capture detection, skip text-detected ones
+        if (c.type === 'meaningful_event' && hasExistingEvent) return false;
+        return true;
+      });
+      if (deduped.length > 0) {
+        if (uiDirective) {
+          (uiDirective.payload as Record<string, unknown>).captures = [...existingCaptures, ...deduped];
+        } else {
+          uiDirective = {
+            action: 'CAPTURE_ONLY' as UIAction,
+            payload: { captures: deduped } as unknown as UIDirective['payload'],
+          };
+        }
       }
     }
 
@@ -328,6 +381,12 @@ export class AgentforceClient {
       .replace(/\((?:Profile [Uu]pdated|profile updated|Updated|Saved):\s*.+?\)/g, '')
       .replace(/\(uiDirective\s+forthcoming[^)]*\)/gi, '')
       .replace(/\(Note:?\s*[^)]*\)/gi, '')
+      // Strip bare "Event Captured: <summary>" text (without parentheses)
+      .replace(/Event\s+Captured:\s*[^\n.!?]+/gi, '')
+      // Strip any remaining JSON blocks that leaked through (capture metadata, directive fragments)
+      .replace(/\{[^{}]*"(?:captured|eventType|captureNotification|uiDirective|eventDescription|agentNote|metadataJson)"[^}]*\}/g, '')
+      // Strip bare "uiDirective" mentions the agent may output as text
+      .replace(/\buiDirective\b[^.!?\n]*/gi, '')
       .replace(/\s{2,}/g, ' ')
       .trim();
 

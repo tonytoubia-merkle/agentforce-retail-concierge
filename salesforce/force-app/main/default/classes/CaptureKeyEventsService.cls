@@ -57,18 +57,19 @@ global with sharing class CaptureKeyEventsService {
                         req.eventDescription
                     );
 
-                    if (String.isNotBlank(req.customerId) && String.isNotBlank(req.sessionId)) {
-                        // Use enhanced write method with temporal fields + end date
-                        DataCloudProfileService.writeMeaningfulEventEnhanced(
-                            req.customerId, req.sessionId,
-                            req.eventType, req.eventDescription,
-                            req.agentNote, null,
-                            temporal.relativeText,
-                            temporal.eventDate,
-                            temporal.urgency,
-                            req.eventEndDate
-                        );
-                    }
+                    // Always persist the event — use customerId/sessionId if available,
+                    // fall back to defaults so the event is never silently dropped.
+                    String custId = String.isNotBlank(req.customerId) ? req.customerId : 'unknown';
+                    String sessId = String.isNotBlank(req.sessionId) ? req.sessionId : 'agent-session';
+                    DataCloudProfileService.writeMeaningfulEventEnhanced(
+                        custId, sessId,
+                        req.eventType, req.eventDescription,
+                        req.agentNote, null,
+                        temporal.relativeText,
+                        temporal.eventDate,
+                        temporal.urgency,
+                        req.eventEndDate
+                    );
 
                     Map<String, Object> event = new Map<String, Object>();
                     event.put('eventType', req.eventType);
@@ -80,20 +81,21 @@ global with sharing class CaptureKeyEventsService {
                     events.add(event);
                 } else if (String.isNotBlank(req.conversationTranscript)) {
                     events = extractEventsFromTextEnhanced(req.conversationTranscript);
-                    if (String.isNotBlank(req.customerId) && String.isNotBlank(req.sessionId)) {
-                        for (Map<String, Object> event : events) {
-                            TemporalContext temporal = (TemporalContext) event.get('temporal');
-                            DataCloudProfileService.writeMeaningfulEventEnhanced(
-                                req.customerId, req.sessionId,
-                                (String) event.get('eventType'),
-                                (String) event.get('description'),
-                                (String) event.get('agentNote'),
-                                null,
-                                temporal != null ? temporal.relativeText : null,
-                                temporal != null ? temporal.eventDate : null,
-                                temporal != null ? temporal.urgency : 'No Date'
-                            );
-                        }
+                    // Always persist extracted events — use customerId/sessionId if available
+                    String custId = String.isNotBlank(req.customerId) ? req.customerId : 'unknown';
+                    String sessId = String.isNotBlank(req.sessionId) ? req.sessionId : 'agent-session';
+                    for (Map<String, Object> event : events) {
+                        TemporalContext temporal = (TemporalContext) event.get('temporal');
+                        DataCloudProfileService.writeMeaningfulEventEnhanced(
+                            custId, sessId,
+                            (String) event.get('eventType'),
+                            (String) event.get('description'),
+                            (String) event.get('agentNote'),
+                            null,
+                            temporal != null ? temporal.relativeText : null,
+                            temporal != null ? temporal.eventDate : null,
+                            temporal != null ? temporal.urgency : 'No Date'
+                        );
                     }
                 }
 

@@ -36,6 +36,11 @@
                 <default>false</default>
                 <label>Not Applicable</label>
             </value>
+            <value>
+                <fullName>Processing Error</fullName>
+                <default>false</default>
+                <label>Processing Error</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

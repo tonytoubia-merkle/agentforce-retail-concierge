@@ -284,6 +284,8 @@ export interface CustomerSessionContext {
   customerId: string;
   name: string;
   email?: string;
+  /** Salesforce Contact ID (starts with '003') when available, or email as fallback */
+  contactId?: string;
   identityTier: IdentityTier;
   skinType?: string;
   concerns?: string[];

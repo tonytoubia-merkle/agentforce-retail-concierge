@@ -6,7 +6,9 @@
     <label>Create Meaningful Event</label>
     <processMetadataValues>
         <name>BuilderType</name>
-        <value><stringValue>LightningFlowBuilder</stringValue></value>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
     <runInMode>SystemModeWithoutSharing</runInMode>
@@ -14,66 +16,282 @@
         <locationX>50</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Check_Contact_Id</targetReference>
+            <targetReference>Resolve_Contact</targetReference>
         </connector>
     </start>
+    <status>Active</status>
 
-    <!-- Decision: Skip if no contactId (anonymous user) -->
+    <!-- ─── Assignments ─────────────────────────────────────── -->
+
+    <assignments>
+        <name>Set_Contact_From_Id</name>
+        <label>Set Contact From Id</label>
+        <locationX>50</locationX>
+        <locationY>158</locationY>
+        <assignmentItems>
+            <assignToReference>resolvedContactId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>contactId</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>safeCustomerId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>contactId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Event_Record</targetReference>
+        </connector>
+    </assignments>
+
+    <assignments>
+        <name>Set_Contact_From_Email</name>
+        <label>Set Contact From Email</label>
+        <locationX>302</locationX>
+        <locationY>258</locationY>
+        <assignmentItems>
+            <assignToReference>resolvedContactId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Lookup_Contact_By_Email.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>safeCustomerId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>contactId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Event_Record</targetReference>
+        </connector>
+    </assignments>
+
+    <assignments>
+        <name>Set_Fallback_Ids</name>
+        <label>Set Fallback Ids</label>
+        <locationX>450</locationX>
+        <locationY>158</locationY>
+        <assignmentItems>
+            <assignToReference>safeCustomerId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>agent-captured</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Event_Record</targetReference>
+        </connector>
+    </assignments>
+
+    <assignments>
+        <name>Set_Success</name>
+        <label>Set Success</label>
+        <locationX>176</locationX>
+        <locationY>458</locationY>
+        <assignmentItems>
+            <assignToReference>outputSuccess</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>outputRecordId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Create_Event_Record</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+
+    <assignments>
+        <name>Set_Error</name>
+        <label>Set Error</label>
+        <locationX>400</locationX>
+        <locationY>458</locationY>
+        <assignmentItems>
+            <assignToReference>outputSuccess</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>outputError</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+
+    <!-- ─── Decisions ───────────────────────────────────────── -->
+
     <decisions>
-        <name>Check_Contact_Id</name>
-        <label>Check Contact Id</label>
+        <name>Resolve_Contact</name>
+        <label>Resolve Contact</label>
         <locationX>176</locationX>
         <locationY>80</locationY>
         <defaultConnector>
-            <targetReference>Set_Skipped</targetReference>
+            <targetReference>Set_Fallback_Ids</targetReference>
         </defaultConnector>
-        <defaultConnectorLabel>No Contact Id</defaultConnectorLabel>
+        <defaultConnectorLabel>No Contact Info</defaultConnectorLabel>
         <rules>
-            <name>Has_Contact_Id</name>
+            <name>Is_SF_Contact_Id</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
                 <leftValueReference>contactId</leftValueReference>
                 <operator>IsNull</operator>
-                <rightValue><booleanValue>false</booleanValue></rightValue>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
             </conditions>
             <conditions>
                 <leftValueReference>contactId</leftValueReference>
-                <operator>NotEqualTo</operator>
-                <rightValue><stringValue></stringValue></rightValue>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>003</stringValue>
+                </rightValue>
             </conditions>
             <connector>
-                <targetReference>Create_Event_Record</targetReference>
+                <targetReference>Set_Contact_From_Id</targetReference>
             </connector>
-            <label>Has Contact Id</label>
+            <label>Is SF Contact Id</label>
+        </rules>
+        <rules>
+            <name>Is_Email</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>contactId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>contactId</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>@</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Lookup_Contact_By_Email</targetReference>
+            </connector>
+            <label>Is Email</label>
         </rules>
     </decisions>
 
-    <status>Active</status>
+    <!-- ─── Record Creates ──────────────────────────────────── -->
 
-    <!-- Input Variables -->
+    <recordCreates>
+        <name>Create_Event_Record</name>
+        <label>Create Event Record</label>
+        <locationX>176</locationX>
+        <locationY>358</locationY>
+        <connector>
+            <targetReference>Set_Success</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Set_Error</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Customer_Id__c</field>
+            <value>
+                <elementReference>safeCustomerId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Contact__c</field>
+            <value>
+                <elementReference>resolvedContactId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Session_Id__c</field>
+            <value>
+                <elementReference>sessionId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Event_Type__c</field>
+            <value>
+                <elementReference>eventType</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Description__c</field>
+            <value>
+                <elementReference>eventDescription</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Agent_Note__c</field>
+            <value>
+                <elementReference>agentNote</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Metadata_JSON__c</field>
+            <value>
+                <elementReference>metadataJson</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Captured_At__c</field>
+            <value>
+                <elementReference>$Flow.CurrentDateTime</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Meaningful_Event__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+
+    <!-- ─── Record Lookups ──────────────────────────────────── -->
+
+    <recordLookups>
+        <name>Lookup_Contact_By_Email</name>
+        <label>Lookup Contact By Email</label>
+        <locationX>302</locationX>
+        <locationY>158</locationY>
+        <connector>
+            <targetReference>Set_Contact_From_Email</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Email</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>contactId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contact</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+
+    <!-- ─── Variables ───────────────────────────────────────── -->
+
+    <variables>
+        <name>agentNote</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>Optional note from the agent about why this event matters</description>
+    </variables>
     <variables>
         <name>contactId</name>
         <dataType>String</dataType>
         <isCollection>false</isCollection>
         <isInput>true</isInput>
         <isOutput>false</isOutput>
-        <description>The Salesforce Contact ID for the customer</description>
-    </variables>
-    <variables>
-        <name>sessionId</name>
-        <dataType>String</dataType>
-        <isCollection>false</isCollection>
-        <isInput>true</isInput>
-        <isOutput>false</isOutput>
-        <description>The unique session identifier for this conversation</description>
-    </variables>
-    <variables>
-        <name>eventType</name>
-        <dataType>String</dataType>
-        <isCollection>false</isCollection>
-        <isInput>true</isInput>
-        <isOutput>false</isOutput>
-        <description>The category of event: life-event, preference, concern, intent, milestone</description>
+        <description>The Salesforce Contact ID (003...) or email address for the customer</description>
     </variables>
     <variables>
         <name>eventDescription</name>
@@ -84,12 +302,12 @@
         <description>A brief description of the meaningful event</description>
     </variables>
     <variables>
-        <name>agentNote</name>
+        <name>eventType</name>
         <dataType>String</dataType>
         <isCollection>false</isCollection>
         <isInput>true</isInput>
         <isOutput>false</isOutput>
-        <description>Optional note from the agent about why this event matters</description>
+        <description>The category of event: Travel, Wedding, Maternity, Birthday, Anniversary, Relocation, Graduation, Career, Other</description>
     </variables>
     <variables>
         <name>metadataJson</name>
@@ -99,15 +317,12 @@
         <isOutput>false</isOutput>
         <description>Optional JSON metadata about the event</description>
     </variables>
-
-    <!-- Output Variables -->
     <variables>
-        <name>outputSuccess</name>
-        <dataType>Boolean</dataType>
+        <name>outputError</name>
+        <dataType>String</dataType>
         <isCollection>false</isCollection>
         <isInput>false</isInput>
         <isOutput>true</isOutput>
-        <value><booleanValue>false</booleanValue></value>
     </variables>
     <variables>
         <name>outputRecordId</name>
@@ -117,108 +332,40 @@
         <isOutput>true</isOutput>
     </variables>
     <variables>
-        <name>outputError</name>
-        <dataType>String</dataType>
+        <name>outputSuccess</name>
+        <dataType>Boolean</dataType>
         <isCollection>false</isCollection>
         <isInput>false</isInput>
         <isOutput>true</isOutput>
+        <value>
+            <booleanValue>false</booleanValue>
+        </value>
     </variables>
-
-    <!-- Create Record -->
-    <recordCreates>
-        <name>Create_Event_Record</name>
-        <label>Create Event Record</label>
-        <locationX>176</locationX>
-        <locationY>158</locationY>
-        <connector>
-            <targetReference>Set_Success</targetReference>
-        </connector>
-        <faultConnector>
-            <targetReference>Set_Error</targetReference>
-        </faultConnector>
-        <inputAssignments>
-            <field>Customer_Id__c</field>
-            <value><elementReference>contactId</elementReference></value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Session_Id__c</field>
-            <value><elementReference>sessionId</elementReference></value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Event_Type__c</field>
-            <value><elementReference>eventType</elementReference></value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Description__c</field>
-            <value><elementReference>eventDescription</elementReference></value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Agent_Note__c</field>
-            <value><elementReference>agentNote</elementReference></value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Metadata_JSON__c</field>
-            <value><elementReference>metadataJson</elementReference></value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Captured_At__c</field>
-            <value><elementReference>$Flow.CurrentDateTime</elementReference></value>
-        </inputAssignments>
-        <object>Meaningful_Event__c</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordCreates>
-
-    <!-- Success Assignment -->
-    <assignments>
-        <name>Set_Success</name>
-        <label>Set Success</label>
-        <locationX>176</locationX>
-        <locationY>350</locationY>
-        <assignmentItems>
-            <assignToReference>outputSuccess</assignToReference>
-            <operator>Assign</operator>
-            <value><booleanValue>true</booleanValue></value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>outputRecordId</assignToReference>
-            <operator>Assign</operator>
-            <value><elementReference>Create_Event_Record</elementReference></value>
-        </assignmentItems>
-    </assignments>
-
-    <!-- Error Assignment -->
-    <assignments>
-        <name>Set_Error</name>
-        <label>Set Error</label>
-        <locationX>400</locationX>
-        <locationY>350</locationY>
-        <assignmentItems>
-            <assignToReference>outputSuccess</assignToReference>
-            <operator>Assign</operator>
-            <value><booleanValue>false</booleanValue></value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>outputError</assignToReference>
-            <operator>Assign</operator>
-            <value><elementReference>$Flow.FaultMessage</elementReference></value>
-        </assignmentItems>
-    </assignments>
-
-    <!-- Skipped Assignment (anonymous user) -->
-    <assignments>
-        <name>Set_Skipped</name>
-        <label>Set Skipped</label>
-        <locationX>400</locationX>
-        <locationY>158</locationY>
-        <assignmentItems>
-            <assignToReference>outputSuccess</assignToReference>
-            <operator>Assign</operator>
-            <value><booleanValue>false</booleanValue></value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>outputError</assignToReference>
-            <operator>Assign</operator>
-            <value><stringValue>Skipped: No contactId provided (anonymous user)</stringValue></value>
-        </assignmentItems>
-    </assignments>
+    <variables>
+        <name>resolvedContactId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <description>Resolved Salesforce Contact ID (from direct ID or email lookup)</description>
+    </variables>
+    <variables>
+        <name>safeCustomerId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <description>Customer ID with fallback — never null. Uses contactId when available, otherwise agent-captured.</description>
+        <value>
+            <stringValue>agent-captured</stringValue>
+        </value>
+    </variables>
+    <variables>
+        <name>sessionId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>The unique session identifier for this conversation</description>
+    </variables>
 </Flow>
