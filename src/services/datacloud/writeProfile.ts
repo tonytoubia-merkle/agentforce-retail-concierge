@@ -162,6 +162,8 @@ export class DataCloudWriteService {
     customerId: string,
     sessionId: string,
     event: MeaningfulEvent,
+    /** Optional Salesforce Contact ID (003...) to populate the Contact__c lookup field. */
+    contactId?: string,
   ): Promise<void> {
     if (useMockData) {
       console.log('[mock] Would write meaningful event:', event.description, event.eventDate ? `(${event.eventDate})` : '');
@@ -178,6 +180,11 @@ export class DataCloudWriteService {
       Agent_Note__c: event.agentNote || '',
       Metadata_JSON__c: event.metadata ? JSON.stringify(event.metadata) : null,
     };
+
+    // Link to Salesforce Contact record when we have a valid Contact ID
+    if (contactId && /^003[a-zA-Z0-9]{12,15}$/.test(contactId)) {
+      record.Contact__c = contactId;
+    }
 
     // Add temporal fields for journey orchestration
     if (event.relativeTimeText) {

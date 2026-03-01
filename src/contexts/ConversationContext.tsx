@@ -230,8 +230,14 @@ function buildWelcomeMessage(ctx: CustomerSessionContext): string {
   } else {
     lines.push(`Customer: ${ctx.name} (greet by first name)`, `Email: ${ctx.email || 'unknown'}`, `Identity: ${ctx.identityTier}`);
     if (ctx.contactId) lines.push(`Salesforce Contact ID: ${ctx.contactId}`);
+    // Tell the planner exactly what values to use for action inputs
     if (ctx.email) {
-      lines.push(`[INSTRUCTION] REQUIRED FIRST ACTION: Before responding, you MUST call "Identify Customer By Email" with customerEmail="${ctx.email}". This resolves the Salesforce Contact record and makes the contactId available for all subsequent actions (Create Meaningful Event, Update Contact Profile, etc.). The contactId returned by this action MUST be used whenever an action requires a contactId input. Do NOT skip this step.`);
+      lines.push(`[ACTION INPUT VALUES] When calling ANY action during this conversation, use these values:`);
+      lines.push(`  - contactId = "${ctx.email}"`);
+      lines.push(`  - customerEmail = "${ctx.email}"`);
+      lines.push(`  - sessionId = "${ctx.email}"`);
+      lines.push(`  - customerId = "${ctx.email}"`);
+      lines.push(`These are REQUIRED. NEVER leave contactId empty when calling Create Meaningful Event, Update Contact Profile, or any other action.`);
     }
     lines.push(`[INSTRUCTION] Keep your welcome greeting SHORT — 2 sentences maximum. Greet by first name. If there is ONE standout context item (an upcoming trip, a recent life event, a loyalty milestone), acknowledge it briefly in a warm, natural way. Do NOT list multiple preferences, product types, or questions. End with a single warm invitation or open question. Be conversational, not encyclopedic.`);
   }
@@ -652,8 +658,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           for (const c of captures) {
             showCapture(c);
             // Write client-detected meaningful events to Salesforce (best-effort).
-            // Use email as customerId so Apex can look up the Contact record.
+            // Pass the SF Contact ID so the record is linked via Contact__c lookup.
             if (c.type === 'meaningful_event' && (customer?.email || customer?.id)) {
+              const isSfId = customer?.id && /^003[a-zA-Z0-9]{12,15}$/.test(customer.id);
               getDataCloudWriteService().writeMeaningfulEvent(
                 customer.email || customer.id,
                 uuidv4(),
@@ -662,7 +669,8 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                   description: c.label.replace(/^Event Captured:\s*/i, ''),
                   capturedAt: new Date().toISOString(),
                   agentNote: 'Auto-captured from agent conversation text',
-                }
+                },
+                isSfId ? customer.id : undefined,
               ).catch(err => console.warn('[datacloud] Failed to write event:', err));
             }
           }
