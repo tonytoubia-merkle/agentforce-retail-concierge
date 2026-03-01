@@ -448,7 +448,7 @@ async function expandImage(uploadId, prompt, token, clientId) {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-api-key': clientId,
-          'x-model-version': 'image4_standard',
+          // Expand API uses default model (not image4) — image4 header only for Generate
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Content-Length': Buffer.byteLength(requestBody),
