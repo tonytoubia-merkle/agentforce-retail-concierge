@@ -244,16 +244,70 @@ export class AgentforceClient {
     }
 
     // ─── Client-side event capture detection ─────────────────────
-    // The agent sometimes describes event captures as text instead of
-    // invoking the server-side action. Detect and surface as toast notifications.
+    // Detect captures from multiple sources and surface as toast notifications.
+    const detectedCaptures: Array<{ type: 'meaningful_event' | 'profile_enrichment'; label: string }> = [];
+
+    // 1. Parenthetical notation: (Event Captured: ...) or (Profile Updated: ...)
     const captureRegex = /\((?:Event [Cc]aptured|event captured|Captured|captured):\s*(.+?)\)/g;
-    const detectedCaptures: Array<{ type: 'meaningful_event'; label: string }> = [];
     let captureMatch;
     while ((captureMatch = captureRegex.exec(displayMessage)) !== null) {
       detectedCaptures.push({ type: 'meaningful_event', label: `Event Captured: ${captureMatch[1]}` });
     }
+    const profileRegex = /\((?:Profile [Uu]pdated|profile updated|Updated|Saved):\s*(.+?)\)/g;
+    while ((captureMatch = profileRegex.exec(displayMessage)) !== null) {
+      detectedCaptures.push({ type: 'profile_enrichment', label: `Profile Updated: ${captureMatch[1]}` });
+    }
+
+    // 2. Scan raw API messages for action invocations (Inform messages from
+    //    CaptureKeyEventsService, MeaningfulEventService, ProfileEnrichmentService, etc.)
+    for (const m of rawMessages) {
+      const msg = m as Record<string, unknown>;
+      const msgType = ((msg.type as string) || '').toLowerCase();
+      // Skip regular text messages — look for Inform, Action, ActionResult, etc.
+      if (msgType === 'text' || msgType === '') continue;
+      const content = ((msg.message || msg.text || msg.content || '') as string).toLowerCase();
+      const actionName = ((msg.actionName || msg.name || msg.identifier || '') as string).toLowerCase();
+      const combined = `${content} ${actionName}`;
+
+      if (combined.includes('meaningful') || combined.includes('capturekey') || combined.includes('capture_key')) {
+        // Avoid duplicate if already detected from text
+        if (!detectedCaptures.some(c => c.type === 'meaningful_event')) {
+          detectedCaptures.push({ type: 'meaningful_event', label: 'Event Captured' });
+        }
+      }
+      if (combined.includes('profileenrichment') || combined.includes('profile_enrichment') ||
+          combined.includes('updatecontactprofile') || combined.includes('update_contact_profile')) {
+        if (!detectedCaptures.some(c => c.type === 'profile_enrichment')) {
+          detectedCaptures.push({ type: 'profile_enrichment', label: 'Profile Updated' });
+        }
+      }
+    }
+
+    // 3. Natural language detection — agent confirms a capture in its response text
+    if (detectedCaptures.length === 0) {
+      const lower = displayMessage.toLowerCase();
+      // Meaningful event patterns
+      const eventPhrases = [
+        /i'(?:ve|ll)\s+(?:noted|captured|recorded|saved)\s+(?:your\s+)?(?:upcoming\s+)?(?:trip|travel|wedding|birthday|anniversary|move|graduation|pregnancy|baby)/i,
+        /i'(?:ve|ll)\s+(?:noted|recorded|saved)\s+that\s+you(?:'re| are)\s+(?:planning|going|traveling|moving|expecting|getting married)/i,
+      ];
+      for (const re of eventPhrases) {
+        const m = displayMessage.match(re);
+        if (m) {
+          const summary = m[0].replace(/^i'(?:ve|ll)\s+(?:noted|captured|recorded|saved)\s+/i, '').trim();
+          detectedCaptures.push({ type: 'meaningful_event', label: `Event Captured: ${summary.substring(0, 50)}` });
+          break;
+        }
+      }
+      // Profile enrichment patterns
+      if (lower.includes("i've noted your skin") || lower.includes("i've saved your") ||
+          lower.includes("i've updated your profile") || lower.includes("got it, i've noted")) {
+        detectedCaptures.push({ type: 'profile_enrichment', label: 'Profile Updated' });
+      }
+    }
+
     if (detectedCaptures.length > 0) {
-      console.log('[agentforce] Detected event captures from text:', detectedCaptures);
+      console.log('[agentforce] Detected captures:', detectedCaptures);
       // Inject into directive so ConversationContext shows toasts
       if (uiDirective) {
         const existing = (uiDirective.payload as Record<string, unknown>)?.captures as unknown[] || [];
@@ -271,6 +325,7 @@ export class AgentforceClient {
     // Agent sometimes adds parenthetical meta-notes not meant for the customer
     displayMessage = displayMessage
       .replace(/\((?:Event [Cc]aptured|event captured|Captured|captured):\s*.+?\)/g, '')
+      .replace(/\((?:Profile [Uu]pdated|profile updated|Updated|Saved):\s*.+?\)/g, '')
       .replace(/\(uiDirective\s+forthcoming[^)]*\)/gi, '')
       .replace(/\(Note:?\s*[^)]*\)/gi, '')
       .replace(/\s{2,}/g, ' ')
