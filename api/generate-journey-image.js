@@ -1,12 +1,13 @@
 /**
  * Journey Image Generation API
  *
- * Composites product images and uses Firefly Expand to generate a scene around them.
+ * Composites product images and uses Firefly Generate Object Composite to
+ * create a scene around them. Uses Image Model 4 via the async API.
  *
  * POST /api/generate-journey-image
  * Body: {
  *   products: [{ imageUrl: string, name: string }],
- *   prompt: string,  // Scene description for Firefly expand
+ *   prompt: string,  // Scene description for Firefly composite
  *   eventType?: string  // Optional: travel, birthday, wedding, etc.
  * }
  *
@@ -19,8 +20,8 @@ import sharp from 'sharp';
 // Canvas dimensions
 // Composite is larger to fill more of the output and reduce Firefly generation area
 const COMPOSITE_SIZE = 600;    // Square product composite canvas
-const OUTPUT_WIDTH = 1792;     // Final expanded image width (email banner ratio)
-const OUTPUT_HEIGHT = 1024;    // Final expanded image height
+const OUTPUT_WIDTH = 2688;     // Widescreen (16:9) — supported by Firefly Object Composite
+const OUTPUT_HEIGHT = 1536;    // Widescreen (16:9)
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -92,11 +93,11 @@ async function downloadImage(url) {
  * Products are arranged horizontally with a size/depth hierarchy:
  * - Center product(s) are largest (hero position)
  * - Edge products are smaller and layered behind
- * - Firefly Expand generates the scene around the products
+ * - Firefly Object Composite generates the scene around the products
  */
 async function compositeProducts(products) {
   // Create canvas with fully transparent background
-  // Firefly Expand will generate the scene around the product images
+  // Firefly Object Composite will generate the scene around the product images
   const canvas = sharp({
     create: {
       width: COMPOSITE_SIZE,
@@ -405,15 +406,16 @@ function sleep(ms) {
 }
 
 /**
- * Call Firefly Expand Image API with retry logic.
- * Expands the composite image with AI-generated scene content.
+ * Call Firefly Generate Object Composite API (async).
+ * Creates a scene around the product composite using Image Model 4.
  * Products are placed in the lower center to leave the top clear for text overlay.
+ *
+ * This is the preferred approach over Expand — it's purpose-built for
+ * compositing objects (like products) into AI-generated scenes.
  */
-async function expandImage(uploadId, prompt, token, clientId) {
-  // Firefly Expand API requires alignment as object: { horizontal: 'left'|'center'|'right', vertical: 'top'|'center'|'bottom' }
-  // NOT a string like 'center' - that causes 400 validation error
-  // Place products in lower portion (vertical: 'bottom') to leave top clear for text
+async function generateObjectComposite(uploadId, prompt, token, clientId) {
   const requestBody = JSON.stringify({
+    contentClass: 'photo',
     numVariations: 1,
     size: {
       width: OUTPUT_WIDTH,
@@ -433,67 +435,42 @@ async function expandImage(uploadId, prompt, token, clientId) {
     },
   });
 
-  const maxRetries = 3;
-  let lastError = null;
+  console.log('[generate-journey-image] Calling Firefly Generate Object Composite (async)...');
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`[generate-journey-image] Firefly expand attempt ${attempt}/${maxRetries}`);
+  const result = await httpsRequest({
+    hostname: 'firefly-api.adobe.io',
+    port: 443,
+    path: '/v3/images/generate-object-composite-async',
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'x-api-key': clientId,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Content-Length': Buffer.byteLength(requestBody),
+    },
+  }, requestBody);
 
-      const result = await httpsRequest({
-        hostname: 'firefly-api.adobe.io',
-        port: 443,
-        path: '/v3/images/expand',
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'x-api-key': clientId,
-          // Expand API uses default model (not image4) — image4 header only for Generate
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Content-Length': Buffer.byteLength(requestBody),
-        },
-      }, requestBody);
-
-      if (result.statusCode === 200) {
-        const data = JSON.parse(result.body.toString());
-
-        // Extract image URL from response
-        const imageUrl = data.outputs?.[0]?.image?.url ||
-                         data.outputs?.[0]?.image?.presignedUrl ||
-                         data.images?.[0]?.url;
-
-        if (!imageUrl) {
-          throw new Error('Firefly returned no image URL');
-        }
-
-        return imageUrl;
-      }
-
-      // Check if error is retryable (5xx errors)
-      const bodyStr = result.body.toString();
-      if (result.statusCode >= 500 && attempt < maxRetries) {
-        console.log(`[generate-journey-image] Firefly returned ${result.statusCode}, retrying in ${attempt * 2}s...`);
-        lastError = new Error(`Firefly expand failed: ${result.statusCode} - ${bodyStr}`);
-        await sleep(attempt * 2000); // Exponential backoff: 2s, 4s, 6s
-        continue;
-      }
-
-      // Non-retryable error or final attempt
-      throw new Error(`Firefly expand failed: ${result.statusCode} - ${bodyStr}`);
-
-    } catch (err) {
-      lastError = err;
-      if (attempt < maxRetries && err.message.includes('500')) {
-        console.log(`[generate-journey-image] Error on attempt ${attempt}, retrying...`);
-        await sleep(attempt * 2000);
-        continue;
-      }
-      throw err;
-    }
+  if (result.statusCode !== 202 && result.statusCode !== 200) {
+    const bodyStr = result.body.toString();
+    throw new Error(`Firefly object composite failed: ${result.statusCode} - ${bodyStr}`);
   }
 
-  throw lastError || new Error('Firefly expand failed after all retries');
+  const data = JSON.parse(result.body.toString());
+
+  // Async response — poll for result
+  if (data.jobId) {
+    console.log(`[generate-journey-image] Object composite job submitted: ${data.jobId}`);
+    return pollFireflyJob(data.jobId, token, clientId);
+  }
+
+  // Synchronous fallback (unlikely for async endpoint)
+  const imageUrl = data.outputs?.[0]?.image?.url
+    || data.outputs?.[0]?.image?.presignedUrl
+    || data.images?.[0]?.url;
+  if (imageUrl) return imageUrl;
+
+  throw new Error('Firefly object composite returned no jobId or image URL');
 }
 
 /**
@@ -713,18 +690,17 @@ export default async function handler(req, res) {
     }
 
     try {
-      // Try Expand API with product compositing
+      // Upload product composite then generate scene around it
       console.log('[generate-journey-image] Uploading to Firefly...');
       const uploadId = await uploadToFirefly(compositeBuffer, token, clientId);
       console.log(`[generate-journey-image] Upload ID: ${uploadId}`);
 
-      console.log('[generate-journey-image] Calling Firefly Expand...');
       console.log('[generate-journey-image] Enhanced prompt:', enhancedPrompt);
-      imageUrl = await expandImage(uploadId, enhancedPrompt, token, clientId);
-      console.log('[generate-journey-image] Expand API SUCCEEDED - products should be in the output');
-    } catch (expandErr) {
-      // Fallback to Generate API if Expand fails
-      console.log(`[generate-journey-image] ⚠️ EXPAND FAILED: ${expandErr.message}`);
+      imageUrl = await generateObjectComposite(uploadId, enhancedPrompt, token, clientId);
+      console.log('[generate-journey-image] Object Composite SUCCEEDED - products should be in the output');
+    } catch (compositeErr) {
+      // Fallback to Generate API if Object Composite fails
+      console.log(`[generate-journey-image] ⚠️ OBJECT COMPOSITE FAILED: ${compositeErr.message}`);
       console.log('[generate-journey-image] ⚠️ Falling back to Generate API - PRODUCTS WILL NOT BE IN OUTPUT');
       imageUrl = await generateImageFallback(enhancedPrompt, token, clientId);
       usedFallback = true;
