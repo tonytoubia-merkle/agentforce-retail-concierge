@@ -333,13 +333,39 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  /** Re-fetch the current persona's profile without resetting the conversation. */
+  /** Lightweight re-fetch: pull latest profile data (events, summaries, etc.)
+   *  and merge into the current customer WITHOUT resetting the conversation. */
   const refreshProfile = useCallback(async () => {
-    if (!selectedPersonaId) return;
-    isRefreshRef.current = true;
-    await selectPersona(selectedPersonaId);
-    isRefreshRef.current = false;
-  }, [selectedPersonaId, selectPersona]);
+    if (!selectedPersonaId || !customer) return;
+
+    const isSalesforceId = /^[a-zA-Z0-9]{15,18}$/.test(selectedPersonaId) && selectedPersonaId.startsWith('003');
+
+    if (isSalesforceId && !useMockData) {
+      try {
+        const dataCloudService = getDataCloudService();
+        const fresh = await dataCloudService.getCustomerProfileById(selectedPersonaId);
+        // Merge fresh data into existing customer — keep auth state, merkury, appended untouched
+        setCustomer(prev => prev ? {
+          ...prev,
+          chatSummaries: fresh.chatSummaries ?? prev.chatSummaries,
+          meaningfulEvents: fresh.meaningfulEvents ?? prev.meaningfulEvents,
+          orders: fresh.orders ?? prev.orders,
+          browseSessions: fresh.browseSessions ?? prev.browseSessions,
+          agentCapturedProfile: fresh.agentCapturedProfile ?? prev.agentCapturedProfile,
+          beautyProfile: fresh.beautyProfile ?? prev.beautyProfile,
+          loyalty: fresh.loyalty ?? prev.loyalty,
+        } : prev);
+      } catch (err) {
+        console.error('[customer] Lightweight refresh failed:', err);
+      }
+    } else if (useMockData) {
+      // Mock mode: just re-read persona data
+      const persona = getPersonaById(selectedPersonaId);
+      if (persona) {
+        setCustomer(prev => prev ? { ...prev, ...persona.profile, id: prev.id, name: prev.name, email: prev.email } : prev);
+      }
+    }
+  }, [selectedPersonaId, customer]);
 
   /** Clear a persona's cached session so their next switch re-fires welcome. */
   const resetPersonaSession = useCallback((personaId: string) => {

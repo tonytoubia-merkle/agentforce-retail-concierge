@@ -72,9 +72,57 @@
     </assignments>
 
     <assignments>
+        <name>Set_Contact_From_CustomerEmail</name>
+        <label>Set Contact From Customer Email</label>
+        <locationX>550</locationX>
+        <locationY>258</locationY>
+        <assignmentItems>
+            <assignToReference>resolvedContactId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Lookup_Contact_By_CustomerEmail.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>safeCustomerId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>customerEmail</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Event_Record</targetReference>
+        </connector>
+    </assignments>
+
+    <assignments>
+        <name>Set_Contact_From_SessionEmail</name>
+        <label>Set Contact From Session Email</label>
+        <locationX>700</locationX>
+        <locationY>258</locationY>
+        <assignmentItems>
+            <assignToReference>resolvedContactId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Lookup_Contact_By_SessionEmail.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>safeCustomerId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>sessionId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Event_Record</targetReference>
+        </connector>
+    </assignments>
+
+    <assignments>
         <name>Set_Fallback_Ids</name>
         <label>Set Fallback Ids</label>
-        <locationX>450</locationX>
+        <locationX>850</locationX>
         <locationY>158</locationY>
         <assignmentItems>
             <assignToReference>safeCustomerId</assignToReference>
@@ -132,15 +180,22 @@
 
     <!-- ─── Decisions ───────────────────────────────────────── -->
 
+    <!-- Multi-tier contact resolution:
+         1. contactId starts with 003 → Salesforce Contact ID
+         2. contactId contains @ → email in contactId field
+         3. customerEmail contains @ → separate email input
+         4. sessionId contains @ → session was initialized with email
+         5. Default → fallback to 'agent-captured' -->
+
     <decisions>
         <name>Resolve_Contact</name>
         <label>Resolve Contact</label>
         <locationX>176</locationX>
         <locationY>80</locationY>
         <defaultConnector>
-            <targetReference>Set_Fallback_Ids</targetReference>
+            <targetReference>Try_CustomerEmail</targetReference>
         </defaultConnector>
-        <defaultConnectorLabel>No Contact Info</defaultConnectorLabel>
+        <defaultConnectorLabel>No contactId</defaultConnectorLabel>
         <rules>
             <name>Is_SF_Contact_Id</name>
             <conditionLogic>and</conditionLogic>
@@ -164,7 +219,7 @@
             <label>Is SF Contact Id</label>
         </rules>
         <rules>
-            <name>Is_Email</name>
+            <name>Is_Email_In_ContactId</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
                 <leftValueReference>contactId</leftValueReference>
@@ -183,7 +238,73 @@
             <connector>
                 <targetReference>Lookup_Contact_By_Email</targetReference>
             </connector>
-            <label>Is Email</label>
+            <label>Is Email in contactId</label>
+        </rules>
+    </decisions>
+
+    <decisions>
+        <name>Try_CustomerEmail</name>
+        <label>Try Customer Email</label>
+        <locationX>550</locationX>
+        <locationY>80</locationY>
+        <defaultConnector>
+            <targetReference>Try_SessionEmail</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No customerEmail</defaultConnectorLabel>
+        <rules>
+            <name>Has_CustomerEmail</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>customerEmail</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>customerEmail</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>@</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Lookup_Contact_By_CustomerEmail</targetReference>
+            </connector>
+            <label>Has Customer Email</label>
+        </rules>
+    </decisions>
+
+    <decisions>
+        <name>Try_SessionEmail</name>
+        <label>Try Session Email</label>
+        <locationX>700</locationX>
+        <locationY>80</locationY>
+        <defaultConnector>
+            <targetReference>Set_Fallback_Ids</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No session email</defaultConnectorLabel>
+        <rules>
+            <name>Session_Has_Email</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>sessionId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>sessionId</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>@</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Lookup_Contact_By_SessionEmail</targetReference>
+            </connector>
+            <label>Session Has Email</label>
         </rules>
     </decisions>
 
@@ -275,6 +396,48 @@
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
 
+    <recordLookups>
+        <name>Lookup_Contact_By_CustomerEmail</name>
+        <label>Lookup Contact By Customer Email</label>
+        <locationX>550</locationX>
+        <locationY>158</locationY>
+        <connector>
+            <targetReference>Set_Contact_From_CustomerEmail</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Email</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>customerEmail</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contact</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+
+    <recordLookups>
+        <name>Lookup_Contact_By_SessionEmail</name>
+        <label>Lookup Contact By Session Email</label>
+        <locationX>700</locationX>
+        <locationY>158</locationY>
+        <connector>
+            <targetReference>Set_Contact_From_SessionEmail</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Email</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>sessionId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contact</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+
     <!-- ─── Variables ───────────────────────────────────────── -->
 
     <variables>
@@ -291,7 +454,15 @@
         <isCollection>false</isCollection>
         <isInput>true</isInput>
         <isOutput>false</isOutput>
-        <description>The Salesforce Contact ID (003...) or email address for the customer</description>
+        <description>The customer's email address (e.g. sarah@example.com) or Salesforce Contact ID (003...). Email is preferred — the flow will look up the Contact record automatically.</description>
+    </variables>
+    <variables>
+        <name>customerEmail</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <description>The customer's email address. Used to look up their Salesforce Contact record if contactId is not provided.</description>
     </variables>
     <variables>
         <name>eventDescription</name>
@@ -366,6 +537,6 @@
         <isCollection>false</isCollection>
         <isInput>true</isInput>
         <isOutput>false</isOutput>
-        <description>The unique session identifier for this conversation</description>
+        <description>The customer's email address or session identifier for this conversation</description>
     </variables>
 </Flow>
