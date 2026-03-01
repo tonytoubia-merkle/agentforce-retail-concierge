@@ -30,9 +30,9 @@ Map<String, Map<String, String>> products = new Map<String, Map<String, String>>
         'name' => 'Radiance Renewal Serum',
         'image' => '/assets/products/serum-vitamin-c.png'
     },
-    'serum-peptide' => new Map<String, String>{
+    'serum-anti-aging' => new Map<String, String>{
         'name' => 'Peptide Lift Pro Serum',
-        'image' => '/assets/products/serum-peptide.png'
+        'image' => '/assets/products/serum-anti-aging.png'
     },
     'eye-cream' => new Map<String, String>{
         'name' => 'Eye Revival Cream',
@@ -105,7 +105,7 @@ affinities.add(createAffinity(sarahChen.Id, 'moisturizer-sensitive', 'Purchased'
 affinities.add(createAffinity(sarahChen.Id, 'cleanser-gentle', 'Purchased', 5, appBaseUrl, products));
 
 // Added to cart but not purchased
-affinities.add(createAffinity(sarahChen.Id, 'serum-peptide', 'Added to Cart', 3, appBaseUrl, products));
+affinities.add(createAffinity(sarahChen.Id, 'serum-anti-aging', 'Added to Cart', 3, appBaseUrl, products));
 
 // Recently viewed (travel products for upcoming trip)
 affinities.add(createAffinity(sarahChen.Id, 'sunscreen-lightweight', 'Viewed', 2, appBaseUrl, products));

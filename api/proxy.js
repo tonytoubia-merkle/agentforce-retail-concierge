@@ -15,7 +15,8 @@ const routes = [
   { prefix: '/api/imagen/generate',        target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/imagen-4.0-generate-001:predict' },
   { prefix: '/api/gemini/generateContent', target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.5-flash-image:generateContent' },
   { prefix: '/api/firefly/token',          target: 'https://ims-na1.adobelogin.com',            rewrite: '/ims/token/v3' },
-  { prefix: '/api/firefly/generate',       target: 'https://firefly-api.adobe.io',              rewrite: '/v3/images/generate' },
+  { prefix: '/api/firefly/generate',       target: 'https://firefly-api.adobe.io',              rewrite: '/v3/images/generate-async' },
+  { prefix: '/api/firefly/status',         target: 'https://firefly-api.adobe.io',              rewrite: '/v3/status' },
   { prefix: '/api/datacloud',             target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0' },
 ];
 
@@ -62,7 +63,7 @@ function httpsRequest(options, body) {
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-goog-api-key, x-api-key',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-goog-api-key, x-api-key, x-model-version',
 };
 
 /** Get a server-side OAuth token using Client Credentials flow */

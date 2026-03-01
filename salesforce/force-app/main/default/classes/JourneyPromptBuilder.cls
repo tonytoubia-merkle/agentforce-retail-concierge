@@ -186,7 +186,7 @@ public with sharing class JourneyPromptBuilder {
             defaults.add(createRecommendation('Deep Dew Hydrating Mask', 'mask-hydrating', '/assets/products/mask-hydrating.png'));
             defaults.add(createRecommendation('Velvet Matte Lipstick', 'lipstick-velvet', '/assets/products/lipstick-velvet.png'));
         } else if (eventLower.contains('birthday')) {
-            defaults.add(createRecommendation('Peptide Lift Pro Serum', 'serum-peptide', '/assets/products/serum-peptide.png'));
+            defaults.add(createRecommendation('Peptide Lift Pro Serum', 'serum-anti-aging', '/assets/products/serum-anti-aging.png'));
             defaults.add(createRecommendation('Eye Revival Cream', 'eye-cream', '/assets/products/eye-cream.png'));
             defaults.add(createRecommendation('Hydra-Calm Sensitive Moisturizer', 'moisturizer-sensitive', '/assets/products/moisturizer-sensitive.png'));
         } else {

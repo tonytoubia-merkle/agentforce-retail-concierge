@@ -448,8 +448,7 @@ async function expandImage(uploadId, prompt, token, clientId) {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-api-key': clientId,
-          // Switch to 'image4_ultra' once API credentials are provisioned for Image Model 4
-          // 'x-model-version': 'image4_ultra',
+          'x-model-version': 'image4_standard',
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Content-Length': Buffer.byteLength(requestBody),
@@ -498,18 +497,71 @@ async function expandImage(uploadId, prompt, token, clientId) {
 }
 
 /**
- * Fallback: Call Firefly Generate API (text-to-image) without product compositing.
+ * Poll for an async Firefly job result.
+ * The generate-async endpoint returns a jobId; poll /v3/status/{jobId} until complete.
+ */
+async function pollFireflyJob(jobId, token, clientId) {
+  const maxAttempts = 30;  // 60s max
+  const pollInterval = 2000;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    await sleep(pollInterval);
+
+    const result = await httpsRequest({
+      hostname: 'firefly-api.adobe.io',
+      port: 443,
+      path: `/v3/status/${jobId}`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-api-key': clientId,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (result.statusCode !== 200) {
+      console.warn(`[generate-journey-image] Status poll ${attempt + 1} returned ${result.statusCode}`);
+      continue;
+    }
+
+    const status = JSON.parse(result.body.toString());
+    console.log(`[generate-journey-image] Job ${jobId} status: ${status.status}`);
+
+    if (status.status === 'succeeded') {
+      const imageUrl = status.result?.outputs?.[0]?.image?.presignedUrl
+        || status.result?.outputs?.[0]?.image?.url
+        || status.outputs?.[0]?.image?.presignedUrl
+        || status.outputs?.[0]?.image?.url
+        || status.result?.images?.[0]?.url;
+
+      if (!imageUrl) {
+        throw new Error('Firefly job succeeded but returned no image URL');
+      }
+      return imageUrl;
+    }
+
+    if (status.status === 'failed' || status.status === 'cancelled') {
+      throw new Error(`Firefly job ${status.status}: ${status.message || status.error_code || 'unknown'}`);
+    }
+  }
+
+  throw new Error(`Firefly job timed out after ${maxAttempts * pollInterval / 1000}s`);
+}
+
+/**
+ * Fallback: Call Firefly Generate Async API (text-to-image) without product compositing.
+ * Uses Image Model 4 via the async endpoint, then polls for the result.
  * Used when Expand API fails consistently.
  */
 async function generateImageFallback(prompt, token, clientId) {
-  console.log('[generate-journey-image] Using Generate API fallback...');
+  console.log('[generate-journey-image] Using Generate Async API fallback (image4)...');
 
   const requestBody = JSON.stringify({
     prompt: prompt,
     contentClass: 'photo',
     size: {
-      width: 1024,
-      height: 1024
+      width: 2048,
+      height: 2048
     },
     numVariations: 1
   });
@@ -517,33 +569,35 @@ async function generateImageFallback(prompt, token, clientId) {
   const result = await httpsRequest({
     hostname: 'firefly-api.adobe.io',
     port: 443,
-    path: '/v3/images/generate',
+    path: '/v3/images/generate-async',
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
       'x-api-key': clientId,
-      // Switch to 'image4_ultra' once API credentials are provisioned for Image Model 4
-      // 'x-model-version': 'image4_ultra',
+      'x-model-version': 'image4_standard',
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       'Content-Length': Buffer.byteLength(requestBody),
     },
   }, requestBody);
 
-  if (result.statusCode !== 200) {
-    throw new Error(`Firefly generate failed: ${result.statusCode} - ${result.body.toString()}`);
+  if (result.statusCode !== 202 && result.statusCode !== 200) {
+    throw new Error(`Firefly generate-async failed: ${result.statusCode} - ${result.body.toString()}`);
   }
 
   const data = JSON.parse(result.body.toString());
-  const imageUrl = data.outputs?.[0]?.image?.url ||
-                   data.outputs?.[0]?.image?.presignedUrl ||
-                   data.images?.[0]?.url;
+  console.log('[generate-journey-image] Async job submitted:', data.jobId);
 
-  if (!imageUrl) {
-    throw new Error('Firefly generate returned no image URL');
+  // If the API returned a synchronous result (backward compat)
+  if (!data.jobId) {
+    const imageUrl = data.outputs?.[0]?.image?.url
+      || data.outputs?.[0]?.image?.presignedUrl
+      || data.images?.[0]?.url;
+    if (imageUrl) return imageUrl;
+    throw new Error('Firefly returned no jobId or image URL');
   }
 
-  return imageUrl;
+  return pollFireflyJob(data.jobId, token, clientId);
 }
 
 /**

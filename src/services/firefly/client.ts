@@ -3,6 +3,9 @@ import type { SceneSetting } from '@/types/scene';
 import type { Product } from '@/types/product';
 import type { FireflyConfig, GenerationOptions } from './types';
 
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_ATTEMPTS = 30; // 60s max wait
+
 export class FireflyClient {
   private config: FireflyConfig;
   private accessToken: string | null = null;
@@ -40,28 +43,68 @@ export class FireflyClient {
     return this.accessToken!;
   }
 
-  async generateSceneBackground(
-    setting: SceneSetting,
-    products: Product[],
-    options: GenerationOptions = {}
-  ): Promise<string> {
-    // Firefly supported sizes: 2688x1536, 1344x768, 2048x2048, 1024x1024, etc.
-    // Use 2688x1536 for wide hero banners (closest to 2:1 aspect ratio)
-    const {
-      width = 2688,
-      height = 1536,
-    } = options;
+  /**
+   * Poll for an async job result.
+   * The generate-async endpoint returns a jobId; poll /status/{jobId} until done.
+   */
+  private async pollForResult(jobId: string, token: string): Promise<string> {
+    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
 
+      const statusRes = await fetch(`/api/firefly/status/${jobId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'x-api-key': this.config.clientId,
+        },
+      });
+
+      if (!statusRes.ok) {
+        console.warn(`[firefly] Status poll ${attempt + 1} returned ${statusRes.status}`);
+        continue;
+      }
+
+      const status = await statusRes.json();
+      console.log(`[firefly] Job ${jobId} status: ${status.status}`);
+
+      if (status.status === 'succeeded') {
+        const imageUrl = status.result?.outputs?.[0]?.image?.presignedUrl
+          || status.result?.outputs?.[0]?.image?.url
+          || status.outputs?.[0]?.image?.presignedUrl
+          || status.outputs?.[0]?.image?.url
+          || status.result?.images?.[0]?.url;
+
+        if (!imageUrl) {
+          console.error('[firefly] Job succeeded but no image URL in result:', status);
+          throw new Error('Firefly job succeeded but returned no image URL');
+        }
+        return imageUrl;
+      }
+
+      if (status.status === 'failed' || status.status === 'cancelled') {
+        throw new Error(`Firefly job ${status.status}: ${status.message || status.error_code || 'unknown error'}`);
+      }
+
+      // status === 'running' or 'cancel_pending' — keep polling
+    }
+
+    throw new Error(`Firefly job timed out after ${MAX_POLL_ATTEMPTS * POLL_INTERVAL_MS / 1000}s`);
+  }
+
+  /**
+   * Submit an async generate request and poll for the result.
+   * Uses Firefly Image Model 4 via the generate-async endpoint.
+   */
+  private async generateAsync(prompt: string, width: number, height: number): Promise<string> {
     const token = await this.getAccessToken();
-    const prompt = buildScenePrompt(setting);
 
+    // Submit async generation job
     const response = await fetch('/api/firefly/generate', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'x-api-key': this.config.clientId,
-        // Switch to 'image4_ultra' once API credentials are provisioned for Image Model 4
-        // 'x-model-version': 'image4_ultra',
+        'x-model-version': 'image4_standard',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -74,66 +117,43 @@ export class FireflyClient {
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`Firefly generation failed (${response.status}): ${errText}`);
+      throw new Error(`Firefly generate-async failed (${response.status}): ${errText}`);
     }
 
     const data = await response.json();
-    console.log('[firefly] Scene API response:', JSON.stringify(data).substring(0, 500));
+    console.log('[firefly] Async job submitted:', data);
 
-    const imageUrl = data.outputs?.[0]?.image?.presignedUrl
-      || data.outputs?.[0]?.image?.url
-      || data.images?.[0]?.url
-      || data.result?.images?.[0]?.url;
-
-    if (!imageUrl) {
-      console.error('[firefly] Could not find image URL in response:', data);
-      throw new Error('Firefly returned no image URL');
+    const jobId = data.jobId;
+    if (!jobId) {
+      // Fallback: if API returned a synchronous response (image3 compat)
+      const imageUrl = data.outputs?.[0]?.image?.presignedUrl
+        || data.outputs?.[0]?.image?.url
+        || data.images?.[0]?.url;
+      if (imageUrl) return imageUrl;
+      throw new Error('Firefly returned no jobId or image URL');
     }
 
-    return imageUrl;
+    // Poll for result
+    return this.pollForResult(jobId, token);
+  }
+
+  async generateSceneBackground(
+    setting: SceneSetting,
+    products: Product[],
+    options: GenerationOptions = {}
+  ): Promise<string> {
+    const {
+      width = 2688,
+      height = 1536,
+    } = options;
+
+    const prompt = buildScenePrompt(setting);
+    return this.generateAsync(prompt, width, height);
   }
 
   /** Generate from a raw prompt string (no setting mapping). */
   async generateFromPrompt(prompt: string): Promise<string> {
-    const token = await this.getAccessToken();
-
-    const response = await fetch('/api/firefly/generate', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'x-api-key': this.config.clientId,
-        // Switch to 'image4_ultra' once API credentials are provisioned for Image Model 4
-        // 'x-model-version': 'image4_ultra',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt,
-        contentClass: 'photo',
-        size: { width: 2688, height: 1536 },
-        numVariations: 1,
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Firefly generation failed (${response.status}): ${errText}`);
-    }
-
-    const data = await response.json();
-    console.log('[firefly] API response:', JSON.stringify(data).substring(0, 500));
-
-    // Handle different response structures from Firefly API
-    const imageUrl = data.outputs?.[0]?.image?.presignedUrl
-      || data.outputs?.[0]?.image?.url
-      || data.images?.[0]?.url
-      || data.result?.images?.[0]?.url;
-
-    if (!imageUrl) {
-      console.error('[firefly] Could not find image URL in response:', data);
-      throw new Error('Firefly returned no image URL');
-    }
-
-    return imageUrl;
+    return this.generateAsync(prompt, 2688, 1536);
   }
 }
 

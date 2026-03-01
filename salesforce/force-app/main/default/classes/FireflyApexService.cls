@@ -18,7 +18,8 @@
 public with sharing class FireflyApexService {
 
     private static final String TOKEN_URL = 'https://ims-na1.adobelogin.com/ims/token/v3';
-    private static final String GENERATE_URL = 'https://firefly-api.adobe.io/v3/images/generate';
+    private static final String GENERATE_URL = 'https://firefly-api.adobe.io/v3/images/generate-async';
+    private static final String STATUS_URL = 'https://firefly-api.adobe.io/v3/status/';
     private static final String VERCEL_APP_URL = 'https://agentforce-retail-advisor.vercel.app';
 
     // Cache token in static variable (within transaction only)
@@ -305,26 +306,29 @@ public with sharing class FireflyApexService {
 
     /**
      * Call Firefly API to generate an image from a prompt.
+     * Uses Image Model 4 via the async endpoint: submit job, then poll for result.
      */
     public static String callFireflyAPI(String prompt) {
         String token = getAccessToken();
         String clientId = getCredential('Firefly_Client_Id');
 
+        // Submit async generation job
         HttpRequest req = new HttpRequest();
         req.setEndpoint(GENERATE_URL);
         req.setMethod('POST');
         req.setHeader('Authorization', 'Bearer ' + token);
         req.setHeader('x-api-key', clientId);
+        req.setHeader('x-model-version', 'image4_standard');
         req.setHeader('Content-Type', 'application/json');
         req.setHeader('Accept', 'application/json');
-        req.setTimeout(120000); // 2 minute timeout for image generation
+        req.setTimeout(30000);
 
         Map<String, Object> requestBody = new Map<String, Object>{
             'prompt' => prompt,
             'contentClass' => 'photo',
             'size' => new Map<String, Object>{
-                'width' => 1024,
-                'height' => 1024
+                'width' => 2048,
+                'height' => 2048
             },
             'numVariations' => 1
         };
@@ -334,20 +338,78 @@ public with sharing class FireflyApexService {
         Http http = new Http();
         HttpResponse res = http.send(req);
 
-        if (res.getStatusCode() != 200) {
-            throw new FireflyException('Firefly generation failed (' + res.getStatusCode() + '): ' + res.getBody());
+        // Async endpoint returns 202 Accepted
+        if (res.getStatusCode() != 202 && res.getStatusCode() != 200) {
+            throw new FireflyException('Firefly generate-async failed (' + res.getStatusCode() + '): ' + res.getBody());
         }
 
         Map<String, Object> responseData = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
 
-        // Parse response - handle different response structures
-        String imageUrl = extractImageUrl(responseData);
-
-        if (String.isBlank(imageUrl)) {
-            throw new FireflyException('Firefly returned no image URL. Response: ' + res.getBody().left(500));
+        // Check for jobId (async response)
+        String jobId = (String) responseData.get('jobId');
+        if (String.isNotBlank(jobId)) {
+            System.debug(LoggingLevel.INFO, '[callFireflyAPI] Async job submitted: ' + jobId);
+            return pollForJobResult(jobId, token, clientId);
         }
 
-        return imageUrl;
+        // Fallback: synchronous response (backward compat)
+        String imageUrl = extractImageUrl(responseData);
+        if (String.isNotBlank(imageUrl)) {
+            return imageUrl;
+        }
+
+        throw new FireflyException('Firefly returned no jobId or image URL. Response: ' + res.getBody().left(500));
+    }
+
+    /**
+     * Poll Firefly status endpoint until job completes.
+     * Each HTTP callout waits for the response (network latency serves as natural delay).
+     */
+    private static String pollForJobResult(String jobId, String token, String clientId) {
+        Integer maxAttempts = 30;
+        Http http = new Http();
+
+        for (Integer attempt = 0; attempt < maxAttempts; attempt++) {
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(STATUS_URL + jobId);
+            req.setMethod('GET');
+            req.setHeader('Authorization', 'Bearer ' + token);
+            req.setHeader('x-api-key', clientId);
+            req.setHeader('Accept', 'application/json');
+            req.setTimeout(10000);
+
+            HttpResponse res = http.send(req);
+
+            if (res.getStatusCode() != 200) {
+                System.debug(LoggingLevel.WARN, '[pollForJobResult] Poll ' + (attempt + 1) + ' returned ' + res.getStatusCode());
+                continue;
+            }
+
+            Map<String, Object> status = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+            String jobStatus = (String) status.get('status');
+            System.debug(LoggingLevel.INFO, '[pollForJobResult] Job ' + jobId + ' status: ' + jobStatus);
+
+            if (jobStatus == 'succeeded') {
+                String imageUrl = extractImageUrl(status);
+                // Also try nested result object
+                if (String.isBlank(imageUrl) && status.containsKey('result')) {
+                    imageUrl = extractImageUrl((Map<String, Object>) status.get('result'));
+                }
+                if (String.isBlank(imageUrl)) {
+                    throw new FireflyException('Job succeeded but returned no image URL');
+                }
+                return imageUrl;
+            }
+
+            if (jobStatus == 'failed' || jobStatus == 'cancelled') {
+                String errMsg = status.containsKey('message') ? (String) status.get('message') : 'unknown error';
+                throw new FireflyException('Firefly job ' + jobStatus + ': ' + errMsg);
+            }
+
+            // Still running - continue polling
+        }
+
+        throw new FireflyException('Firefly job timed out after ' + maxAttempts + ' poll attempts');
     }
 
     /**
