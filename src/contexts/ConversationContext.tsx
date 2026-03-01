@@ -657,26 +657,18 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           await processUIDirective(response.uiDirective);
         }
 
-        // Show toast notifications for any background captures
+        // Show toast notifications for any background captures.
+        // The agent creates the actual Salesforce records via Create_Meaningful_Event
+        // flow action — we only surface the toast UI here, no client-side writes.
+        // Dedupe by type to avoid multiple toasts for the same capture detected
+        // through different detection paths in client.ts.
         const captures = response.uiDirective.payload?.captures;
         if (captures?.length) {
+          const shown = new Set<string>();
           for (const c of captures) {
-            showCapture(c);
-            // Write client-detected meaningful events to Salesforce (best-effort).
-            // Pass the SF Contact ID so the record is linked via Contact__c lookup.
-            if (c.type === 'meaningful_event' && (customer?.email || customer?.id)) {
-              const isSfId = customer?.id && /^003[a-zA-Z0-9]{12,15}$/.test(customer.id);
-              getDataCloudWriteService().writeMeaningfulEvent(
-                customer.email || customer.id,
-                uuidv4(),
-                {
-                  eventType: 'life-event',
-                  description: c.label.replace(/^Event Captured:\s*/i, ''),
-                  capturedAt: new Date().toISOString(),
-                  agentNote: 'Auto-captured from agent conversation text',
-                },
-                isSfId ? customer.id : undefined,
-              ).catch(err => console.warn('[datacloud] Failed to write event:', err));
+            if (!shown.has(c.type)) {
+              showCapture(c);
+              shown.add(c.type);
             }
           }
         }
