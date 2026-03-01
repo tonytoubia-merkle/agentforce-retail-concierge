@@ -273,16 +273,23 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             }
         }
 
-        // Track original date presence for confidence scoring
+        // Track date signal presence for confidence scoring.
+        // Both explicit dates (Event_Date__c set by flow) and strong relative
+        // time expressions ("in three weeks", "next month") count as date signals.
         Boolean hadOriginalDate = (event.Event_Date__c != null);
+        Boolean hadRelativeTimeText = String.isNotBlank(event.Relative_Time_Text__c);
 
         // Derive event date if missing — enables multi-step journeys
         if (event.Event_Date__c == null) {
             Date derivedDate = null;
 
             // Try parsing from relative time text (e.g., "in two weeks", "next month")
-            if (String.isNotBlank(event.Relative_Time_Text__c)) {
+            if (hadRelativeTimeText) {
                 derivedDate = deriveEventDateFromText(event.Relative_Time_Text__c);
+                // Successfully derived date from relative text counts as a date signal
+                if (derivedDate != null) {
+                    hadOriginalDate = true;
+                }
             }
 
             // Default to 14 days out for life-events

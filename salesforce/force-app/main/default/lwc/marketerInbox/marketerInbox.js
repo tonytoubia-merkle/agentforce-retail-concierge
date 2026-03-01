@@ -10,6 +10,7 @@ import sendJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.sendJour
 import regenerateImageFromLWC from '@salesforce/apex/JourneyApprovalService.regenerateImageFromLWC';
 import updateProductsFromLWC from '@salesforce/apex/JourneyApprovalService.updateProductsFromLWC';
 import approveAllJourneySteps from '@salesforce/apex/JourneyApprovalService.approveAllJourneySteps';
+import declineAllJourneySteps from '@salesforce/apex/JourneyApprovalService.declineAllJourneySteps';
 import sendJourneyToMarketingFlow from '@salesforce/apex/JourneyApprovalService.sendJourneyToMarketingFlow';
 import processEventsNow from '@salesforce/apex/JourneyApprovalService.processEventsNow';
 import Id from '@salesforce/user/Id';
@@ -203,6 +204,8 @@ export default class MarketerInbox extends LightningElement {
                     contactEmail: approval.contactEmail,
                     eventType: approval.eventType,
                     eventDate: approval.eventDate,
+                    eventSummary: approval.Event_Summary__c || '',
+                    confidenceScore: approval.Confidence_Score__c || 0,
                     portfolioName: approval.portfolioName,
                     totalSteps: approval.Total_Steps__c || 1,
                     steps: [],
@@ -514,6 +517,34 @@ export default class MarketerInbox extends LightningElement {
                 await refreshApex(this.wiredStatsResult);
             } else {
                 this.showToastMessage(result.errorMessage || 'Bulk approval failed', 'error');
+            }
+        } catch (error) {
+            this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    /**
+     * Decline all steps in a multi-step journey.
+     */
+    async handleDeclineAllSteps(event) {
+        event.stopPropagation();
+        const journeyId = event.currentTarget.dataset.journeyId;
+        const group = this.groupedApprovals.find(g => g.journeyId === journeyId);
+
+        if (!group) return;
+
+        this.isLoading = true;
+        try {
+            const result = await declineAllJourneySteps({ journeyId: journeyId, reason: 'Bulk declined from inbox' });
+
+            if (result.success) {
+                this.showToastMessage(`Declined all ${group.stepCount} steps for ${group.contactName}`, 'success');
+                await refreshApex(this.wiredApprovalsResult);
+                await refreshApex(this.wiredStatsResult);
+            } else {
+                this.showToastMessage(result.errorMessage || 'Bulk decline failed', 'error');
             }
         } catch (error) {
             this.showToastMessage('Error: ' + (error.body?.message || error.message), 'error');

@@ -128,68 +128,89 @@
                                         </lightning-icon>
                                     </div>
 
-                                    <div class="journey-group-content slds-grid slds-wrap slds-grid_vertical-align-center">
-                                        <!-- Expand Toggle + Contact Info -->
-                                        <div class="slds-col slds-size_5-of-12 slds-grid slds-grid_vertical-align-center">
-                                            <button class="slds-button slds-button_icon expand-toggle"
-                                                    data-journey-id={group.journeyId}
-                                                    onclick={handleToggleJourney}>
-                                                <lightning-icon
-                                                    icon-name={group.expandIcon}
-                                                    size="x-small">
-                                                </lightning-icon>
-                                            </button>
-                                            <div class="contact-info slds-m-left_small">
-                                                <h3 class="contact-name">{group.contactName}</h3>
-                                                <div class="event-info slds-m-top_xx-small">
-                                                    <span class={group.urgencyClass}>{group.urgency}</span>
-                                                    <span class="event-type slds-m-left_x-small">{group.eventType}</span>
-                                                    <span class="step-badge slds-m-left_x-small">{group.stepsLabel}</span>
+                                    <div class="journey-group-content">
+                                        <!-- Top row: Contact info + deadline + actions -->
+                                        <div class="slds-grid slds-wrap slds-grid_vertical-align-center">
+                                            <!-- Expand Toggle + Contact Info -->
+                                            <div class="slds-col slds-size_5-of-12 slds-grid slds-grid_vertical-align-center">
+                                                <button class="slds-button slds-button_icon expand-toggle"
+                                                        data-journey-id={group.journeyId}
+                                                        onclick={handleToggleJourney}>
+                                                    <lightning-icon
+                                                        icon-name={group.expandIcon}
+                                                        size="x-small">
+                                                    </lightning-icon>
+                                                </button>
+                                                <div class="contact-info slds-m-left_small">
+                                                    <h3 class="contact-name">{group.contactName}</h3>
+                                                    <div class="event-info slds-m-top_xx-small">
+                                                        <span class={group.urgencyClass}>{group.urgency}</span>
+                                                        <span class="event-type slds-m-left_x-small">{group.eventType}</span>
+                                                        <span class="step-badge slds-m-left_x-small">{group.stepsLabel}</span>
+                                                        <template if:true={group.confidenceScore}>
+                                                            <span class="confidence-badge slds-m-left_x-small">{group.confidenceScore}% AI</span>
+                                                        </template>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <!-- Deadline -->
-                                        <div class="slds-col slds-size_3-of-12">
-                                            <template if:true={group.isApproachingDeadline}>
-                                                <div class="deadline-warning">
-                                                    <lightning-icon icon-name="utility:warning" size="xx-small" variant="warning"></lightning-icon>
-                                                    <span>{group.deadlineDisplay}</span>
-                                                </div>
-                                            </template>
-                                            <template if:false={group.isApproachingDeadline}>
-                                                <template if:true={group.deadlineDisplay}>
-                                                    <div class="deadline-info slds-text-color_weak">
-                                                        <lightning-icon icon-name="utility:clock" size="xx-small"></lightning-icon>
+                                            <!-- Deadline -->
+                                            <div class="slds-col slds-size_3-of-12">
+                                                <template if:true={group.isApproachingDeadline}>
+                                                    <div class="deadline-warning">
+                                                        <lightning-icon icon-name="utility:warning" size="xx-small" variant="warning"></lightning-icon>
                                                         <span>{group.deadlineDisplay}</span>
                                                     </div>
                                                 </template>
-                                            </template>
+                                                <template if:false={group.isApproachingDeadline}>
+                                                    <template if:true={group.deadlineDisplay}>
+                                                        <div class="deadline-info slds-text-color_weak">
+                                                            <lightning-icon icon-name="utility:clock" size="xx-small"></lightning-icon>
+                                                            <span>{group.deadlineDisplay}</span>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                            </div>
+
+                                            <!-- Bulk Actions -->
+                                            <div class="slds-col slds-size_4-of-12 slds-text-align_right">
+                                                <template if:true={group.isPastDue}>
+                                                    <span class="past-due-badge">Past Due</span>
+                                                </template>
+                                                <template if:false={group.isPastDue}>
+                                                    <lightning-button
+                                                        label="Reject All"
+                                                        variant="destructive"
+                                                        icon-name="utility:close"
+                                                        data-journey-id={group.journeyId}
+                                                        onclick={handleDeclineAllSteps}
+                                                        class="slds-m-right_x-small">
+                                                    </lightning-button>
+                                                    <lightning-button
+                                                        label="Approve All"
+                                                        variant="brand"
+                                                        icon-name="utility:check"
+                                                        data-journey-id={group.journeyId}
+                                                        onclick={handleApproveAllSteps}
+                                                        class="slds-m-right_x-small">
+                                                    </lightning-button>
+                                                    <lightning-button
+                                                        label="Send Flow"
+                                                        variant="success"
+                                                        icon-name="utility:send"
+                                                        data-journey-id={group.journeyId}
+                                                        onclick={handleSendFlow}>
+                                                    </lightning-button>
+                                                </template>
+                                            </div>
                                         </div>
 
-                                        <!-- Bulk Actions -->
-                                        <div class="slds-col slds-size_4-of-12 slds-text-align_right">
-                                            <template if:true={group.isPastDue}>
-                                                <span class="past-due-badge">Past Due</span>
-                                            </template>
-                                            <template if:false={group.isPastDue}>
-                                                <lightning-button
-                                                    label="Approve All"
-                                                    variant="brand"
-                                                    icon-name="utility:check"
-                                                    data-journey-id={group.journeyId}
-                                                    onclick={handleApproveAllSteps}
-                                                    class="slds-m-right_x-small">
-                                                </lightning-button>
-                                                <lightning-button
-                                                    label="Send Flow"
-                                                    variant="success"
-                                                    icon-name="utility:send"
-                                                    data-journey-id={group.journeyId}
-                                                    onclick={handleSendFlow}>
-                                                </lightning-button>
-                                            </template>
-                                        </div>
+                                        <!-- Journey context summary -->
+                                        <template if:true={group.eventSummary}>
+                                            <div class="journey-context slds-m-top_xx-small slds-m-left_x-large slds-p-left_medium">
+                                                <p class="journey-context-text slds-text-color_weak slds-text-body_small">{group.eventSummary}</p>
+                                            </div>
+                                        </template>
                                     </div>
                                 </div>
 

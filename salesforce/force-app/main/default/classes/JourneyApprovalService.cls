@@ -553,6 +553,54 @@ public with sharing class JourneyApprovalService {
         return result;
     }
 
+    /**
+     * Decline all steps in a journey at once.
+     */
+    @AuraEnabled
+    public static ApprovalActionResult declineAllJourneySteps(String journeyId, String reason) {
+        ApprovalActionResult result = new ApprovalActionResult();
+
+        if (String.isBlank(journeyId)) {
+            result.success = false;
+            result.errorMessage = 'Journey ID is required';
+            return result;
+        }
+
+        try {
+            List<Journey_Approval__c> steps = [
+                SELECT Id, Status__c
+                FROM Journey_Approval__c
+                WHERE Journey_Id__c = :journeyId
+                AND Status__c = 'Pending'
+            ];
+
+            if (steps.isEmpty()) {
+                result.success = false;
+                result.errorMessage = 'No pending steps found for this journey';
+                return result;
+            }
+
+            for (Journey_Approval__c step : steps) {
+                step.Status__c = 'Declined';
+                step.Reviewed_By__c = UserInfo.getUserId();
+                step.Reviewed_At__c = DateTime.now();
+                step.Decline_Reason__c = String.isNotBlank(reason) ? reason : 'Bulk declined';
+            }
+
+            update steps;
+
+            result.success = true;
+            result.message = 'Declined ' + steps.size() + ' journey steps';
+            result.newStatus = 'Declined';
+
+        } catch (Exception e) {
+            result.success = false;
+            result.errorMessage = 'Failed to decline journey: ' + e.getMessage();
+        }
+
+        return result;
+    }
+
     @AuraEnabled
     public static ApprovalActionResult approveJourneyFromLWC(Id approvalId, String subject, String body) {
         ApprovalActionRequest req = new ApprovalActionRequest();

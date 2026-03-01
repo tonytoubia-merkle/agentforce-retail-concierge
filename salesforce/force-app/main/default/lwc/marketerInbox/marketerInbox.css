@@ -182,6 +182,30 @@
     color: #16325c;
 }
 
+.confidence-badge {
+    font-size: 11px;
+    background: #eef4ff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #0070d2;
+    font-weight: 500;
+}
+
+/* Journey Context Summary */
+.journey-context {
+    border-left: 2px solid #d8dde6;
+}
+
+.journey-context-text {
+    line-height: 1.4;
+    max-height: 2.8em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
 /* Subject Preview */
 .subject-preview {
     display: flex;
