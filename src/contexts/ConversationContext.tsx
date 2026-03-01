@@ -703,6 +703,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 Agent_Note__c: 'Auto-captured skin concern from Beauty Concierge conversation. Personalized video journey triggered.',
                 Event_Date__c: new Date().toISOString().split('T')[0],
                 Journey_Start_Date__c: new Date().toISOString().split('T')[0],
+                Captured_At__c: new Date().toISOString(),
                 Urgency__c: 'Immediate',
                 Approval_Status__c: 'Pending Review',
               },

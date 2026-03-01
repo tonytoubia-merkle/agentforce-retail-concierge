@@ -69,10 +69,11 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
                 }
             } catch (Exception e) {
                 System.debug(LoggingLevel.ERROR, 'Failed to process event ' + event.Id + ': ' + e.getMessage());
+                System.debug(LoggingLevel.ERROR, 'Stack trace: ' + e.getStackTraceString());
                 // Mark as error so it doesn't get stuck in an infinite retry loop
                 event.Approval_Status__c = 'Processing Error';
                 event.Agent_Note__c = (String.isNotBlank(event.Agent_Note__c) ? event.Agent_Note__c + '\n' : '')
-                    + '[Batch Error] ' + e.getMessage();
+                    + '[Batch Error] ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString();
                 eventsToUpdate.add(event);
             }
         }
@@ -633,7 +634,11 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             summary += '\nSUGGESTED PRODUCTS: ' + event.Suggested_Products__c + '\n';
         }
 
-        summary += '\nCAPTURED: ' + event.Captured_At__c.format() + '\n';
+        if (event.Captured_At__c != null) {
+            summary += '\nCAPTURED: ' + event.Captured_At__c.format() + '\n';
+        } else {
+            summary += '\nCAPTURED: ' + Datetime.now().format() + '\n';
+        }
 
         return summary;
     }
