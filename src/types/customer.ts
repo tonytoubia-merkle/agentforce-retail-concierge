@@ -103,7 +103,7 @@ export type EventUrgency = 'Immediate' | 'This Week' | 'This Month' | 'Future' |
 
 export interface MeaningfulEvent {
   id?: string;  // Salesforce record ID for delete operations
-  eventType: 'preference' | 'milestone' | 'life-event' | 'concern' | 'intent';
+  eventType: 'preference' | 'milestone' | 'life-event' | 'concern' | 'intent' | 'skincare-video';
   description: string;
   capturedAt: string;
   agentNote?: string;

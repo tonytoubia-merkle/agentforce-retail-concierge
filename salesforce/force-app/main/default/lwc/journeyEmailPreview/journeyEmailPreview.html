@@ -108,5 +108,37 @@
                 </div>
             </div>
         </template>
+
+        <!-- Video Preview -->
+        <template if:true={isVideoChannel}>
+            <div class="video-preview">
+                <div class="video-preview-frame">
+                    <div class="video-preview-header">
+                        <span class="video-brand">BEAUTÉ</span>
+                        <span class="video-label">Personalized Video</span>
+                    </div>
+                    <template if:true={hasVideo}>
+                        <div class="video-player-container">
+                            <video controls class="video-player-preview">
+                                <source src={videoUrl} type="video/mp4"/>
+                                Your browser does not support video playback.
+                            </video>
+                        </div>
+                    </template>
+                    <template if:false={hasVideo}>
+                        <div class="video-placeholder-preview">
+                            <lightning-icon icon-name="utility:video" size="large"></lightning-icon>
+                            <p class="slds-m-top_small slds-text-color_weak">Video not yet generated</p>
+                        </div>
+                    </template>
+                    <template if:true={body}>
+                        <div class="video-companion-text">
+                            <p class="video-companion-label">Companion Message</p>
+                            <p class="video-companion-body">{smsPreviewBody}</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
     </div>
 </template>

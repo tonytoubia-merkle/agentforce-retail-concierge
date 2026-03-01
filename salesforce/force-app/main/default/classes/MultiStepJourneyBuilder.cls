@@ -33,12 +33,14 @@ public with sharing class MultiStepJourneyBuilder {
         public String suggestedProducts;
         public String agentNote;
         public String contactName;
+        public Boolean isVideoJourney = false;  // Skincare concern video journeys
+        public String videoPrompt;               // Pre-generated video prompt from GenAI template
     }
 
     public class JourneyStep {
         public Integer stepNumber;
         public Integer totalSteps;
-        public String channel;          // Email, SMS, Push
+        public String channel;          // Email, SMS, Push, Video
         public Integer sendDelayDays;   // Days after previous step
         public String subject;
         public String body;
@@ -46,6 +48,7 @@ public with sharing class MultiStepJourneyBuilder {
         public String fireflyPrompt;
         public String productsJson;
         public String guardrailsJson;
+        public String videoPrompt;      // Video generation prompt (for Video channel)
     }
 
     public class JourneyResult {
@@ -188,18 +191,23 @@ public with sharing class MultiStepJourneyBuilder {
         List<JourneyStep> steps = new List<JourneyStep>();
         Integer daysUntilEvent = calculateDaysUntilEvent(config.eventDate);
 
-        switch on pattern {
-            when IMMEDIATE_SINGLE {
-                steps = generateImmediateSingle(config, channels, guardrailsJson);
-            }
-            when SHORT_TWO_STEP {
-                steps = generateShortTwoStep(config, channels, guardrailsJson, daysUntilEvent);
-            }
-            when MEDIUM_THREE_STEP {
-                steps = generateMediumThreeStep(config, channels, guardrailsJson, daysUntilEvent);
-            }
-            when LONG_MULTI_STEP {
-                steps = generateLongMultiStep(config, channels, guardrailsJson, daysUntilEvent);
+        // Video journeys use a specialized step builder
+        if (config.isVideoJourney) {
+            steps = generateVideoJourney(config, channels, guardrailsJson);
+        } else {
+            switch on pattern {
+                when IMMEDIATE_SINGLE {
+                    steps = generateImmediateSingle(config, channels, guardrailsJson);
+                }
+                when SHORT_TWO_STEP {
+                    steps = generateShortTwoStep(config, channels, guardrailsJson, daysUntilEvent);
+                }
+                when MEDIUM_THREE_STEP {
+                    steps = generateMediumThreeStep(config, channels, guardrailsJson, daysUntilEvent);
+                }
+                when LONG_MULTI_STEP {
+                    steps = generateLongMultiStep(config, channels, guardrailsJson, daysUntilEvent);
+                }
             }
         }
 
@@ -419,6 +427,68 @@ public with sharing class MultiStepJourneyBuilder {
             step5.smsBody = buildPushBody(config, 5);
             step5.guardrailsJson = guardrailsJson;
             steps.add(step5);
+        }
+
+        return steps;
+    }
+
+    // ─── Video Journey Builder ──────────────────────────────────────────
+
+    /**
+     * Generate a video-first journey for skincare concern events.
+     * Step 1 is always a Video channel (personalized Firefly video).
+     * Step 2 (optional) is Email/SMS with a link to watch the video.
+     * Only ONE video is generated — companion steps reference the same video.
+     */
+    private static List<JourneyStep> generateVideoJourney(JourneyConfig config, ChannelPreferences channels, String guardrailsJson) {
+        List<JourneyStep> steps = new List<JourneyStep>();
+        String name = String.isNotBlank(config.contactName) ? config.contactName : 'there';
+
+        // Step 1: Video (primary touchpoint — the personalized skincare video)
+        JourneyStep videoStep = new JourneyStep();
+        videoStep.stepNumber = 1;
+        videoStep.sendDelayDays = 0;
+        videoStep.channel = 'Video';
+        videoStep.videoPrompt = config.videoPrompt;
+        videoStep.subject = name + ', we made something just for you';
+        videoStep.body = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px; margin: 0 auto;">'
+            + '<p style="font-size: 18px; line-height: 1.7; color: #444;">Dear ' + name + ',</p>'
+            + '<p style="font-size: 16px; line-height: 1.7; color: #444;">We heard your concern and wanted to do something special. '
+            + 'Our skincare experts created a personalized video just for you, addressing your specific needs with tailored product recommendations.</p>'
+            + '<p style="margin: 30px 0; text-align: center;">{{VIDEO_LINK}}</p>'
+            + '<p style="font-size: 16px; line-height: 1.7; color: #444;">Watch your personalized video to discover the perfect routine for your skin.</p>'
+            + '<p style="margin: 30px 0; text-align: center;">'
+            + '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Shop Your Recommendations</a>'
+            + '</p></div>';
+        videoStep.guardrailsJson = guardrailsJson;
+        steps.add(videoStep);
+
+        // Step 2: Follow-up via Email or SMS (links back to the same video)
+        if (channels.emailOptIn || channels.smsOptIn) {
+            JourneyStep followUp = new JourneyStep();
+            followUp.stepNumber = 2;
+            followUp.sendDelayDays = 3;
+            followUp.guardrailsJson = guardrailsJson;
+
+            if (channels.emailOptIn) {
+                followUp.channel = 'Email';
+                followUp.subject = name + ', did you catch your personalized video?';
+                followUp.body = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px; margin: 0 auto;">'
+                    + '<p style="font-size: 18px; line-height: 1.7; color: #444;">Dear ' + name + ',</p>'
+                    + '<p style="font-size: 16px; line-height: 1.7; color: #444;">Just a gentle nudge — we created a personalized skincare video with expert recommendations tailored to you. In case you missed it, here it is again.</p>'
+                    + '<p style="margin: 30px 0; text-align: center;">{{VIDEO_LINK}}</p>'
+                    + '<p style="font-size: 16px; line-height: 1.7; color: #444;">If you have any questions about the products or your routine, our advisors are here to help. Simply reply to this email or book a consultation.</p>'
+                    + '<p style="margin: 30px 0; text-align: center;">'
+                    + '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Book a Consultation</a>'
+                    + '</p></div>';
+            } else {
+                followUp.channel = 'SMS';
+                String smsName = String.isNotBlank(config.contactName) ? config.contactName : '';
+                String smsPrefix = String.isNotBlank(smsName) ? 'Hi ' + smsName + '! ' : '';
+                followUp.smsBody = smsPrefix + 'Your personalized skincare video is waiting for you. Watch now: beaute.co/video';
+            }
+
+            steps.add(followUp);
         }
 
         return steps;

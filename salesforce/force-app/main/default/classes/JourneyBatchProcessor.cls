@@ -292,6 +292,27 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
                 }
             }
 
+            // Fallback: scan the Description for relative time patterns.
+            // The agent often embeds temporal info in the description (e.g.,
+            // "Traveling to Dubai in three weeks") without populating
+            // Relative_Time_Text__c separately.
+            if (derivedDate == null && String.isNotBlank(event.Description__c)) {
+                derivedDate = deriveEventDateFromText(event.Description__c);
+                if (derivedDate != null) {
+                    hadOriginalDate = true;
+                    System.debug('Derived date from description text: ' + derivedDate);
+                }
+            }
+
+            // Fallback: scan the Agent_Note__c for temporal patterns.
+            if (derivedDate == null && String.isNotBlank(event.Agent_Note__c)) {
+                derivedDate = deriveEventDateFromText(event.Agent_Note__c);
+                if (derivedDate != null) {
+                    hadOriginalDate = true;
+                    System.debug('Derived date from agent note: ' + derivedDate);
+                }
+            }
+
             // Default to 14 days out for life-events
             if (derivedDate == null) {
                 derivedDate = Date.today().addDays(14);
@@ -312,6 +333,12 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
         config.suggestedProducts = event.Suggested_Products__c;
         config.agentNote = event.Agent_Note__c;
         config.contactName = contactName;
+
+        // Skincare-video events use the video journey pipeline
+        if (event.Event_Type__c == 'skincare-video') {
+            config.isVideoJourney = true;
+            config.videoPrompt = buildSkincareVideoPrompt(event, contactName, contactId);
+        }
 
         // Build the multi-step journey
         MultiStepJourneyBuilder.JourneyResult journeyResult = MultiStepJourneyBuilder.buildJourney(config);
@@ -412,8 +439,18 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             approval.Send_Delay_Days__c = step.sendDelayDays;
             approval.Journey_Guardrails__c = step.guardrailsJson;
 
+            // Video channel: populate video-specific fields
+            if (step.channel == 'Video') {
+                approval.Video_Prompt__c = step.videoPrompt;
+                approval.Suggested_Subject__c = step.subject;
+                approval.Suggested_Body__c = step.body;
+                // Attach products if available
+                if (String.isNotBlank(productsJson)) {
+                    approval.Recommended_Products__c = productsJson;
+                }
+            }
             // Content: Use AI-generated for first email step, builder templates for others
-            if (step.stepNumber == 1 && step.channel == 'Email' && agentResult != null) {
+            else if (step.stepNumber == 1 && step.channel == 'Email' && agentResult != null) {
                 // First email uses AI-generated content
                 approval.Suggested_Subject__c = agentResult.suggestedSubject;
                 approval.Suggested_Body__c = agentResult.suggestedBody;
@@ -733,6 +770,68 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
 
         html += '</div>';
         return html;
+    }
+
+    // ─── Skincare Video Prompt Builder ──────────────────────────────
+
+    /**
+     * Build a structured video prompt for skincare-video events.
+     * Queries the customer's profile for skin type and current products
+     * to create a rich, contextual video generation prompt.
+     *
+     * In production, this would call the Skincare_Concern_Video_Brief
+     * GenAI prompt template. For now, builds a structured prompt directly.
+     */
+    private String buildSkincareVideoPrompt(Meaningful_Event__c event, String contactName, Id contactId) {
+        String skinType = 'Unknown';
+        String currentProducts = '';
+
+        // Query profile enrichment data for skin context
+        if (contactId != null) {
+            try {
+                List<Agent_Captured_Profile__c> profileData = [
+                    SELECT Field_Name__c, Field_Value__c
+                    FROM Agent_Captured_Profile__c
+                    WHERE Customer_Id__c = :String.valueOf(contactId)
+                      AND Field_Name__c IN ('skinType', 'skinConcerns', 'currentProducts', 'Skin_Type__c')
+                    LIMIT 5
+                ];
+                for (Agent_Captured_Profile__c pd : profileData) {
+                    if (pd.Field_Name__c == 'skinType' || pd.Field_Name__c == 'Skin_Type__c') {
+                        skinType = pd.Field_Value__c;
+                    }
+                    if (pd.Field_Name__c == 'currentProducts') {
+                        currentProducts = pd.Field_Value__c;
+                    }
+                }
+            } catch (Exception e) {
+                System.debug(LoggingLevel.WARN, 'Failed to query profile for video prompt: ' + e.getMessage());
+            }
+
+            // Also check Contact fields directly
+            try {
+                Contact c = [SELECT Skin_Type__c FROM Contact WHERE Id = :contactId LIMIT 1];
+                if (String.isNotBlank(c.Skin_Type__c)) {
+                    skinType = c.Skin_Type__c;
+                }
+            } catch (Exception e) {
+                // Continue with defaults
+            }
+        }
+
+        String concern = event.Description__c != null ? event.Description__c : 'skin concern';
+        String name = String.isNotBlank(contactName) ? contactName : 'valued customer';
+
+        // Build the Firefly video prompt
+        String prompt = 'A calming, intimate skincare ritual scene addressing ' + concern + '. '
+            + 'Soft natural lighting in a spa-like environment with clean marble surfaces and botanical elements. '
+            + 'Close-up textures of premium skincare products being gently applied — creams, serums, essences. '
+            + 'Warm tones of white, soft green, and rose gold. '
+            + 'Gentle water droplets, steam, and natural ingredients (aloe, chamomile, hyaluronic crystals) woven throughout. '
+            + 'Slow, meditative motion conveying care and expertise. '
+            + 'No human faces. Premium luxury beauty editorial aesthetic.';
+
+        return prompt;
     }
 
     // ─── Date Derivation ─────────────────────────────────────────────

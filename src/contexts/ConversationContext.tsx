@@ -676,6 +676,39 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }
         }
       }
+
+      // ─── Skin concern auto-capture for video journey pipeline ───────────
+      // When the user shares a skin concern and the agent responds with advice/products,
+      // create a skincare-video Meaningful_Event__c so the JourneyBatchProcessor
+      // picks it up and generates a personalized video journey.
+      if (customer?.contactId) {
+        const userLower = content.toLowerCase();
+        const agentLower = (response.message || '').toLowerCase();
+        const skinConcernKeywords = /\b(oily|dry|acne|blemish|breakout|wrinkle|aging|anti-aging|redness|sensitive|irritat|dark spot|hyperpigment|dull|pore|uneven|flak|eczema|rosacea|fine line|sun damage|dehydrat)\b/;
+        const agentAdviceSignals = /\b(recommend|suggest|curated|help with|here are|products? for|serum|moisturiz|cleanser|treatment|routine)\b/;
+
+        if (skinConcernKeywords.test(userLower) && agentAdviceSignals.test(agentLower)) {
+          console.log('[conversation] Skin concern detected — creating skincare-video event');
+          const concernDescription = content.length > 500 ? content.substring(0, 500) : content;
+          getDataCloudWriteService().writeMeaningfulEvent(
+            customer.contactId,
+            `skincare-video-capture-${Date.now()}`,
+            {
+              eventType: 'skincare-video',
+              description: concernDescription,
+              capturedAt: new Date().toISOString(),
+              agentNote: 'Auto-captured skin concern from Beauty Concierge conversation. Personalized video journey triggered.',
+              urgency: 'Immediate',
+            },
+            customer.contactId,
+          ).then(() => {
+            console.log('[conversation] Skincare-video event created successfully');
+            showCapture({ type: 'meaningful_event', label: 'Skin Concern Captured — Video Journey Triggered' });
+          }).catch((err) => {
+            console.error('[conversation] Failed to create skincare-video event:', err);
+          });
+        }
+      }
     } catch (error) {
       console.error('Failed to get agent response:', error);
       const errorMessage: AgentMessage = {
@@ -687,7 +720,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setMessages((prev) => [...prev, errorMessage]);
       setIsAgentTyping(false);
     }
-  }, [processUIDirective, identifyByEmail, showCapture]);
+  }, [processUIDirective, identifyByEmail, showCapture, customer]);
 
   const clearConversation = useCallback(() => {
     setMessages([]);

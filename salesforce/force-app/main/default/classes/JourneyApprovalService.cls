@@ -65,8 +65,10 @@ public with sharing class JourneyApprovalService {
                            Suggested_Subject__c, Suggested_Body__c,
                            Approved_Subject__c, Approved_Body__c,
                            Generated_Image_URL__c, Image_Content_Version_Id__c,
+                           Generated_Video_URL__c, Video_Content_Version_Id__c,
+                           Video_Prompt__c,
                            Firefly_Prompt__c, Event_Summary__c, Event_Type__c,
-                           Recommended_Products__c,
+                           Recommended_Products__c, Channel__c,
                            Reviewed_By__c, Reviewed_At__c
                     FROM Journey_Approval__c
                     WHERE Id = :req.approvalId
@@ -82,6 +84,9 @@ public with sharing class JourneyApprovalService {
                     }
                     when 'regenerate_image' {
                         result = regenerateImage(approval, req);
+                    }
+                    when 'regenerate_video' {
+                        result = regenerateVideo(approval, req);
                     }
                     when 'update_products' {
                         result = updateProducts(approval, req);
@@ -238,6 +243,48 @@ public with sharing class JourneyApprovalService {
         } else {
             result.success = false;
             result.errorMessage = fireflyResult == null ? 'No result' : fireflyResult.errorMessage;
+        }
+
+        return result;
+    }
+
+    /**
+     * Regenerate the Firefly video with a new or modified prompt.
+     * Uses FireflyApexService.generateVideo() for full orchestration.
+     */
+    private static ApprovalActionResult regenerateVideo(Journey_Approval__c approval, ApprovalActionRequest req) {
+        ApprovalActionResult result = new ApprovalActionResult();
+
+        String prompt = String.isNotBlank(req.newFireflyPrompt)
+            ? req.newFireflyPrompt : approval.Video_Prompt__c;
+
+        if (String.isBlank(prompt)) {
+            result.success = false;
+            result.errorMessage = 'No video prompt available';
+            return result;
+        }
+
+        FireflyApexService.VideoGenerationResult videoResult = FireflyApexService.generateVideo(prompt);
+
+        if (videoResult != null && videoResult.success) {
+            // Use Salesforce internal file URL for authenticated access in LWC
+            String videoUrl = videoResult.videoUrl;
+            if (String.isNotBlank(videoResult.contentVersionId)) {
+                videoUrl = '/sfc/servlet.shepherd/version/download/' + videoResult.contentVersionId;
+            }
+
+            approval.Generated_Video_URL__c = videoUrl;
+            approval.Video_Content_Version_Id__c = videoResult.contentVersionId;
+            approval.Video_Prompt__c = prompt;
+
+            update approval;
+
+            result.success = true;
+            result.message = 'Video generated successfully';
+            result.newImageUrl = videoUrl; // Reuse newImageUrl field for video URL
+        } else {
+            result.success = false;
+            result.errorMessage = videoResult == null ? 'No result' : videoResult.errorMessage;
         }
 
         return result;
@@ -471,6 +518,8 @@ public with sharing class JourneyApprovalService {
                    Approved_Subject__c, Approved_Body__c,
                    Generated_Image_URL__c, Firefly_Prompt__c,
                    Recommended_Products__c,
+                   // Video fields
+                   Generated_Video_URL__c, Video_Content_Version_Id__c, Video_Prompt__c,
                    Contact__c, Contact__r.Name, Contact__r.Email,
                    Meaningful_Event__c, CreatedDate,
                    // Multi-step journey fields
@@ -619,6 +668,17 @@ public with sharing class JourneyApprovalService {
         req.approvalId = approvalId;
         req.action = 'decline';
         req.declineReason = reason;
+
+        List<ApprovalActionResult> results = processActions(new List<ApprovalActionRequest>{req});
+        return results[0];
+    }
+
+    @AuraEnabled
+    public static ApprovalActionResult regenerateVideoFromLWC(Id approvalId, String newPrompt) {
+        ApprovalActionRequest req = new ApprovalActionRequest();
+        req.approvalId = approvalId;
+        req.action = 'regenerate_video';
+        req.newFireflyPrompt = newPrompt;
 
         List<ApprovalActionResult> results = processActions(new List<ApprovalActionRequest>{req});
         return results[0];

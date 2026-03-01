@@ -105,7 +105,6 @@ global with sharing class ProductCatalogService {
         public String imageUrl;
     }
 
-    @InvocableMethod(label='Check Store Stock' description='Checks product stock levels for a given store location')
     public static List<String> checkStock(List<StockCheckRequest> requests) {
         List<String> allResults = new List<String>();
 

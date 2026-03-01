@@ -280,4 +280,76 @@ global with sharing class CaptureKeyEventsService {
         event.put('agentNote', agentNote);
         return event;
     }
+
+    // ─── Skincare Concern Video Capture ──────────────────────────────────
+    // Creates a Meaningful_Event__c with type 'skincare-video'.
+    // This event type is NOT in the JourneyBatchProcessor exclusion filter,
+    // so it will be picked up and routed through the video journey pipeline.
+    // Portfolio assignment handles VIP routing (Customer_Value_Score__c >= 80).
+
+    @AuraEnabled
+    public static Map<String, Object> captureSkinConcernForVideo(
+        String contactId,
+        String skinConcern,
+        String agentNote
+    ) {
+        Map<String, Object> result = new Map<String, Object>();
+
+        try {
+            if (String.isBlank(contactId) || String.isBlank(skinConcern)) {
+                result.put('success', false);
+                result.put('error', 'Contact ID and skin concern are required');
+                return result;
+            }
+
+            // Look up tier for informational purposes (no gate)
+            String tierName = getLoyaltyTierName(contactId);
+
+            // Create Meaningful_Event__c with skincare-video type
+            DataCloudProfileService.writeMeaningfulEventEnhanced(
+                contactId,
+                'skincare-video-capture',
+                'skincare-video',
+                skinConcern,
+                String.isNotBlank(agentNote) ? agentNote : 'Skincare concern captured — personalized video journey triggered',
+                null,
+                null,
+                Date.today(),
+                'Immediate',
+                null
+            );
+
+            result.put('success', true);
+            result.put('tier', tierName);
+            result.put('message', 'Skincare concern captured. Video journey will be generated.');
+        } catch (Exception e) {
+            result.put('success', false);
+            result.put('error', e.getMessage());
+        }
+
+        return result;
+    }
+
+    private static String getLoyaltyTierName(String contactId) {
+        try {
+            // Get the LoyaltyProgramMember for this contact first
+            List<LoyaltyProgramMember> members = [
+                SELECT Id FROM LoyaltyProgramMember
+                WHERE ContactId = :contactId
+                LIMIT 1
+            ];
+            if (members.isEmpty()) return null;
+
+            List<LoyaltyMemberTier> tiers = [
+                SELECT LoyaltyTier.Name
+                FROM LoyaltyMemberTier
+                WHERE LoyaltyMemberId = :members[0].Id
+                ORDER BY CreatedDate DESC
+                LIMIT 1
+            ];
+            return tiers.isEmpty() ? null : tiers[0].LoyaltyTier.Name;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

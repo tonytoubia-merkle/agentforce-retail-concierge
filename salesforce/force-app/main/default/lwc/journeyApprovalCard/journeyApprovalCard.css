@@ -85,6 +85,11 @@
     color: #a86403;
 }
 
+.channel-video {
+    background: #f3e8ff;
+    color: #7526c9;
+}
+
 /* ─── Marketing Flow Link ─────────────────────────────────────────────── */
 
 .marketing-flow-link {
@@ -276,6 +281,17 @@
     margin-bottom: 0.5rem;
 }
 
+.product-image-placeholder {
+    width: 72px;
+    height: 72px;
+    border-radius: 0.25rem;
+    background: #f3f3f3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
 /* Product remove button - no background by default, dark X */
 .product-remove-btn {
     position: absolute;
@@ -421,4 +437,22 @@
     font-weight: 600;
     color: #181818;
     margin-top: 0.25rem;
+}
+
+/* ─── Video Preview ──────────────────────────────────────────────────── */
+
+.video-preview-container {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 0.5rem;
+    border: 1px solid #d8dde6;
+    overflow: hidden;
+    background: #1a1a1a;
+}
+
+.video-preview-player {
+    width: 100%;
+    display: block;
+    border-radius: 0.5rem;
 }

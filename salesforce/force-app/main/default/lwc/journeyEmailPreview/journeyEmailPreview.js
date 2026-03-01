@@ -16,7 +16,8 @@ export default class JourneyEmailPreview extends LightningElement {
     @api contactName = '';
     @api contactEmail = '';
     @api products = [];
-    @api channel = 'Email'; // Email, SMS, Push
+    @api channel = 'Email'; // Email, SMS, Push, Video
+    @api videoUrl = '';
 
     // Toggle between preview and edit mode
     @api mode = 'preview'; // 'preview' or 'edit'
@@ -31,6 +32,14 @@ export default class JourneyEmailPreview extends LightningElement {
 
     get isPushChannel() {
         return this.channel === 'Push';
+    }
+
+    get isVideoChannel() {
+        return this.channel === 'Video';
+    }
+
+    get hasVideo() {
+        return !!this.videoUrl;
     }
 
     get hasHeroImage() {
@@ -137,9 +146,33 @@ export default class JourneyEmailPreview extends LightningElement {
                 return `${baseClass} slds-theme_success`;
             case 'Push':
                 return `${baseClass} slds-theme_warning`;
+            case 'Video':
+                return `${baseClass} slds-theme_alt-inverse`;
             default:
                 return baseClass;
         }
+    }
+
+    /**
+     * Strip trailing sign-off from body HTML since the preview template
+     * adds its own signature after the product section.
+     * Matches patterns like "With love,<br/>The BEAUTÉ Team" in various HTML forms.
+     */
+    get cleanedBody() {
+        if (!this.body) return '';
+        let html = this.body;
+
+        // Remove trailing sign-off block: "With love," + "The BEAUTÉ Team" (or BEAUTE)
+        // Handles: <p>With love,<br/>The BEAUTÉ Team</p> or separate <p> tags
+        html = html.replace(/<p[^>]*>\s*With love,?\s*<br\s*\/?>\s*The BEAUT[ÉE] Team\s*<\/p>\s*$/i, '');
+        html = html.replace(/<p[^>]*>\s*With love,?\s*<\/p>\s*<p[^>]*>\s*The BEAUT[ÉE] Team\s*<\/p>\s*$/i, '');
+
+        // Also handle: "Bon voyage!...</p><p>With love,<br/>The BEAUTÉ Team</p>" at end
+        html = html.replace(/<p[^>]*>\s*With love,?\s*<br\s*\/?>\s*The BEAUT[ÉE] Team\s*<\/p>\s*/gi, '');
+        // Handle split paragraphs anywhere (not just at end)
+        html = html.replace(/<p[^>]*>\s*With love,?\s*<\/p>\s*<p[^>]*>\s*The BEAUT[ÉE] Team\s*<\/p>\s*/gi, '');
+
+        return html.trim();
     }
 
     // Render HTML body content after component renders
@@ -147,8 +180,7 @@ export default class JourneyEmailPreview extends LightningElement {
         if (this.isEmailChannel) {
             const contentDiv = this.template.querySelector('.email-content');
             if (contentDiv && this.body) {
-                // Sanitize HTML (basic - in production use a proper sanitizer)
-                contentDiv.innerHTML = this.body;
+                contentDiv.innerHTML = this.cleanedBody;
             }
         }
     }

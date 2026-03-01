@@ -25,10 +25,13 @@ export default class JourneyApprovalCard extends LightningElement {
             // Sync local products with server state
             this.localProducts = this.parseProducts(value.Recommended_Products__c);
             this.productsModified = false; // Reset flag - server now has latest
-            // Reset image error state when approval changes
+            // Sync video state
+            this.editedVideoPrompt = value.Video_Prompt__c || '';
+            // Reset image/video error state when approval changes
             this.imageLoadError = false;
-            // Reset generating state - data has been refreshed
+            // Reset generating states - data has been refreshed
             this.isGeneratingImage = false;
+            this.isGeneratingVideo = false;
         }
     }
 
@@ -59,6 +62,9 @@ export default class JourneyApprovalCard extends LightningElement {
     @track pickerLoading = true;
     @track imageLoadError = false; // Track if generated image failed to load
     @track isGeneratingImage = false; // Track if image generation is in progress
+    @track isGeneratingVideo = false; // Track if video generation is in progress
+    @track editedVideoPrompt = ''; // Editable video prompt
+    @track showRegenerateVideoModal = false; // Modal for editing video prompt
 
     // Helper to parse products JSON
     parseProducts(productsJson) {
@@ -199,11 +205,16 @@ export default class JourneyApprovalCard extends LightningElement {
         return this.channel === 'Push';
     }
 
+    get isVideoChannel() {
+        return this.channel === 'Video';
+    }
+
     get channelIcon() {
         switch (this.channel) {
             case 'Email': return 'utility:email';
             case 'SMS': return 'utility:chat';
             case 'Push': return 'utility:notification';
+            case 'Video': return 'utility:video';
             default: return 'utility:email';
         }
     }
@@ -214,6 +225,7 @@ export default class JourneyApprovalCard extends LightningElement {
             case 'Email': return `${base} channel-email`;
             case 'SMS': return `${base} channel-sms`;
             case 'Push': return `${base} channel-push`;
+            case 'Video': return `${base} channel-video`;
             default: return base;
         }
     }
@@ -329,6 +341,7 @@ export default class JourneyApprovalCard extends LightningElement {
     get bodyLabel() {
         if (this.isSmsChannel) return 'SMS Message';
         if (this.isPushChannel) return 'Push Notification Text';
+        if (this.isVideoChannel) return 'Video Companion Text';
         return 'Email Body';
     }
 
@@ -359,6 +372,26 @@ export default class JourneyApprovalCard extends LightningElement {
     handleImageError() {
         console.warn('[JourneyApprovalCard] Generated image failed to load');
         this.imageLoadError = true;
+    }
+
+    handleProductImageError(event) {
+        const img = event.target;
+        const productCode = img.dataset.code;
+        const currentSrc = img.src;
+        console.warn('[JourneyApprovalCard] Product image failed to load:', productCode, currentSrc);
+
+        // Try reconstructing the URL from productCode if the stored URL is broken
+        const expectedUrl = `https://agentforce-retail-advisor.vercel.app/assets/products/${productCode}.png`;
+        if (currentSrc !== expectedUrl && productCode) {
+            console.log('[JourneyApprovalCard] Retrying with reconstructed URL:', expectedUrl);
+            img.src = expectedUrl;
+        } else {
+            // Hide broken image, show placeholder
+            img.style.display = 'none';
+            img.insertAdjacentHTML('afterend',
+                '<div class="product-image-placeholder"><span style="font-size:1.5rem;color:#b0adab;">&#128247;</span></div>'
+            );
+        }
     }
 
     // Reset error state when approval changes (in case new image is generated)
@@ -787,5 +820,54 @@ export default class JourneyApprovalCard extends LightningElement {
             }
         }));
         this.closeRegenerateModal();
+    }
+
+    // ─── Video Channel Methods ──────────────────────────────────────────
+
+    get videoUrl() {
+        return this.approval?.Generated_Video_URL__c;
+    }
+
+    get hasGeneratedVideo() {
+        return !!this.videoUrl && this.videoUrl.trim() !== '';
+    }
+
+    get videoPrompt() {
+        return this.approval?.Video_Prompt__c || '';
+    }
+
+    get generateVideoLabel() {
+        return this.hasGeneratedVideo ? 'Regenerate Video' : 'Generate Video';
+    }
+
+    handleVideoPromptChange(event) {
+        this.editedVideoPrompt = event.target.value;
+    }
+
+    handleGenerateVideoClick() {
+        this.showRegenerateVideoModal = true;
+    }
+
+    handleEditVideoPrompt() {
+        this.showRegenerateVideoModal = true;
+    }
+
+    closeRegenerateVideoModal() {
+        this.showRegenerateVideoModal = false;
+    }
+
+    confirmRegenerateVideo() {
+        this.isGeneratingVideo = true;
+        this.showRegenerateVideoModal = false;
+
+        this.dispatchEvent(new CustomEvent('action', {
+            detail: {
+                action: 'regenerate_video',
+                approvalId: this.approval.Id,
+                data: {
+                    prompt: this.editedVideoPrompt
+                }
+            }
+        }));
     }
 }

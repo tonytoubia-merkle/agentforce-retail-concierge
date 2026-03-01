@@ -8,6 +8,7 @@ import approveJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.appro
 import declineJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.declineJourneyFromLWC';
 import sendJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.sendJourneyFromLWC';
 import regenerateImageFromLWC from '@salesforce/apex/JourneyApprovalService.regenerateImageFromLWC';
+import regenerateVideoFromLWC from '@salesforce/apex/JourneyApprovalService.regenerateVideoFromLWC';
 import updateProductsFromLWC from '@salesforce/apex/JourneyApprovalService.updateProductsFromLWC';
 import approveAllJourneySteps from '@salesforce/apex/JourneyApprovalService.approveAllJourneySteps';
 import declineAllJourneySteps from '@salesforce/apex/JourneyApprovalService.declineAllJourneySteps';
@@ -148,6 +149,51 @@ export default class MarketerInbox extends LightningElement {
         };
     }
 
+    /**
+     * Parse raw Event_Summary__c into a clean, readable summary.
+     * Raw format: "EVENT TYPE: X DESCRIPTION: Y EVENT DATE: Z DAYS UNTIL: N URGENCY: U AGENT INSIGHT: I CAPTURED: T"
+     * Output: "Y — I" (description + agent insight)
+     */
+    formatEventSummary(raw) {
+        if (!raw) return '';
+
+        // Try to parse structured fields from the raw summary
+        const descMatch = raw.match(/DESCRIPTION:\s*(.+?)(?=\s+EVENT DATE:|$)/i);
+        const insightMatch = raw.match(/AGENT INSIGHT:\s*(.+?)(?=\s+CAPTURED:|$)/i);
+        const dateMatch = raw.match(/EVENT DATE:\s*(\S+)/i);
+        const daysMatch = raw.match(/DAYS UNTIL:\s*(\S+)/i);
+
+        const parts = [];
+
+        if (descMatch && descMatch[1].trim()) {
+            parts.push(descMatch[1].trim());
+        }
+
+        if (dateMatch && dateMatch[1].trim() && dateMatch[1].trim() !== 'No') {
+            const days = daysMatch ? daysMatch[1].trim() : null;
+            if (days && days !== 'No') {
+                parts.push(`in ${days} days (${dateMatch[1].trim()})`);
+            }
+        }
+
+        if (insightMatch && insightMatch[1].trim()) {
+            const insight = insightMatch[1].trim();
+            // Capitalize first letter and add as a separate line
+            parts.push(insight.charAt(0).toUpperCase() + insight.slice(1));
+        }
+
+        // If parsing failed, fall back to truncated raw text
+        if (parts.length === 0) {
+            return raw.length > 120 ? raw.substring(0, 120) + '…' : raw;
+        }
+
+        // Join description + timeline on one line, insight as context
+        if (parts.length >= 3) {
+            return `${parts[0]} ${parts[1]} — ${parts[2]}`;
+        }
+        return parts.join(' — ');
+    }
+
     getDaysDisplay(days) {
         if (days === null || days === undefined) return 'No date';
         if (days === 0) return 'Today!';
@@ -204,7 +250,7 @@ export default class MarketerInbox extends LightningElement {
                     contactEmail: approval.contactEmail,
                     eventType: approval.eventType,
                     eventDate: approval.eventDate,
-                    eventSummary: approval.Event_Summary__c || '',
+                    eventSummary: this.formatEventSummary(approval.Event_Summary__c),
                     confidenceScore: approval.Confidence_Score__c || 0,
                     portfolioName: approval.portfolioName,
                     totalSteps: approval.Total_Steps__c || 1,
@@ -390,7 +436,8 @@ export default class MarketerInbox extends LightningElement {
         const icons = {
             'Email': 'utility:email',
             'SMS': 'utility:chat',
-            'Push': 'utility:notification'
+            'Push': 'utility:notification',
+            'Video': 'utility:video'
         };
         return icons[channel] || 'utility:email';
     }
@@ -697,7 +744,23 @@ export default class MarketerInbox extends LightningElement {
     // Handle action from detail card
     async handleCardAction(event) {
         const { action, approvalId, data } = event.detail;
-        console.log('[MarketerInbox] handleCardAction:', action, approvalId);
+        console.log('[MarketerInbox] handleCardAction v2:', action, approvalId);
+
+        // Handle step navigation and timing locally (no Apex call)
+        switch (action) {
+            case 'navigateStep':
+                console.log('[MarketerInbox] navigateStep direction:', data.direction);
+                this.handleNavigateStep(approvalId, data.direction);
+                return;
+
+            case 'updateTiming':
+                console.log('[MarketerInbox] updateTiming not yet implemented');
+                return;
+
+            default:
+                break;
+        }
+
         this.isLoading = true;
 
         try {
@@ -724,6 +787,13 @@ export default class MarketerInbox extends LightningElement {
                         approvalId: approvalId,
                         newPrompt: data.prompt,
                         productsJson: data.products
+                    });
+                    break;
+
+                case 'regenerate_video':
+                    result = await regenerateVideoFromLWC({
+                        approvalId: approvalId,
+                        newPrompt: data.prompt
                     });
                     break;
 
@@ -795,6 +865,35 @@ export default class MarketerInbox extends LightningElement {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    /**
+     * Navigate to a sibling step within the same journey.
+     * Updates selectedApproval so the detail modal card re-renders with the new step.
+     */
+    handleNavigateStep(approvalId, direction) {
+        // Find the current approval
+        const current = this.approvals.find(a => a.Id === approvalId);
+        if (!current || !current.Journey_Id__c) {
+            console.warn('[MarketerInbox] Approval or Journey_Id not found for:', approvalId);
+            return;
+        }
+
+        // Get ALL sibling steps (unfiltered) sorted by step number
+        const siblings = this.approvals
+            .filter(a => a.Journey_Id__c === current.Journey_Id__c)
+            .sort((a, b) => (a.Step_Number__c || 0) - (b.Step_Number__c || 0));
+
+        const currentIndex = siblings.findIndex(s => s.Id === approvalId);
+        if (currentIndex === -1) return;
+
+        const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+        if (newIndex < 0 || newIndex >= siblings.length) return;
+
+        const newStep = siblings[newIndex];
+        console.log('[MarketerInbox] Navigating to step', newStep.Step_Number__c, 'of', current.Total_Steps__c);
+        // Spread to force LWC reactivity
+        this.selectedApproval = { ...newStep };
     }
 
     showToastMessage(message, variant) {

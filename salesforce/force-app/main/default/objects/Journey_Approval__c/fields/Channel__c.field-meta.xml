@@ -27,6 +27,11 @@
                 <default>false</default>
                 <label>Push</label>
             </value>
+            <value>
+                <fullName>Video</fullName>
+                <default>false</default>
+                <label>Video</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>
