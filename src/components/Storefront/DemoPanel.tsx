@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
@@ -295,6 +295,16 @@ export const DemoPanel: React.FC = () => {
   const [isManageMode, setIsManageMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshProfile();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshProfile]);
 
   // Fetch CRM contacts when panel opens (real mode only)
   useEffect(() => {
@@ -722,6 +732,17 @@ export const DemoPanel: React.FC = () => {
                               {tierLabel}
                             </div>
                           </div>
+                          {/* Refresh profile data */}
+                          <button
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            className="p-1.5 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors disabled:opacity-50"
+                            title="Refresh profile data"
+                          >
+                            <svg className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                          </button>
                           {/* Manage (trash) toggle — only when there are deletable records */}
                           {((customer.chatSummaries && customer.chatSummaries.length > 0) ||
                             (customer.meaningfulEvents && customer.meaningfulEvents.length > 0)) && (

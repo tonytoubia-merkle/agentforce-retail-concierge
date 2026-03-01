@@ -389,7 +389,9 @@ public with sharing class JourneyStepService {
      */
     public static String generateJourneyId(Id contactId, String eventType) {
         String timestamp = String.valueOf(DateTime.now().getTime());
-        String contactPrefix = String.valueOf(contactId).substring(0, 10);
+        String contactPrefix = contactId != null
+            ? String.valueOf(contactId).substring(0, 10)
+            : 'UNLINKED00';
 
         String eventCode = 'UNKNOWN';
         if (eventType != null) {
