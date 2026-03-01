@@ -20,8 +20,8 @@ import sharp from 'sharp';
 // Canvas dimensions
 // Composite is larger to fill more of the output and reduce Firefly generation area
 const COMPOSITE_SIZE = 600;    // Square product composite canvas
-const OUTPUT_WIDTH = 2688;     // Widescreen (16:9) — supported by Firefly Object Composite
-const OUTPUT_HEIGHT = 1536;    // Widescreen (16:9)
+const OUTPUT_WIDTH = 1344;     // Widescreen (16:9) — keeps file size under Salesforce 6MB callout limit
+const OUTPUT_HEIGHT = 768;     // Widescreen (16:9)
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -537,8 +537,8 @@ async function generateImageFallback(prompt, token, clientId) {
     prompt: prompt,
     contentClass: 'photo',
     size: {
-      width: 2048,
-      height: 2048
+      width: 1024,
+      height: 1024
     },
     numVariations: 1
   });

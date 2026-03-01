@@ -327,8 +327,8 @@ public with sharing class FireflyApexService {
             'prompt' => prompt,
             'contentClass' => 'photo',
             'size' => new Map<String, Object>{
-                'width' => 2048,
-                'height' => 2048
+                'width' => 1024,
+                'height' => 1024
             },
             'numVariations' => 1
         };
