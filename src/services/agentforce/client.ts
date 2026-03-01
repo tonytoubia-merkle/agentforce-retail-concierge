@@ -63,37 +63,11 @@ export class AgentforceClient {
       bypassUser: true,
     };
 
-    // Pass customer context as session variables so the agent knows who it's talking to
-    // Agentforce API requires { name, value, type } for each variable
-    if (customerContext) {
-      const toStr = (v: unknown): string =>
-        Array.isArray(v) ? v.join('; ') : String(v ?? '');
-
-      sessionBody.variables = [
-        // Use email as customerId so Apex CaptureKeyEventsService can look up Contact
-        { name: 'customerId', type: 'Text', value: toStr(customerContext.email || customerContext.customerId) },
-        { name: 'customerEmail', type: 'Text', value: toStr(customerContext.email) },
-        // VerifiedCustomerId: The only Custom-sourced agent variable (Messaging Session vars are null for API sessions).
-        // The planner uses this to pass contactId to Create_Meaningful_Event and other actions.
-        { name: 'VerifiedCustomerId', type: 'Text', value: toStr(customerContext.contactId || customerContext.email || customerContext.customerId) },
-        { name: 'contactId', type: 'Text', value: toStr(customerContext.contactId || customerContext.email || customerContext.customerId) },
-        { name: 'sessionId', type: 'Text', value: toStr(customerContext.email || customerContext.customerId) },
-        { name: 'customerName', type: 'Text', value: toStr(customerContext.name) },
-        { name: 'identityTier', type: 'Text', value: toStr(customerContext.identityTier || 'anonymous') },
-        { name: 'skinType', type: 'Text', value: toStr(customerContext.skinType) },
-        { name: 'concerns', type: 'Text', value: toStr(customerContext.concerns) },
-        { name: 'recentPurchases', type: 'Text', value: toStr(customerContext.recentPurchases) },
-        { name: 'recentActivity', type: 'Text', value: toStr(customerContext.recentActivity) },
-        { name: 'appendedInterests', type: 'Text', value: toStr(customerContext.appendedInterests) },
-        { name: 'loyaltyTier', type: 'Text', value: toStr(customerContext.loyaltyTier) },
-        { name: 'loyaltyPoints', type: 'Text', value: toStr(customerContext.loyaltyPoints) },
-        { name: 'chatContext', type: 'Text', value: toStr(customerContext.chatContext) },
-        { name: 'meaningfulEvents', type: 'Text', value: toStr(customerContext.meaningfulEvents) },
-        { name: 'browseInterests', type: 'Text', value: toStr(customerContext.browseInterests) },
-        { name: 'capturedProfile', type: 'Text', value: toStr(customerContext.capturedProfile) },
-        { name: 'missingProfileFields', type: 'Text', value: toStr(customerContext.missingProfileFields) },
-      ].filter(v => v.value !== '');
-    }
+    // DO NOT pass session variables — the Agentforce API consistently rejects them with
+    // InternalVariableMutationAttemptException regardless of which variable name we use.
+    // All customer identity (Contact ID, email, name, etc.) is passed via the welcome
+    // message text in buildWelcomeMessage() and the agent extracts it from there when
+    // calling actions like Create_Meaningful_Event.
 
     const response = await fetch(url, {
       method: 'POST',
@@ -371,6 +345,29 @@ export class AgentforceClient {
             payload: { captures: deduped } as unknown as UIDirective['payload'],
           };
         }
+      }
+    }
+
+    // ─── Quality filter: remove false-positive meaningful_event captures ───
+    // The agent sometimes tags conversational preferences (e.g., "open to lipstick
+    // options") as meaningful events. Real meaningful events describe life events,
+    // travel plans, milestones, etc. — filter out labels that don't match.
+    const allCaptures = ((uiDirective?.payload as Record<string, unknown>)?.captures as Array<{ type: string; label: string }>) || [];
+    if (allCaptures.length > 0) {
+      const lifeEventKeywords = /\b(trip|travel|anniversary|birthday|wedding|baby|pregnan|moving|graduat|retire|vacation|holiday|honeymoon|prom|reunion|concert|festival|event|appointment|surgery|celebration)\b/i;
+      const filtered = allCaptures.filter(c => {
+        if (c.type !== 'meaningful_event') return true; // keep non-event captures
+        // Extract the descriptive part after "Event Captured: " prefix
+        const desc = c.label.replace(/^Event\s+Captured:\s*/i, '').trim();
+        // Accept if it contains a recognized life-event keyword
+        if (lifeEventKeywords.test(desc)) return true;
+        // Accept if label was from structured JSON capture detection (has proper prefix)
+        if (c.label.startsWith('Event Captured:') && desc.length > 15) return true;
+        console.log('[agentforce] Filtered out low-quality capture:', c.label);
+        return false;
+      });
+      if (filtered.length < allCaptures.length) {
+        (uiDirective!.payload as Record<string, unknown>).captures = filtered;
       }
     }
 
