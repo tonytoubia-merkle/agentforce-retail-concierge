@@ -681,7 +681,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // When the user shares a skin concern and the agent responds with advice/products,
       // create a skincare-video Meaningful_Event__c so the JourneyBatchProcessor
       // picks it up and generates a personalized video journey.
-      if (customer?.contactId) {
+      if (customer?.id) {
         const userLower = content.toLowerCase();
         const agentLower = (response.message || '').toLowerCase();
         const skinConcernKeywords = /\b(oily|dry|acne|blemish|breakout|wrinkle|aging|anti-aging|redness|sensitive|irritat|dark spot|hyperpigment|dull|pore|uneven|flak|eczema|rosacea|fine line|sun damage|dehydrat)\b/;
@@ -691,7 +691,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           console.log('[conversation] Skin concern detected — creating skincare-video event');
           const concernDescription = content.length > 500 ? content.substring(0, 500) : content;
           getDataCloudWriteService().writeMeaningfulEvent(
-            customer.contactId,
+            customer.id,
             `skincare-video-capture-${Date.now()}`,
             {
               eventType: 'skincare-video',
@@ -700,7 +700,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
               agentNote: 'Auto-captured skin concern from Beauty Concierge conversation. Personalized video journey triggered.',
               urgency: 'Immediate',
             },
-            customer.contactId,
+            customer.id,
           ).then(() => {
             console.log('[conversation] Skincare-video event created successfully');
             showCapture({ type: 'meaningful_event', label: 'Skin Concern Captured — Video Journey Triggered' });
