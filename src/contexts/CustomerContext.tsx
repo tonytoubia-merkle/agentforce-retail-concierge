@@ -91,6 +91,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             }
           }
           setCustomer(profile);
+          setIsAuthenticated(true);
         } catch (err) {
           console.error('[customer] CRM profile fetch failed:', err);
           setError(err instanceof Error ? err : new Error('Failed to load CRM profile'));
@@ -145,6 +146,9 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const persona = getPersonaById(personaId);
         if (persona) {
           setCustomer(persona.profile);
+          if (persona.profile.merkuryIdentity?.identityTier === 'known') {
+            setIsAuthenticated(true);
+          }
         } else {
           setCustomer(null);
         }
