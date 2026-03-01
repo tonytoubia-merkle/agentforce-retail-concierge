@@ -229,14 +229,15 @@ function buildWelcomeMessage(ctx: CustomerSessionContext): string {
     lines.push(`Identity: anonymous`);
   } else {
     lines.push(`Customer: ${ctx.name} (greet by first name)`, `Email: ${ctx.email || 'unknown'}`, `Identity: ${ctx.identityTier}`);
-    if (ctx.contactId) lines.push(`Salesforce Contact ID: ${ctx.contactId}`);
-    // Tell the planner exactly what values to use for action inputs
-    if (ctx.email) {
+    // Tell the planner exactly what values to use for action inputs.
+    // Use the SF Contact ID (003...) when available, email as fallback.
+    const contactIdValue = ctx.contactId || ctx.email;
+    if (contactIdValue) {
       lines.push(`[ACTION INPUT VALUES] When calling ANY action during this conversation, use these values:`);
-      lines.push(`  - contactId = "${ctx.email}"`);
-      lines.push(`  - customerEmail = "${ctx.email}"`);
-      lines.push(`  - sessionId = "${ctx.email}"`);
-      lines.push(`  - customerId = "${ctx.email}"`);
+      lines.push(`  - contactId = "${contactIdValue}"`);
+      lines.push(`  - customerEmail = "${ctx.email || ''}"`);
+      lines.push(`  - sessionId = "${ctx.email || contactIdValue}"`);
+      lines.push(`  - customerId = "${contactIdValue}"`);
       lines.push(`These are REQUIRED. NEVER leave contactId empty when calling Create Meaningful Event, Update Contact Profile, or any other action.`);
     }
     lines.push(`[INSTRUCTION] Keep your welcome greeting SHORT — 2 sentences maximum. Greet by first name. If there is ONE standout context item (an upcoming trip, a recent life event, a loyalty milestone), acknowledge it briefly in a warm, natural way. Do NOT list multiple preferences, product types, or questions. End with a single warm invitation or open question. Be conversational, not encyclopedic.`);

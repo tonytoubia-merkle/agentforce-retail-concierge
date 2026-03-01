@@ -454,7 +454,7 @@
         <isCollection>false</isCollection>
         <isInput>true</isInput>
         <isOutput>false</isOutput>
-        <description>The customer's email address (e.g. sarah@example.com). ALWAYS provide the customer email from the conversation context. The flow will look up the Contact record automatically. A Salesforce Contact ID (003...) is also accepted.</description>
+        <description>The Salesforce Contact ID (003...) for the customer. If unavailable, an email address is accepted and the flow will look up the Contact record automatically.</description>
     </variables>
     <variables>
         <name>customerEmail</name>
