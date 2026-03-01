@@ -474,9 +474,6 @@ public with sharing class MultiStepJourneyBuilder {
         html += '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Discover Your Selection</a>';
         html += '</p>';
 
-        // Warm sign-off
-        html += '<p style="margin-top: 40px; color: #666; font-style: italic;">With love,</p>';
-        html += '<p style="color: #B76E79; font-weight: 600; font-size: 16px;">The BEAUTÉ Team</p>';
         html += '</div>';
 
         return html;

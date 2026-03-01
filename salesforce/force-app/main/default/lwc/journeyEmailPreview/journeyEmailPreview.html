@@ -40,10 +40,9 @@
                     <div class="email-content-wrapper">
                         <div class="email-content" lwc:dom="manual"></div>
 
-                        <!-- Product Grid - Integrated into body flow -->
+                        <!-- Product Grid - Before sign-off -->
                         <template if:true={hasProducts}>
                             <div class="product-section-inline">
-                                <h3 class="product-section-title-inline">Recommended For You</h3>
                                 <div class="product-grid-inline">
                                     <template for:each={displayProducts} for:item="product">
                                         <div key={product.productCode} class="product-card-inline">
@@ -57,7 +56,7 @@
 
                         <!-- Closing signature -->
                         <div class="email-signature">
-                            <p>Warm regards,</p>
+                            <p>With love,</p>
                             <p class="signature-name">The BEAUTÉ Team</p>
                         </div>
                     </div>

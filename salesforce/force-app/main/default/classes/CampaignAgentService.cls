@@ -579,8 +579,7 @@ public with sharing class CampaignAgentService {
         String ctaStyle = 'display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); '
             + 'color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500;';
         String wrapOpen = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px;">';
-        String signOff = '<p style="color: #666; font-style: italic;">With love,</p>'
-            + '<p style="color: #B76E79; font-weight: 600;">The BEAUTÉ Team</p></div>';
+        String signOff = '</div>';
         String name = String.isNotBlank(contactName) ? contactName : 'there';
 
         if (lower.contains('serum') || lower.contains('moisturizer') || lower.contains('cleanser') || lower.contains('skincare')) {
