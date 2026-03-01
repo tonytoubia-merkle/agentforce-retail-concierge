@@ -139,12 +139,16 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
   }, [customer]);
 
   // SF Personalization decision takes priority, then campaign, then local logic
+  // Only override local fields when the SF decision has non-empty values
   const variant = useMemo(() => {
     const localVariant = getHeroVariant(customer, isAuthenticated, campaign);
     if (sfpDecision) {
       return {
         ...localVariant,
-        ...sfpDecision,
+        ...(sfpDecision.badge ? { badge: sfpDecision.badge } : {}),
+        ...(sfpDecision.headlineTop ? { headlineTop: sfpDecision.headlineTop } : {}),
+        ...(sfpDecision.headlineBottom ? { headlineBottom: sfpDecision.headlineBottom } : {}),
+        ...(sfpDecision.subtitle ? { subtitle: sfpDecision.subtitle } : {}),
         heroImage: sfpDecision.heroImage || localVariant.heroImage,
         imageAlt: sfpDecision.imageAlt || localVariant.imageAlt,
       };
