@@ -513,11 +513,25 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // Appended-tier customers: session is initialized with 3P signals
         // (so subsequent messages can use them for curation), but the welcome
         // screen looks identical to anonymous — no personalized greeting.
+        if (sessionCtx.identityTier === 'appended') {
+          setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
+          setSuggestedActions([
+            'Show me moisturizers',
+            'I need travel products',
+            'What do you recommend?',
+          ]);
+          return;
+        }
+
         // Known-but-not-authenticated: Merkury identified them but they haven't
-        // signed in. Treat the same — generic welcome, no personalization.
-        // Their full profile is loaded and ready for when they do sign in.
-        if (sessionCtx.identityTier === 'appended' ||
-            (sessionCtx.identityTier === 'known' && !isAuthenticated)) {
+        // signed in. Show the generic landing page, but fire the welcome message
+        // in the background so the agent calls IdentifyCustomerByEmail and resolves
+        // the Contact ID. When the user sends their first message, the agent already
+        // has full context and a resolved contactId for event capture.
+        if (sessionCtx.identityTier === 'known' && !isAuthenticated) {
+          getAgentResponse(welcomeMsg).catch(err => {
+            console.error('[welcome] Background identity resolution failed:', err);
+          });
           setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
           setSuggestedActions([
             'Show me moisturizers',
