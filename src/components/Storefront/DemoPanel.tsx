@@ -39,6 +39,7 @@ interface ManageOptions {
   isManageMode: boolean;
   selectedIds: Set<string>;
   onToggle: (id: string) => void;
+  onCleared?: () => void;
 }
 
 const DeleteCheckbox: React.FC<{ id: string; selected: boolean; onToggle: (id: string) => void }> = ({ id, selected, onToggle }) => (
@@ -58,6 +59,39 @@ const DeleteCheckbox: React.FC<{ id: string; selected: boolean; onToggle: (id: s
   </button>
 );
 
+/** Clearable field — shows an "×" button in manage mode to null out a Contact field. */
+const ClearableField: React.FC<{
+  label: string; value: string | undefined | null;
+  manage?: ManageOptions; contactId?: string; fieldApi?: string; onCleared?: () => void;
+}> = ({ label, value, manage, contactId, fieldApi, onCleared }) => {
+  if (!value) return null;
+  const handleClear = async () => {
+    if (!contactId || !fieldApi) return;
+    try {
+      const resp = await fetch(`/api/sf-record/${contactId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sobject: 'Contact', fields: { [fieldApi]: null } }),
+      });
+      if (resp.ok || resp.status === 204) {
+        console.log(`[demo] Cleared ${fieldApi} on ${contactId}`);
+        onCleared?.();
+      }
+    } catch (err) { console.error(`[demo] Failed to clear ${fieldApi}:`, err); }
+  };
+  return (
+    <div className="flex justify-between gap-2 py-0.5 items-center">
+      <span className="text-[11px] text-white/40 shrink-0">{label}</span>
+      <span className="text-[11px] text-white/80 text-right flex items-center gap-1">
+        {value}
+        {manage?.isManageMode && fieldApi && (
+          <button onClick={handleClear} className="text-red-400 hover:text-red-300 text-[10px] ml-1" title={`Clear ${label}`}>×</button>
+        )}
+      </span>
+    </div>
+  );
+};
+
 function renderProfileDetail(customer: CustomerProfile, manage?: ManageOptions) {
   const sections: React.ReactNode[] = [];
   const bp = customer.beautyProfile;
@@ -65,10 +99,10 @@ function renderProfileDetail(customer: CustomerProfile, manage?: ManageOptions) 
   if (bp?.skinType) {
     sections.push(
       <DetailSection key="beauty" title="Beauty Profile" source="Contact">
-        <DetailField label="Skin Type" value={bp.skinType} />
-        <DetailField label="Concerns" value={bp.concerns?.join(', ')} />
-        <DetailField label="Allergies" value={bp.allergies?.join(', ')} />
-        <DetailField label="Brands" value={bp.preferredBrands?.join(', ')} />
+        <ClearableField label="Skin Type" value={bp.skinType} manage={manage} contactId={customer.id} fieldApi="Skin_Type__c" onCleared={manage?.onCleared} />
+        <ClearableField label="Concerns" value={bp.concerns?.join(', ')} manage={manage} contactId={customer.id} fieldApi="Skin_Concerns__c" onCleared={manage?.onCleared} />
+        <ClearableField label="Allergies" value={bp.allergies?.join(', ')} manage={manage} contactId={customer.id} fieldApi="Allergies__c" onCleared={manage?.onCleared} />
+        <ClearableField label="Brands" value={bp.preferredBrands?.join(', ')} manage={manage} contactId={customer.id} fieldApi="Preferred_Brands__c" onCleared={manage?.onCleared} />
       </DetailSection>
     );
   }
@@ -350,13 +384,30 @@ export const DemoPanel: React.FC = () => {
         ?.filter((e) => e.id && selectedForDelete.has(e.id))
         .map((e) => e.id!) || [];
 
+      // Cascade: find Journey_Approval__c records linked to events being deleted
+      let approvalIds: string[] = [];
+      if (eventIds.length > 0) {
+        try {
+          const idList = eventIds.map((id) => `'${id}'`).join(',');
+          const resp = await fetch(`/api/datacloud/query/?q=SELECT+Id+FROM+Journey_Approval__c+WHERE+Meaningful_Event__c+IN+(${encodeURIComponent(idList)})`);
+          if (resp.ok) {
+            const data = await resp.json();
+            approvalIds = (data.records || []).map((r: any) => r.Id);
+            if (approvalIds.length > 0) {
+              console.log(`[demo] Found ${approvalIds.length} journey approvals to cascade-delete`);
+            }
+          }
+        } catch { /* non-critical — event delete still proceeds */ }
+      }
+
       const results = await Promise.all([
         chatIds.length > 0 ? writeService.deleteRecords('Chat_Summary__c', chatIds) : { deleted: [], failed: [] },
+        approvalIds.length > 0 ? writeService.deleteRecords('Journey_Approval__c', approvalIds) : { deleted: [], failed: [] },
         eventIds.length > 0 ? writeService.deleteRecords('Meaningful_Event__c', eventIds) : { deleted: [], failed: [] },
       ]);
 
-      const totalDeleted = results[0].deleted.length + results[1].deleted.length;
-      const totalFailed = results[0].failed.length + results[1].failed.length;
+      const totalDeleted = results[0].deleted.length + results[1].deleted.length + results[2].deleted.length;
+      const totalFailed = results[0].failed.length + results[1].failed.length + results[2].failed.length;
       console.log(`[demo] Deleted ${totalDeleted} records${totalFailed > 0 ? `, ${totalFailed} failed` : ''}`);
 
       // Exit manage mode and refresh profile once
@@ -784,6 +835,7 @@ export const DemoPanel: React.FC = () => {
                           isManageMode,
                           selectedIds: selectedForDelete,
                           onToggle: toggleDeleteSelection,
+                          onCleared: refreshProfile,
                         })
                       ) : (
                         !campaign && (
