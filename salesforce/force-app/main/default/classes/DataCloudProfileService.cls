@@ -357,6 +357,12 @@ global with sharing class DataCloudProfileService {
         // Link to Contact for Data Cloud Individual association
         if (String.isNotBlank(customerId) && customerId.startsWith('003')) {
             try { record.Contact__c = Id.valueOf(customerId); } catch (Exception e) { /* not a valid Id */ }
+        } else if (String.isNotBlank(customerId)) {
+            // customerId might be an email — look up the Contact
+            List<Contact> contacts = [SELECT Id FROM Contact WHERE Email = :customerId LIMIT 1];
+            if (!contacts.isEmpty()) {
+                record.Contact__c = contacts[0].Id;
+            }
         }
         insert record;
     }
@@ -406,6 +412,12 @@ global with sharing class DataCloudProfileService {
         // Link to Contact for Data Cloud Individual association
         if (String.isNotBlank(customerId) && customerId.startsWith('003')) {
             try { record.Contact__c = Id.valueOf(customerId); } catch (Exception e) { /* not a valid Id */ }
+        } else if (String.isNotBlank(customerId)) {
+            // customerId might be an email — look up the Contact
+            List<Contact> contacts = [SELECT Id FROM Contact WHERE Email = :customerId LIMIT 1];
+            if (!contacts.isEmpty()) {
+                record.Contact__c = contacts[0].Id;
+            }
         }
 
         // Temporal fields

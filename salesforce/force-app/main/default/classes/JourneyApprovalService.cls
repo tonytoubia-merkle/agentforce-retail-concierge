@@ -612,7 +612,7 @@ public with sharing class JourneyApprovalService {
                 SELECT COUNT()
                 FROM Meaningful_Event__c
                 WHERE Approval_Status__c = 'Pending Review'
-                  AND Event_Type__c = 'life-event'
+                  AND Event_Type__c NOT IN ('intent', 'concern', 'preference', 'milestone')
             ];
 
             if (pendingCount == 0) {

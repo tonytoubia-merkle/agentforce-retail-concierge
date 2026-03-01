@@ -34,7 +34,7 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
                    Approval_Status__c, Captured_At__c
             FROM Meaningful_Event__c
             WHERE Approval_Status__c = 'Pending Review'
-              AND Event_Type__c = 'life-event'
+              AND Event_Type__c NOT IN ('intent', 'concern', 'preference', 'milestone')
               AND (Event_Date__c = NULL OR Event_Date__c >= TODAY)
               AND (Event_Date__c = NULL OR Event_Date__c <= NEXT_N_DAYS:60)
             ORDER BY Event_Date__c ASC NULLS LAST, Captured_At__c DESC
@@ -194,7 +194,13 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
             try {
                 contactId = Id.valueOf(event.Customer_Id__c);
             } catch (Exception e) {
-                System.debug(LoggingLevel.WARN, 'Could not parse Customer_Id__c as Contact Id: ' + event.Customer_Id__c);
+                // Customer_Id__c is likely an email — look up the Contact
+                List<Contact> contacts = [SELECT Id FROM Contact WHERE Email = :event.Customer_Id__c LIMIT 1];
+                if (!contacts.isEmpty()) {
+                    contactId = contacts[0].Id;
+                } else {
+                    System.debug(LoggingLevel.WARN, 'No Contact found for Customer_Id__c: ' + event.Customer_Id__c);
+                }
             }
         }
 
