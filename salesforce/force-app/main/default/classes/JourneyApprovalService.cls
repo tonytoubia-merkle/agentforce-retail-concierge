@@ -553,11 +553,14 @@ public with sharing class JourneyApprovalService {
         }
 
         try {
-            // Get all pending steps for this journey
+            // Get all pending steps for this journey (include fields needed for image generation)
             List<Journey_Approval__c> steps = [
                 SELECT Id, Status__c, Step_Number__c, Send_Delay_Days__c,
                        Suggested_Subject__c, Suggested_Body__c,
-                       Approved_Subject__c, Approved_Body__c
+                       Approved_Subject__c, Approved_Body__c,
+                       Channel__c, Firefly_Prompt__c, Recommended_Products__c,
+                       Generated_Image_URL__c, Image_Content_Version_Id__c,
+                       Event_Type__c
                 FROM Journey_Approval__c
                 WHERE Journey_Id__c = :journeyId
                 AND Status__c = 'Pending'
@@ -569,7 +572,52 @@ public with sharing class JourneyApprovalService {
                 return result;
             }
 
-            // Calculate scheduled send dates and approve all steps
+            // Generate images for Email steps that don't have one yet (callouts first, before DML)
+            Integer imagesGenerated = 0;
+            for (Journey_Approval__c step : steps) {
+                if (step.Channel__c == 'Email'
+                    && String.isBlank(step.Generated_Image_URL__c)
+                    && String.isNotBlank(step.Firefly_Prompt__c)) {
+                    try {
+                        FireflyApexService.ImageGenerationResult fireflyResult;
+
+                        if (String.isNotBlank(step.Recommended_Products__c)) {
+                            FireflyApexService.ProductImageRequest productReq = new FireflyApexService.ProductImageRequest();
+                            productReq.productsJson = step.Recommended_Products__c;
+                            productReq.prompt = step.Firefly_Prompt__c;
+                            productReq.eventType = step.Event_Type__c;
+                            productReq.saveToFiles = true;
+
+                            List<FireflyApexService.ImageGenerationResult> fireflyResults =
+                                FireflyApexService.generateWithProducts(new List<FireflyApexService.ProductImageRequest>{productReq});
+                            fireflyResult = fireflyResults.isEmpty() ? null : fireflyResults[0];
+                        } else {
+                            FireflyApexService.ImageGenerationRequest textReq = new FireflyApexService.ImageGenerationRequest();
+                            textReq.prompt = step.Firefly_Prompt__c;
+                            textReq.saveToFiles = true;
+
+                            List<FireflyApexService.ImageGenerationResult> fireflyResults =
+                                FireflyApexService.generateImages(new List<FireflyApexService.ImageGenerationRequest>{textReq});
+                            fireflyResult = fireflyResults.isEmpty() ? null : fireflyResults[0];
+                        }
+
+                        if (fireflyResult != null && fireflyResult.success) {
+                            String imageUrl = fireflyResult.imageUrl;
+                            if (String.isNotBlank(fireflyResult.contentVersionId)) {
+                                imageUrl = '/sfc/servlet.shepherd/version/download/' + fireflyResult.contentVersionId;
+                            }
+                            step.Generated_Image_URL__c = imageUrl;
+                            step.Image_Content_Version_Id__c = fireflyResult.contentVersionId;
+                            imagesGenerated++;
+                        }
+                    } catch (Exception imgEx) {
+                        System.debug(LoggingLevel.WARN, 'Image generation failed for step ' + step.Step_Number__c + ': ' + imgEx.getMessage());
+                        // Continue with approval even if image generation fails
+                    }
+                }
+            }
+
+            // Now do DML: approve all steps and set scheduled dates
             DateTime baseTime = DateTime.now();
             for (Journey_Approval__c step : steps) {
                 step.Status__c = 'Approved';
@@ -592,8 +640,9 @@ public with sharing class JourneyApprovalService {
 
             update steps;
 
+            String imageMsg = imagesGenerated > 0 ? ' (' + imagesGenerated + ' image(s) generated)' : '';
             result.success = true;
-            result.message = 'Approved ' + steps.size() + ' journey steps';
+            result.message = 'Approved ' + steps.size() + ' journey steps' + imageMsg;
             result.newStatus = 'Approved';
 
         } catch (Exception e) {

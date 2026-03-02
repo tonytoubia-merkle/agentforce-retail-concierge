@@ -135,7 +135,11 @@ export default class MarketerInbox extends LightningElement {
     }
 
     get isReadOnlyView() {
-        return this.selectedStatus !== 'pending';
+        return this.selectedStatus === 'sent';
+    }
+
+    get isInProgressView() {
+        return this.selectedStatus === 'in-progress';
     }
 
     /**

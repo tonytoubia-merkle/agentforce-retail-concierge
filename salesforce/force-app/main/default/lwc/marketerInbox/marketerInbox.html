@@ -186,26 +186,9 @@
                                                     <span class="status-badge-group">{group.journeyStatus}</span>
                                                 </template>
                                                 <template if:false={isReadOnlyView}>
-                                                    <template if:true={group.isPastDue}>
-                                                        <span class="past-due-badge">Past Due</span>
-                                                    </template>
-                                                    <template if:false={group.isPastDue}>
-                                                        <lightning-button
-                                                            label="Reject All"
-                                                            variant="destructive"
-                                                            icon-name="utility:close"
-                                                            data-journey-id={group.journeyId}
-                                                            onclick={handleDeclineAllSteps}
-                                                            class="slds-m-right_x-small">
-                                                        </lightning-button>
-                                                        <lightning-button
-                                                            label="Approve All"
-                                                            variant="brand"
-                                                            icon-name="utility:check"
-                                                            data-journey-id={group.journeyId}
-                                                            onclick={handleApproveAllSteps}
-                                                            class="slds-m-right_x-small">
-                                                        </lightning-button>
+                                                    <template if:true={isInProgressView}>
+                                                        <!-- In Progress: show Send Flow + status -->
+                                                        <span class="status-badge-group slds-m-right_small">Approved</span>
                                                         <lightning-button
                                                             label="Send Flow"
                                                             variant="success"
@@ -213,6 +196,36 @@
                                                             data-journey-id={group.journeyId}
                                                             onclick={handleSendFlow}>
                                                         </lightning-button>
+                                                    </template>
+                                                    <template if:false={isInProgressView}>
+                                                        <template if:true={group.isPastDue}>
+                                                            <span class="past-due-badge">Past Due</span>
+                                                        </template>
+                                                        <template if:false={group.isPastDue}>
+                                                            <lightning-button
+                                                                label="Reject All"
+                                                                variant="destructive"
+                                                                icon-name="utility:close"
+                                                                data-journey-id={group.journeyId}
+                                                                onclick={handleDeclineAllSteps}
+                                                                class="slds-m-right_x-small">
+                                                            </lightning-button>
+                                                            <lightning-button
+                                                                label="Approve All"
+                                                                variant="brand"
+                                                                icon-name="utility:check"
+                                                                data-journey-id={group.journeyId}
+                                                                onclick={handleApproveAllSteps}
+                                                                class="slds-m-right_x-small">
+                                                            </lightning-button>
+                                                            <lightning-button
+                                                                label="Send Flow"
+                                                                variant="success"
+                                                                icon-name="utility:send"
+                                                                data-journey-id={group.journeyId}
+                                                                onclick={handleSendFlow}>
+                                                            </lightning-button>
+                                                        </template>
                                                     </template>
                                                 </template>
                                             </div>
