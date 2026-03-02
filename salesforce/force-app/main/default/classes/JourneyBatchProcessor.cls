@@ -339,7 +339,11 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
         if (event.Event_Type__c == 'skincare-video') {
             config.isVideoJourney = true;
             config.videoPrompt = buildSkincareVideoPrompt(event, contactName, contactId);
+            config.videoRoutineHtml = buildSkincareRoutineHtml(event, contactName, contactId);
         }
+
+        // Compute customer value score for media activation eligibility
+        config.customerValueScore = computeCustomerValueScore(contactId);
 
         // Build the multi-step journey
         MultiStepJourneyBuilder.JourneyResult journeyResult = MultiStepJourneyBuilder.buildJourney(config);
@@ -450,6 +454,20 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
                     approval.Recommended_Products__c = productsJson;
                 }
             }
+            // Media channel: populate media activation fields
+            else if (step.channel == 'Media') {
+                approval.Suggested_Subject__c = step.subject;
+                approval.Suggested_Body__c = step.body;
+                approval.Media_Platform__c = step.mediaPlatform;
+                approval.Media_Ad_Format__c = step.mediaAdFormat;
+                approval.Media_Creative_Brief__c = step.mediaCreativeBrief;
+                approval.Media_Audience_Signals__c = step.mediaAudienceSignals;
+                approval.Media_Estimated_Reach__c = step.mediaEstimatedReach;
+                approval.Merkury_Activation_Status__c = 'Staged';
+                if (String.isNotBlank(productsJson)) {
+                    approval.Recommended_Products__c = productsJson;
+                }
+            }
             // Content: Use AI-generated for first email step, builder templates for others
             else if (step.stepNumber == 1 && step.channel == 'Email' && agentResult != null) {
                 // First email uses AI-generated content
@@ -498,6 +516,11 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
                 agentResult != null,
                 hasBrowseData
             );
+
+            // Attach customer value score to every approval for media eligibility tracking
+            if (config.customerValueScore != null) {
+                approval.Customer_Value_Score__c = config.customerValueScore;
+            }
 
             approvals.add(approval);
         }
@@ -780,63 +803,340 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
     // ─── Skincare Video Prompt Builder ──────────────────────────────
 
     /**
-     * Build a structured video prompt for skincare-video events.
-     * Queries the customer's profile for skin type and current products
-     * to create a rich, contextual video generation prompt.
+     * Build a personalized video prompt and routine for skincare-video events.
      *
-     * In production, this would call the Skincare_Concern_Video_Brief
-     * GenAI prompt template. For now, builds a structured prompt directly.
+     * Strategy: The Firefly Video API generates 5-second clips, so the video
+     * serves as a cinematic hero visual — a beautiful, concern-specific product
+     * beauty shot. The detailed step-by-step routine goes into the email body
+     * (set on the Journey_Approval__c record body field via MultiStepJourneyBuilder).
+     *
+     * The video prompt describes a short, visually stunning vignette showing
+     * the key recommended products for the customer's specific concern.
      */
     private String buildSkincareVideoPrompt(Meaningful_Event__c event, String contactName, Id contactId) {
-        String skinType = 'Unknown';
-        String currentProducts = '';
+        String skinType = '';
+        String skinConcerns = '';
 
-        // Query profile enrichment data for skin context
+        // Query Contact profile for skin data
         if (contactId != null) {
             try {
-                List<Agent_Captured_Profile__c> profileData = [
-                    SELECT Field_Name__c, Field_Value__c
-                    FROM Agent_Captured_Profile__c
-                    WHERE Customer_Id__c = :String.valueOf(contactId)
-                      AND Field_Name__c IN ('skinType', 'skinConcerns', 'currentProducts', 'Skin_Type__c')
-                    LIMIT 5
-                ];
-                for (Agent_Captured_Profile__c pd : profileData) {
-                    if (pd.Field_Name__c == 'skinType' || pd.Field_Name__c == 'Skin_Type__c') {
-                        skinType = pd.Field_Value__c;
-                    }
-                    if (pd.Field_Name__c == 'currentProducts') {
-                        currentProducts = pd.Field_Value__c;
-                    }
-                }
-            } catch (Exception e) {
-                System.debug(LoggingLevel.WARN, 'Failed to query profile for video prompt: ' + e.getMessage());
-            }
-
-            // Also check Contact fields directly
-            try {
-                Contact c = [SELECT Skin_Type__c FROM Contact WHERE Id = :contactId LIMIT 1];
+                Contact c = [SELECT Skin_Type__c, Skin_Concerns__c FROM Contact WHERE Id = :contactId LIMIT 1];
                 if (String.isNotBlank(c.Skin_Type__c)) {
                     skinType = c.Skin_Type__c;
                 }
+                if (String.isNotBlank(c.Skin_Concerns__c)) {
+                    skinConcerns = c.Skin_Concerns__c;
+                }
             } catch (Exception e) {
-                // Continue with defaults
+                System.debug(LoggingLevel.WARN, 'Failed to query Contact for video prompt: ' + e.getMessage());
             }
         }
 
-        String concern = event.Description__c != null ? event.Description__c : 'skin concern';
-        String name = String.isNotBlank(contactName) ? contactName : 'valued customer';
+        // Determine the primary concern from the event description or profile
+        String concern = '';
+        if (String.isNotBlank(event.Description__c)) {
+            concern = event.Description__c.toLowerCase();
+        } else if (String.isNotBlank(skinConcerns)) {
+            concern = skinConcerns.toLowerCase();
+        } else {
+            concern = 'general skincare';
+        }
 
-        // Build the Firefly video prompt
-        String prompt = 'A calming, intimate skincare ritual scene addressing ' + concern + '. '
-            + 'Soft natural lighting in a spa-like environment with clean marble surfaces and botanical elements. '
-            + 'Close-up textures of premium skincare products being gently applied — creams, serums, essences. '
-            + 'Warm tones of white, soft green, and rose gold. '
-            + 'Gentle water droplets, steam, and natural ingredients (aloe, chamomile, hyaluronic crystals) woven throughout. '
-            + 'Slow, meditative motion conveying care and expertise. '
-            + 'No human faces. Premium luxury beauty editorial aesthetic.';
+        // Build a concern-specific 5-second video vignette prompt
+        return buildConcernVideoVignette(concern, skinType);
+    }
 
-        return prompt;
+    /**
+     * Build a concern-specific skincare routine for the email body.
+     * Called by MultiStepJourneyBuilder to populate the journey step body
+     * with a personalized, step-by-step routine and product recommendations.
+     */
+    public String buildSkincareRoutineHtml(Meaningful_Event__c event, String contactName, Id contactId) {
+        String skinType = '';
+        String skinConcerns = '';
+
+        if (contactId != null) {
+            try {
+                Contact c = [SELECT Skin_Type__c, Skin_Concerns__c FROM Contact WHERE Id = :contactId LIMIT 1];
+                if (String.isNotBlank(c.Skin_Type__c)) skinType = c.Skin_Type__c;
+                if (String.isNotBlank(c.Skin_Concerns__c)) skinConcerns = c.Skin_Concerns__c;
+            } catch (Exception e) { /* continue with defaults */ }
+        }
+
+        String concern = '';
+        if (String.isNotBlank(event.Description__c)) {
+            concern = event.Description__c.toLowerCase();
+        } else if (String.isNotBlank(skinConcerns)) {
+            concern = skinConcerns.toLowerCase();
+        } else {
+            concern = 'general skincare';
+        }
+
+        String name = String.isNotBlank(contactName) ? contactName : 'there';
+        return buildRoutineEmailBody(concern, skinType, name);
+    }
+
+    /**
+     * Build a 5-second video vignette prompt for Firefly Video API.
+     * Each concern maps to a visually distinct, product-focused beauty shot.
+     */
+    private String buildConcernVideoVignette(String concern, String skinType) {
+
+        if (concern.contains('oily') || concern.contains('oil') || concern.contains('shine') || concern.contains('greasy')) {
+            return 'Cinematic close-up of mattifying skincare products on a cool slate surface with morning dew. '
+                + 'A lightweight gel moisturizer is squeezed from a frosted glass bottle, spreading translucent and shine-free across a marble slab. '
+                + 'Oil-blotting serum droplets fall in slow motion into a petri dish, refracting light. '
+                + 'Fresh green tea leaves and kaolin clay powder scattered artfully. Cool blue-green and white color palette. '
+                + 'Camera slowly dollies forward. Premium editorial beauty aesthetic, no human faces.';
+        }
+
+        if (concern.contains('dry') || concern.contains('dryness') || concern.contains('flak') || concern.contains('dehydrat')) {
+            return 'Cinematic close-up of rich hydrating skincare on warm marble vanity bathed in golden hour light. '
+                + 'A thick, luxurious cream is scooped from an open jar, stretching between fingertips showing its creamy texture. '
+                + 'Hyaluronic acid serum drops fall in slow motion onto a dewy rose petal, glistening. '
+                + 'Honey, chamomile flowers, and shea butter pieces arranged as props. Warm gold, cream, and soft pink tones. '
+                + 'Camera slowly pulls back revealing the full vanity scene. Soft, enveloping mood.';
+        }
+
+        if (concern.contains('redness') || concern.contains('rosacea') || concern.contains('irritat') || concern.contains('sensitive') || concern.contains('inflam')) {
+            return 'Cinematic close-up of calming skincare products on a cool white surface with soft diffused light. '
+                + 'A soothing green-tinted serum is dispensed from a dropper, the liquid catching gentle light. '
+                + 'Centella asiatica leaves, aloe vera gel, and oat extract float in a glass dish of water. '
+                + 'Mist gently drifts across the frame. Soft sage green, lavender, and white color palette. '
+                + 'Camera pans slowly left to right. Calming, meditative beauty editorial, no faces shown.';
+        }
+
+        if (concern.contains('acne') || concern.contains('breakout') || concern.contains('blemish') || concern.contains('pimple')) {
+            return 'Cinematic close-up of clarifying skincare products on a clean white surface with crisp lighting. '
+                + 'A clear purifying gel cleanser is pumped out and spreads across a smooth surface, bubbling slightly. '
+                + 'Salicylic acid crystals and tea tree oil droplets are shown in extreme macro, sparkling. '
+                + 'Clean lines, minimal styling with eucalyptus sprigs and white towels. Bright white and mint green palette. '
+                + 'Camera slowly zooms into the serum texture. Fresh, clinical yet luxurious aesthetic.';
+        }
+
+        if (concern.contains('aging') || concern.contains('wrinkle') || concern.contains('fine line') || concern.contains('firm') || concern.contains('sagging') || concern.contains('mature')) {
+            return 'Cinematic close-up of anti-aging skincare products on a rose gold tray with warm candlelit ambiance. '
+                + 'A golden retinol serum is dispensed from an elegant dark glass dropper, the amber liquid catching warm light. '
+                + 'A rich night cream is swirled with a gold spatula, revealing its silky, peptide-rich texture. '
+                + 'Rose petals, gold leaf flakes, and a small hourglass as props. Deep rose, gold, and burgundy palette. '
+                + 'Camera tilts up slowly in soft focus. Opulent, timeless beauty editorial, no faces shown.';
+        }
+
+        if (concern.contains('dark spot') || concern.contains('hyperpigment') || concern.contains('uneven') || concern.contains('discolor') || concern.contains('melasma') || concern.contains('bright')) {
+            return 'Cinematic close-up of brightening skincare products arranged on a luminous white surface with radiant backlighting. '
+                + 'A vitamin C serum in a dark amber bottle is dispensed — the bright orange liquid glows as light passes through it. '
+                + 'Citrus slices, turmeric root, and pearl powder are artfully placed around the products. '
+                + 'Prismatic light refractions dance across the surface. Bright white, amber, and soft coral palette. '
+                + 'Camera slowly dollies forward into the serum droplet. Radiant, luminous beauty editorial.';
+        }
+
+        if (concern.contains('pore') || concern.contains('texture') || concern.contains('rough') || concern.contains('bumpy')) {
+            return 'Cinematic extreme close-up of pore-refining skincare on a cool slate surface with sharp, directional lighting. '
+                + 'A BHA exfoliating toner is poured onto a cotton pad in slow motion, the liquid saturating the fibers. '
+                + 'A clay mask is smoothed across a ceramic palette, showing its fine, grain-free texture. '
+                + 'Charcoal pieces, white kaolin powder, and green clay arranged minimally. Cool grey, white, and sage palette. '
+                + 'Camera slowly racks focus from background to foreground. Clean, precise beauty editorial.';
+        }
+
+        // Default: general luxury skincare beauty shot
+        String skinTypeContext = String.isNotBlank(skinType) ? ' for ' + skinType.toLowerCase() + ' skin' : '';
+        return 'Cinematic close-up of a curated skincare routine' + skinTypeContext + ' on a warm marble vanity in soft morning light. '
+            + 'Products are arranged in a perfect line — cleanser, toner, serum, moisturizer, sunscreen. '
+            + 'A hand reaches in and picks up a serum bottle, dispensing a golden drop that catches the light. '
+            + 'Fresh botanical elements — lavender, rosemary, and white flowers — frame the scene. '
+            + 'Warm neutrals, soft rose gold accents, and cream tones. Camera slowly dollies forward. '
+            + 'Premium luxury beauty editorial aesthetic, no faces shown.';
+    }
+
+    /**
+     * Build the personalized HTML email body with step-by-step routine.
+     * This is where the detailed routine and product recommendations live,
+     * since the 5-second video is a visual hero element, not a tutorial.
+     */
+    private String buildRoutineEmailBody(String concern, String skinType, String name) {
+        String concernTitle = getConcernTitle(concern);
+        String routineSteps = getRoutineSteps(concern, skinType);
+
+        return '<div style="font-family: Georgia, serif; color: #333; max-width: 600px; margin: 0 auto;">'
+            + '<p style="font-size: 18px; line-height: 1.7; color: #444;">Dear ' + name + ',</p>'
+            + '<p style="font-size: 16px; line-height: 1.7; color: #444;">We heard you — and we want to help. '
+            + 'Our skincare experts have put together a personalized routine to address your <strong>' + concernTitle + '</strong> concern, '
+            + 'using products specifically chosen for your skin.</p>'
+            + '<h2 style="font-size: 20px; color: #B76E79; margin: 30px 0 15px; text-align: center; letter-spacing: 1px;">Your Personalized Routine</h2>'
+            + routineSteps
+            + '<p style="font-size: 14px; line-height: 1.7; color: #666; margin-top: 25px; border-top: 1px solid #eee; padding-top: 20px;">'
+            + 'Questions about your routine? Reply to this email or book a one-on-one consultation with our beauty advisors.</p>'
+            + '<p style="margin: 20px 0; text-align: center;">'
+            + '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Shop Your Routine</a>'
+            + '</p></div>';
+    }
+
+    private String getConcernTitle(String concern) {
+        if (concern.contains('oily') || concern.contains('oil')) return 'oily skin';
+        if (concern.contains('dry') || concern.contains('dehydrat')) return 'dryness & dehydration';
+        if (concern.contains('redness') || concern.contains('rosacea')) return 'redness & sensitivity';
+        if (concern.contains('acne') || concern.contains('breakout') || concern.contains('blemish')) return 'acne & breakouts';
+        if (concern.contains('aging') || concern.contains('wrinkle') || concern.contains('fine line')) return 'anti-aging';
+        if (concern.contains('dark spot') || concern.contains('hyperpigment') || concern.contains('uneven')) return 'dark spots & uneven tone';
+        if (concern.contains('pore') || concern.contains('texture')) return 'pores & texture';
+        return 'skin health';
+    }
+
+    private String getRoutineSteps(String concern, String skinType) {
+        String stepStyle = 'style="margin: 12px 0; padding: 12px 16px; background: #faf8f7; border-left: 3px solid #B76E79; border-radius: 4px;"';
+        String numStyle = 'style="color: #B76E79; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;"';
+        String prodStyle = 'style="font-weight: 600; color: #333;"';
+        String descStyle = 'style="font-size: 14px; color: #555; line-height: 1.6; margin-top: 4px;"';
+
+        if (concern.contains('oily') || concern.contains('oil') || concern.contains('shine') || concern.contains('greasy')) {
+            return '<div ' + stepStyle + '><span ' + numStyle + '>Step 1 — Cleanse</span><br/>'
+                + '<span ' + prodStyle + '>Oil Control Purifying Cleanser</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Massage onto damp skin to dissolve excess sebum without stripping. Rinse with lukewarm water.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 2 — Tone</span><br/>'
+                + '<span ' + prodStyle + '>Pore Refining Toner</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Pat onto T-zone with a cotton pad to tighten pores and remove residual oil.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 3 — Treat</span><br/>'
+                + '<span ' + prodStyle + '>Pore Minimizing Serum</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Press 2-3 drops into the T-zone — niacinamide controls oil production throughout the day.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 4 — Moisturize</span><br/>'
+                + '<span ' + prodStyle + '>Oil-Free Hydra-Balance Moisturizer</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Smooth on a thin layer — lightweight, non-greasy, mattifying finish.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 5 — Protect</span><br/>'
+                + '<span ' + prodStyle + '>Invisible Shield SPF 50</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Apply generously — sheer, no white cast, no added shine.</span></div>';
+        }
+
+        if (concern.contains('dry') || concern.contains('dryness') || concern.contains('flak') || concern.contains('dehydrat')) {
+            return '<div ' + stepStyle + '><span ' + numStyle + '>Step 1 — Cleanse</span><br/>'
+                + '<span ' + prodStyle + '>Velvet Cream Cleanser</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Gently massage in circular motions. Leaves skin soft without stripping moisture.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 2 — Tone</span><br/>'
+                + '<span ' + prodStyle + '>Hydrating Essence Toner</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Press into damp skin with palms — multi-weight hyaluronic acid drenches skin in hydration.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 3 — Treat</span><br/>'
+                + '<span ' + prodStyle + '>Hyaluronic Plumping Serum</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Apply 3 drops and press in — draws moisture deep into the skin barrier.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 4 — Moisturize</span><br/>'
+                + '<span ' + prodStyle + '>Rich Repair Cream</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Warm between fingertips and press in — ceramides and shea butter seal in all that hydration.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 5 — Protect</span><br/>'
+                + '<span ' + prodStyle + '>Invisible Shield SPF 50</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Adds a dewy glow while protecting against UV damage.</span></div>';
+        }
+
+        if (concern.contains('redness') || concern.contains('rosacea') || concern.contains('irritat') || concern.contains('sensitive') || concern.contains('inflam')) {
+            return '<div ' + stepStyle + '><span ' + numStyle + '>Step 1 — Cleanse</span><br/>'
+                + '<span ' + prodStyle + '>Hydra-Calm Sensitive Cleanser</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Use with cool water — gentle, soothing strokes only. Never rub.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 2 — Tone</span><br/>'
+                + '<span ' + prodStyle + '>Calming Botanical Toner</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Mist onto skin — centella asiatica immediately reduces visible redness.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 3 — Treat</span><br/>'
+                + '<span ' + prodStyle + '>Rosacea Relief Serum</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Dab onto affected areas — azelaic acid calms inflammation without irritation.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 4 — Moisturize</span><br/>'
+                + '<span ' + prodStyle + '>Hydra-Calm Sensitive Moisturizer</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Apply in gentle upward strokes — ceramides strengthen the barrier and soothe reactive skin.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 5 — Protect</span><br/>'
+                + '<span ' + prodStyle + '>Mineral Sunscreen SPF 50</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Zinc oxide formula shields skin without chemical irritants.</span></div>';
+        }
+
+        if (concern.contains('acne') || concern.contains('breakout') || concern.contains('blemish') || concern.contains('pimple')) {
+            return '<div ' + stepStyle + '><span ' + numStyle + '>Step 1 — Cleanse</span><br/>'
+                + '<span ' + prodStyle + '>Oil Control Purifying Cleanser</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Work into a gentle lather with salicylic acid — clears pore buildup without over-drying.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 2 — Exfoliate</span><br/>'
+                + '<span ' + prodStyle + '>BHA Clarifying Toner</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Swipe across face with cotton pad — dissolves dead skin cells clogging pores.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 3 — Spot Treat</span><br/>'
+                + '<span ' + prodStyle + '>Blemish Control Spot Treatment</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Precisely dot onto active breakouts — reduces inflammation overnight.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 4 — Moisturize</span><br/>'
+                + '<span ' + prodStyle + '>Acne-Safe Hydrating Gel</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Apply lightly — oil-free, non-comedogenic, niacinamide reduces redness.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 5 — Protect</span><br/>'
+                + '<span ' + prodStyle + '>Clear Skin SPF 50</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Matte, lightweight finish — zero pore-clogging ingredients.</span></div>';
+        }
+
+        if (concern.contains('aging') || concern.contains('wrinkle') || concern.contains('fine line') || concern.contains('firm') || concern.contains('sagging') || concern.contains('mature')) {
+            return '<div ' + stepStyle + '><span ' + numStyle + '>Step 1 — Cleanse</span><br/>'
+                + '<span ' + prodStyle + '>Velvet Cream Cleanser</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Gently remove impurities without disrupting the precious skin barrier.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 2 — Tone</span><br/>'
+                + '<span ' + prodStyle + '>Hydrating Essence Toner</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Plumps skin with multi-weight hyaluronic acid — preps for active ingredients.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 3 — Treat</span><br/>'
+                + '<span ' + prodStyle + '>Retinol Renewal Serum</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Press into fine lines around eyes and forehead — stimulates collagen production.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 4 — Eye Care</span><br/>'
+                + '<span ' + prodStyle + '>Firming Eye Contour Cream</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Gently tap around the orbital bone — targets crow\\\'s feet and hollows.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 5 — Moisturize</span><br/>'
+                + '<span ' + prodStyle + '>Overnight Repair Cream</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Locks in actives with peptides and ceramides for nighttime regeneration.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 6 — Protect (AM)</span><br/>'
+                + '<span ' + prodStyle + '>Invisible Shield SPF 50</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>The most important anti-aging step — prevents further UV damage.</span></div>';
+        }
+
+        if (concern.contains('dark spot') || concern.contains('hyperpigment') || concern.contains('uneven') || concern.contains('discolor') || concern.contains('melasma') || concern.contains('bright')) {
+            return '<div ' + stepStyle + '><span ' + numStyle + '>Step 1 — Cleanse</span><br/>'
+                + '<span ' + prodStyle + '>Brightening Gel Cleanser</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Vitamin C derivatives start the brightening process from step one.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 2 — Tone</span><br/>'
+                + '<span ' + prodStyle + '>Glow Refining Toner</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Glycolic acid gently exfoliates — accelerates cell turnover for a more even tone.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 3 — Treat</span><br/>'
+                + '<span ' + prodStyle + '>Vitamin C Brightening Serum</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Apply to dark spots and across cheeks — inhibits melanin production.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 4 — Target</span><br/>'
+                + '<span ' + prodStyle + '>Dark Spot Corrector</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Precisely apply to stubborn areas of discoloration.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 5 — Moisturize</span><br/>'
+                + '<span ' + prodStyle + '>Radiance Day Cream</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Niacinamide evens skin tone while providing all-day hydration.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 6 — Protect</span><br/>'
+                + '<span ' + prodStyle + '>Invisible Shield SPF 50</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Essential — prevents dark spots from returning after treatment.</span></div>';
+        }
+
+        if (concern.contains('pore') || concern.contains('texture') || concern.contains('rough') || concern.contains('bumpy')) {
+            return '<div ' + stepStyle + '><span ' + numStyle + '>Step 1 — Cleanse</span><br/>'
+                + '<span ' + prodStyle + '>Oil Control Purifying Cleanser</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Deeply cleans pores without over-stripping natural oils.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 2 — Exfoliate</span><br/>'
+                + '<span ' + prodStyle + '>BHA Resurfacing Toner</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Salicylic acid dissolves pore congestion from within — pat on, don\\\'t rub.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 3 — Treat</span><br/>'
+                + '<span ' + prodStyle + '>Pore Minimizing Serum</span> <span style="color: #999;">DERMACLEAR</span><br/>'
+                + '<span ' + descStyle + '>Niacinamide visibly tightens enlarged pores and smooths skin texture.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 4 — Moisturize</span><br/>'
+                + '<span ' + prodStyle + '>Oil-Free Hydra-Balance Moisturizer</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Hydrates without adding congestion — lightweight, breathable formula.</span></div>'
+                + '<div ' + stepStyle + '><span ' + numStyle + '>Step 5 — Protect</span><br/>'
+                + '<span ' + prodStyle + '>Invisible Shield SPF 50</span> <span style="color: #999;">SERENE</span><br/>'
+                + '<span ' + descStyle + '>Lightweight, non-comedogenic protection.</span></div>';
+        }
+
+        // Default routine
+        String skinTypeContext = String.isNotBlank(skinType) ? skinType.toLowerCase() + ' skin' : 'your skin';
+        return '<div ' + stepStyle + '><span ' + numStyle + '>Step 1 — Cleanse</span><br/>'
+            + '<span ' + prodStyle + '>Velvet Cream Cleanser</span> <span style="color: #999;">SERENE</span><br/>'
+            + '<span ' + descStyle + '>Gentle lather removes impurities while maintaining ' + skinTypeContext + '\\\'s natural barrier.</span></div>'
+            + '<div ' + stepStyle + '><span ' + numStyle + '>Step 2 — Tone</span><br/>'
+            + '<span ' + prodStyle + '>Hydrating Essence Toner</span> <span style="color: #999;">SERENE</span><br/>'
+            + '<span ' + descStyle + '>Press into damp skin — hyaluronic acid delivers deep hydration.</span></div>'
+            + '<div ' + stepStyle + '><span ' + numStyle + '>Step 3 — Treat</span><br/>'
+            + '<span ' + prodStyle + '>Vitamin C Brightening Serum</span> <span style="color: #999;">SERENE</span><br/>'
+            + '<span ' + descStyle + '>3 drops — antioxidant protection against environmental stressors.</span></div>'
+            + '<div ' + stepStyle + '><span ' + numStyle + '>Step 4 — Moisturize</span><br/>'
+            + '<span ' + prodStyle + '>Hydra-Calm Sensitive Moisturizer</span> <span style="color: #999;">SERENE</span><br/>'
+            + '<span ' + descStyle + '>Seals everything in with ceramides and peptides.</span></div>'
+            + '<div ' + stepStyle + '><span ' + numStyle + '>Step 5 — Protect</span><br/>'
+            + '<span ' + prodStyle + '>Invisible Shield SPF 50</span> <span style="color: #999;">SERENE</span><br/>'
+            + '<span ' + descStyle + '>Sheer, weightless sun protection to finish your routine.</span></div>';
     }
 
     // ─── Date Derivation ─────────────────────────────────────────────
@@ -946,5 +1246,91 @@ global class JourneyBatchProcessor implements Database.Batchable<SObject>, Datab
         } catch (Exception e) {
             System.debug(LoggingLevel.WARN, 'Failed to send notification: ' + e.getMessage());
         }
+    }
+
+    // ─── Customer Value Scoring ──────────────────────────────────────
+
+    /**
+     * Compute a Customer Value Score (0-100) based on loyalty status, tier, and engagement.
+     * Used to gate paid media activation eligibility (CVS >= 80 qualifies).
+     *
+     * Scoring breakdown:
+     * - Baseline: 50 points
+     * - Active loyalty member: +15
+     * - Gold/Platinum tier: +20, Silver: +10
+     * - 5+ browse sessions (last 30 days): +10, 2+: +5
+     * - Capped at 100
+     */
+    private Decimal computeCustomerValueScore(Id contactId) {
+        if (contactId == null) return 50;
+
+        Decimal score = 50;
+
+        // Check loyalty membership and tier
+        try {
+            List<LoyaltyProgramMember> members = [
+                SELECT Id, MemberStatus
+                FROM LoyaltyProgramMember
+                WHERE ContactId = :contactId
+                  AND MemberStatus = 'Active'
+                LIMIT 1
+            ];
+
+            if (!members.isEmpty()) {
+                // Active loyalty member bonus
+                score += 15;
+
+                // Check tier level — query all tiers and pick the highest
+                // (CreatedDate may be identical across tiers, so we rank explicitly)
+                Id memberId = members[0].Id;
+                List<LoyaltyMemberTier> tiers = [
+                    SELECT LoyaltyTier.Name
+                    FROM LoyaltyMemberTier
+                    WHERE LoyaltyMemberId = :memberId
+                ];
+
+                if (!tiers.isEmpty()) {
+                    // Find the highest tier across all records
+                    Map<String, Integer> tierRank = new Map<String, Integer>{
+                        'Bronze' => 1, 'Silver' => 2, 'Gold' => 3, 'Platinum' => 4
+                    };
+                    String bestTier = tiers[0].LoyaltyTier.Name;
+                    Integer bestRank = tierRank.containsKey(bestTier) ? tierRank.get(bestTier) : 0;
+                    for (LoyaltyMemberTier t : tiers) {
+                        String tn = t.LoyaltyTier.Name;
+                        Integer r = tierRank.containsKey(tn) ? tierRank.get(tn) : 0;
+                        if (r > bestRank) { bestTier = tn; bestRank = r; }
+                    }
+                    if (bestTier == 'Gold' || bestTier == 'Platinum') {
+                        score += 20;
+                    } else if (bestTier == 'Silver') {
+                        score += 10;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, 'CVS: Loyalty query failed: ' + e.getMessage());
+        }
+
+        // Check recent browse engagement
+        try {
+            String customerIdStr = String.valueOf(contactId);
+            Integer browseCount = [
+                SELECT COUNT()
+                FROM Browse_Session__c
+                WHERE Customer_Id__c = :customerIdStr
+                  AND Session_Date__c >= :Date.today().addDays(-30)
+            ];
+
+            if (browseCount >= 5) {
+                score += 10;
+            } else if (browseCount >= 2) {
+                score += 5;
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, 'CVS: Browse query failed: ' + e.getMessage());
+        }
+
+        return Math.min(score, 100);
     }
 }

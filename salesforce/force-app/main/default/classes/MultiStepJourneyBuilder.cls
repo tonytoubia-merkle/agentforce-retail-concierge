@@ -35,12 +35,14 @@ public with sharing class MultiStepJourneyBuilder {
         public String contactName;
         public Boolean isVideoJourney = false;  // Skincare concern video journeys
         public String videoPrompt;               // Pre-generated video prompt from GenAI template
+        public String videoRoutineHtml;          // Personalized skincare routine HTML for email body
+        public Decimal customerValueScore;       // For media activation eligibility (0-100)
     }
 
     public class JourneyStep {
         public Integer stepNumber;
         public Integer totalSteps;
-        public String channel;          // Email, SMS, Push, Video
+        public String channel;          // Email, SMS, Push, Video, Media
         public Integer sendDelayDays;   // Days after previous step
         public String subject;
         public String body;
@@ -49,6 +51,13 @@ public with sharing class MultiStepJourneyBuilder {
         public String productsJson;
         public String guardrailsJson;
         public String videoPrompt;      // Video generation prompt (for Video channel)
+        // Media activation fields
+        public String mediaPlatform;        // CTV or Social
+        public String mediaAdFormat;        // Pre-Roll Video, Story Ad, Feed Ad
+        public String mediaCreativeBrief;   // Creative direction for the ad
+        public String mediaAudienceSignals; // JSON targeting signals for Merkury
+        public Integer mediaEstimatedReach; // Estimated audience reach
+        public Boolean isParallelStep = false; // Runs alongside Step 1
     }
 
     public class JourneyResult {
@@ -208,6 +217,21 @@ public with sharing class MultiStepJourneyBuilder {
                 when LONG_MULTI_STEP {
                     steps = generateLongMultiStep(config, channels, guardrailsJson, daysUntilEvent);
                 }
+            }
+        }
+
+        // Inject paid media step for eligible journeys
+        if (!config.isVideoJourney && isMediaEligible(config, pattern)) {
+            JourneyStep mediaStep = generateMediaStep(config, steps);
+            if (mediaStep != null) {
+                steps.add(mediaStep);
+            }
+        }
+        // Also add media to video journeys if eligible (separate check)
+        if (config.isVideoJourney && config.customerValueScore != null && config.customerValueScore >= 60) {
+            JourneyStep mediaStep = generateMediaStep(config, steps);
+            if (mediaStep != null) {
+                steps.add(mediaStep);
             }
         }
 
@@ -444,22 +468,29 @@ public with sharing class MultiStepJourneyBuilder {
         List<JourneyStep> steps = new List<JourneyStep>();
         String name = String.isNotBlank(config.contactName) ? config.contactName : 'there';
 
-        // Step 1: Video (primary touchpoint — the personalized skincare video)
+        // Step 1: Video (primary touchpoint — cinematic hero video + personalized routine)
         JourneyStep videoStep = new JourneyStep();
         videoStep.stepNumber = 1;
         videoStep.sendDelayDays = 0;
         videoStep.channel = 'Video';
         videoStep.videoPrompt = config.videoPrompt;
-        videoStep.subject = name + ', we made something just for you';
-        videoStep.body = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px; margin: 0 auto;">'
-            + '<p style="font-size: 18px; line-height: 1.7; color: #444;">Dear ' + name + ',</p>'
-            + '<p style="font-size: 16px; line-height: 1.7; color: #444;">We heard your concern and wanted to do something special. '
-            + 'Our skincare experts created a personalized video just for you, addressing your specific needs with tailored product recommendations.</p>'
-            + '<p style="margin: 30px 0; text-align: center;">{{VIDEO_LINK}}</p>'
-            + '<p style="font-size: 16px; line-height: 1.7; color: #444;">Watch your personalized video to discover the perfect routine for your skin.</p>'
-            + '<p style="margin: 30px 0; text-align: center;">'
-            + '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Shop Your Recommendations</a>'
-            + '</p></div>';
+        videoStep.subject = name + ', your personalized skincare routine is here';
+
+        // Use the personalized routine HTML if available, otherwise fallback to generic
+        String routineSection = '';
+        if (String.isNotBlank(config.videoRoutineHtml)) {
+            routineSection = config.videoRoutineHtml;
+        } else {
+            routineSection = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px; margin: 0 auto;">'
+                + '<p style="font-size: 18px; line-height: 1.7; color: #444;">Dear ' + name + ',</p>'
+                + '<p style="font-size: 16px; line-height: 1.7; color: #444;">We heard your concern and wanted to do something special. '
+                + 'Our skincare experts created a personalized video just for you, addressing your specific needs with tailored product recommendations.</p>'
+                + '<p style="font-size: 16px; line-height: 1.7; color: #444;">Watch your personalized video above to discover the perfect routine for your skin.</p>'
+                + '<p style="margin: 30px 0; text-align: center;">'
+                + '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Shop Your Recommendations</a>'
+                + '</p></div>';
+        }
+        videoStep.body = routineSection;
         videoStep.guardrailsJson = guardrailsJson;
         steps.add(videoStep);
 
@@ -476,10 +507,12 @@ public with sharing class MultiStepJourneyBuilder {
                 followUp.body = '<div style="font-family: Georgia, serif; color: #333; max-width: 600px; margin: 0 auto;">'
                     + '<p style="font-size: 18px; line-height: 1.7; color: #444;">Dear ' + name + ',</p>'
                     + '<p style="font-size: 16px; line-height: 1.7; color: #444;">Just a gentle nudge — we created a personalized skincare video with expert recommendations tailored to you. In case you missed it, here it is again.</p>'
-                    + '<p style="margin: 30px 0; text-align: center;">{{VIDEO_LINK}}</p>'
-                    + '<p style="font-size: 16px; line-height: 1.7; color: #444;">If you have any questions about the products or your routine, our advisors are here to help. Simply reply to this email or book a consultation.</p>'
                     + '<p style="margin: 30px 0; text-align: center;">'
-                    + '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Book a Consultation</a>'
+                    + '<a href="#" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Watch Your Personalized Video</a>'
+                    + '</p>'
+                    + '<p style="font-size: 16px; line-height: 1.7; color: #444;">If you have any questions about the products or your routine, our advisors are here to help. Simply reply to this email or book a consultation.</p>'
+                    + '<p style="margin: 20px 0; text-align: center;">'
+                    + '<a href="#" style="display: inline-block; border: 1px solid #B76E79; color: #B76E79; text-decoration: none; padding: 12px 28px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Book a Consultation</a>'
                     + '</p></div>';
             } else {
                 followUp.channel = 'SMS';
@@ -492,6 +525,137 @@ public with sharing class MultiStepJourneyBuilder {
         }
 
         return steps;
+    }
+
+    // ─── Media Activation ─────────────────────────────────────────────
+
+    /**
+     * Check if a journey qualifies for paid media amplification via Merkury.
+     * Gates: Customer_Value_Score >= 60 AND pattern is MEDIUM or LONG (enough value for media spend).
+     */
+    public static Boolean isMediaEligible(JourneyConfig config, JourneyPattern pattern) {
+        if (config.customerValueScore == null || config.customerValueScore < 60) {
+            return false;
+        }
+        return pattern == JourneyPattern.MEDIUM_THREE_STEP
+            || pattern == JourneyPattern.LONG_MULTI_STEP;
+    }
+
+    /**
+     * Generate a paid media activation step.
+     * Runs in parallel with Step 1 (sendDelayDays = 0).
+     * Platform selection: travel/wedding → CTV (Hulu/Roku), else → Social (Meta).
+     */
+    private static JourneyStep generateMediaStep(JourneyConfig config, List<JourneyStep> existingSteps) {
+        JourneyStep step = new JourneyStep();
+        step.stepNumber = existingSteps.size() + 1;
+        step.sendDelayDays = 0;
+        step.channel = 'Media';
+        step.isParallelStep = true;
+        step.guardrailsJson = existingSteps.isEmpty() ? '{}' : existingSteps[0].guardrailsJson;
+
+        String eventDesc = config.eventDescription != null ? config.eventDescription.toLowerCase() : '';
+
+        // Platform selection based on event type
+        if (eventDesc.contains('travel') || eventDesc.contains('trip') || eventDesc.contains('vacation')
+            || eventDesc.contains('wedding') || eventDesc.contains('anniversary')) {
+            step.mediaPlatform = 'CTV';
+            step.mediaAdFormat = 'Pre-Roll Video';
+        } else {
+            step.mediaPlatform = 'Social';
+            step.mediaAdFormat = eventDesc.contains('birthday') ? 'Story Ad' : 'Feed Ad';
+        }
+
+        step.mediaCreativeBrief = buildMediaCreativeBrief(config, step.mediaPlatform, step.mediaAdFormat);
+        step.mediaAudienceSignals = buildMediaAudienceSignals(config);
+        step.mediaEstimatedReach = step.mediaPlatform == 'CTV' ? 45000 : 120000;
+
+        step.subject = (step.mediaPlatform == 'CTV' ? 'CTV' : 'Social') + ' Media Activation';
+        step.body = step.mediaCreativeBrief;
+
+        return step;
+    }
+
+    /**
+     * Build a creative brief for the paid media ad.
+     */
+    private static String buildMediaCreativeBrief(JourneyConfig config, String platform, String adFormat) {
+        String eventDesc = config.eventDescription != null ? config.eventDescription.toLowerCase() : '';
+        String brief = '';
+
+        if (platform == 'CTV') {
+            brief += 'PLATFORM: Connected TV (Hulu/Roku)\n';
+            brief += 'FORMAT: ' + adFormat + ' (15-30 second spot)\n';
+            brief += 'OBJECTIVE: Brand awareness + consideration\n\n';
+
+            if (eventDesc.contains('travel')) {
+                brief += 'CREATIVE DIRECTION: Cinematic travel-beauty vignette. Golden hour lighting, '
+                    + 'luxury travel essentials arranged in a premium carry-on. Close-ups of SPF, '
+                    + 'hydrating mist, and travel-size serums. End card: "Travel radiant. BEAUTE."';
+            } else if (eventDesc.contains('wedding')) {
+                brief += 'CREATIVE DIRECTION: Romantic bridal preparation montage. Soft focus, '
+                    + 'petal-scattered vanity, selecting BEAUTE products. '
+                    + 'End card: "Your most beautiful day. BEAUTE."';
+            } else {
+                brief += 'CREATIVE DIRECTION: Aspirational luxury beauty moment. '
+                    + 'Premium product hero shots with lifestyle context. '
+                    + 'End card: "Curated for you. BEAUTE."';
+            }
+        } else {
+            brief += 'PLATFORM: Meta (Facebook/Instagram)\n';
+            brief += 'FORMAT: ' + adFormat + '\n';
+            brief += 'OBJECTIVE: Engagement + traffic to product pages\n\n';
+
+            if (eventDesc.contains('birthday')) {
+                brief += 'CREATIVE DIRECTION: Celebratory gift-unwrapping moment. '
+                    + 'Vibrant, warm tones. UGC-inspired aesthetic. '
+                    + 'CTA: "Treat yourself. Shop your birthday picks."';
+            } else if (eventDesc.contains('baby')) {
+                brief += 'CREATIVE DIRECTION: Gentle, nurturing imagery. Soft pastels, '
+                    + 'pregnancy-safe products in a serene setting. '
+                    + 'CTA: "Gentle care for your journey. Shop now."';
+            } else if (eventDesc.contains('oily') || eventDesc.contains('dry') || eventDesc.contains('acne')
+                    || eventDesc.contains('aging') || eventDesc.contains('redness') || eventDesc.contains('skin')) {
+                brief += 'CREATIVE DIRECTION: Before-and-after skincare transformation. '
+                    + 'Clean editorial aesthetic, product close-ups with ingredient highlights. '
+                    + 'CTA: "Your personalized routine awaits."';
+            } else {
+                brief += 'CREATIVE DIRECTION: Lifestyle moment with product integration. '
+                    + 'Clean, editorial aesthetic matching BEAUTE brand. '
+                    + 'CTA: "Discover your selection."';
+            }
+        }
+
+        return brief;
+    }
+
+    /**
+     * Build JSON audience targeting signals for Merkury identity resolution.
+     */
+    private static String buildMediaAudienceSignals(JourneyConfig config) {
+        Map<String, Object> signals = new Map<String, Object>();
+        signals.put('eventType', config.eventType);
+        signals.put('customerValueScore', config.customerValueScore);
+        signals.put('contactId', config.contactId);
+
+        if (String.isNotBlank(config.suggestedProducts)) {
+            signals.put('productAffinities', config.suggestedProducts);
+        }
+
+        Map<String, Object> seedAttributes = new Map<String, Object>();
+        seedAttributes.put('highValueCustomer', true);
+        seedAttributes.put('eventCategory', config.eventType);
+        if (config.eventDescription != null) {
+            seedAttributes.put('eventKeywords', config.eventDescription.left(200));
+        }
+        signals.put('lookalikeAttributes', seedAttributes);
+
+        signals.put('suppressionRules', new List<String>{
+            'purchased_last_7_days',
+            'active_journey_same_event'
+        });
+
+        return JSON.serialize(signals);
     }
 
     // ─── Content Builders ──────────────────────────────────────────────

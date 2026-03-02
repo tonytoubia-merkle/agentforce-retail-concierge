@@ -456,3 +456,83 @@
     display: block;
     border-radius: 0.5rem;
 }
+
+/* ─── Media Channel ──────────────────────────────────────────────────── */
+
+.channel-media {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.media-activation-header {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border: 1px solid #ffcc80;
+    border-radius: 0.5rem;
+}
+
+.media-activation-header lightning-icon {
+    --slds-c-icon-color-foreground-default: #e65100;
+}
+
+.media-reach-badge {
+    background: #e65100;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.media-reach-badge lightning-icon {
+    --slds-c-icon-color-foreground-default: white;
+}
+
+.merkury-status-badge {
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+}
+
+.merkury-status-staged {
+    background: #f3f2f2;
+    color: #706e6b;
+}
+
+.merkury-status-submitted {
+    background: #e8f4ff;
+    color: #0176d3;
+}
+
+.merkury-status-active {
+    background: #e8f8e8;
+    color: #2e844a;
+}
+
+.merkury-status-failed {
+    background: #fce4ec;
+    color: #c23934;
+}
+
+.audience-signals-json {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.75rem;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ─── Merkury Logo Icon ──────────────────────────────────────────────── */
+
+.merkury-logo-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    flex-shrink: 0;
+}

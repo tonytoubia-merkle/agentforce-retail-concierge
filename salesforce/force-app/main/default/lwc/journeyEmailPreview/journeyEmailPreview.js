@@ -16,7 +16,10 @@ export default class JourneyEmailPreview extends LightningElement {
     @api contactName = '';
     @api contactEmail = '';
     @api products = [];
-    @api channel = 'Email'; // Email, SMS, Push, Video
+    @api channel = 'Email'; // Email, SMS, Push, Video, Media
+    @api mediaPlatform = '';
+    @api mediaAdFormat = '';
+    @api mediaEstimatedReach = '';
     @api videoUrl = '';
 
     // Toggle between preview and edit mode
@@ -36,6 +39,14 @@ export default class JourneyEmailPreview extends LightningElement {
 
     get isVideoChannel() {
         return this.channel === 'Video';
+    }
+
+    get isMediaChannel() {
+        return this.channel === 'Media';
+    }
+
+    get merkuryLogoUrl() {
+        return 'https://agentforce-retail-advisor.vercel.app/assets/merkury-logo.png';
     }
 
     get hasVideo() {
@@ -148,6 +159,8 @@ export default class JourneyEmailPreview extends LightningElement {
                 return `${baseClass} slds-theme_warning`;
             case 'Video':
                 return `${baseClass} slds-theme_alt-inverse`;
+            case 'Media':
+                return `${baseClass} channel-badge-media`;
             default:
                 return baseClass;
         }
@@ -156,11 +169,24 @@ export default class JourneyEmailPreview extends LightningElement {
     /**
      * Strip trailing sign-off from body HTML since the preview template
      * adds its own signature after the product section.
-     * Matches patterns like "With love,<br/>The BEAUTÉ Team" in various HTML forms.
+     * Also replaces any remaining {{VIDEO_LINK}} placeholders.
      */
     get cleanedBody() {
         if (!this.body) return '';
         let html = this.body;
+
+        // Replace {{VIDEO_LINK}} placeholder with styled CTA if video URL exists, otherwise remove it
+        if (this.videoUrl) {
+            const videoCta = '<p style="margin: 20px 0; text-align: center;">'
+                + '<a href="' + this.videoUrl + '" style="display: inline-block; background: linear-gradient(135deg, #B76E79, #D4A574); color: white; text-decoration: none; padding: 14px 32px; border-radius: 25px; font-weight: 500; font-size: 14px; letter-spacing: 0.5px;">Watch Your Personalized Video</a>'
+                + '</p>';
+            html = html.replace(/<p[^>]*>\s*\{\{VIDEO_LINK\}\}\s*<\/p>/gi, videoCta);
+            html = html.replace(/\{\{VIDEO_LINK\}\}/gi, videoCta);
+        } else {
+            // Remove the placeholder entirely if no video yet
+            html = html.replace(/<p[^>]*>\s*\{\{VIDEO_LINK\}\}\s*<\/p>/gi, '');
+            html = html.replace(/\{\{VIDEO_LINK\}\}/gi, '');
+        }
 
         // Remove trailing sign-off block: "With love," + "The BEAUTÉ Team" (or BEAUTE)
         // Handles: <p>With love,<br/>The BEAUTÉ Team</p> or separate <p> tags
@@ -175,12 +201,35 @@ export default class JourneyEmailPreview extends LightningElement {
         return html.trim();
     }
 
+    handleProductImageError(event) {
+        const img = event.target;
+        const productCode = img.dataset.code;
+        if (productCode) {
+            const expectedUrl = `https://agentforce-retail-advisor.vercel.app/assets/products/${productCode}.png`;
+            if (img.src !== expectedUrl) {
+                img.src = expectedUrl;
+            } else {
+                // Replace broken image with a styled placeholder
+                img.style.display = 'none';
+                img.insertAdjacentHTML('afterend',
+                    '<div style="width:80px;height:80px;background:#f5f4f3;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#b0adab;">&#128142;</div>'
+                );
+            }
+        }
+    }
+
     // Render HTML body content after component renders
     renderedCallback() {
         if (this.isEmailChannel) {
             const contentDiv = this.template.querySelector('.email-content');
             if (contentDiv && this.body) {
                 contentDiv.innerHTML = this.cleanedBody;
+            }
+        }
+        if (this.isVideoChannel) {
+            const companionDiv = this.template.querySelector('.video-companion-body');
+            if (companionDiv && this.body) {
+                companionDiv.innerHTML = this.cleanedBody;
             }
         }
     }

@@ -27,6 +27,10 @@ public with sharing class JourneyStepService {
                    Journey_Id__c, Step_Number__c, Total_Steps__c,
                    Channel__c, Send_Delay_Days__c, Scheduled_Send_Date__c,
                    Journey_Guardrails__c,
+                   // Media activation fields
+                   Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
+                   Media_Audience_Signals__c, Media_Estimated_Reach__c,
+                   Merkury_Activation_Status__c,
                    CreatedDate, LastModifiedDate
             FROM Journey_Approval__c
             WHERE Journey_Id__c = :journeyId
@@ -56,6 +60,10 @@ public with sharing class JourneyStepService {
                    Journey_Id__c, Step_Number__c, Total_Steps__c,
                    Channel__c, Send_Delay_Days__c, Scheduled_Send_Date__c,
                    Journey_Guardrails__c,
+                   // Media activation fields
+                   Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
+                   Media_Audience_Signals__c, Media_Estimated_Reach__c,
+                   Merkury_Activation_Status__c,
                    CreatedDate, LastModifiedDate
             FROM Journey_Approval__c
             WHERE Journey_Id__c = :journeyId

@@ -247,7 +247,11 @@ public with sharing class PortfolioAssignmentService {
                    Journey_Guardrails__c, SMS_Body__c,
                    Urgency__c, Days_Until_Event__c, CreatedDate,
                    Marketing_Flow__c, Marketing_Flow__r.Name, Marketing_Flow__r.Flow_URL__c,
-                   Marketing_Flow__r.Status__c
+                   Marketing_Flow__r.Status__c,
+                   // Media activation fields
+                   Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
+                   Media_Audience_Signals__c, Media_Estimated_Reach__c,
+                   Merkury_Activation_Status__c
             FROM Journey_Approval__c
             WHERE Assigned_Portfolio__c IN :portfolioIds
             AND Status__c = 'Pending'
@@ -798,7 +802,11 @@ public with sharing class PortfolioAssignmentService {
                    Journey_Guardrails__c, SMS_Body__c,
                    Urgency__c, Days_Until_Event__c, CreatedDate,
                    Marketing_Flow__c, Marketing_Flow__r.Name, Marketing_Flow__r.Flow_URL__c,
-                   Marketing_Flow__r.Status__c
+                   Marketing_Flow__r.Status__c,
+                   // Media activation fields
+                   Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
+                   Media_Audience_Signals__c, Media_Estimated_Reach__c,
+                   Merkury_Activation_Status__c
             FROM Journey_Approval__c
             WHERE Assigned_Portfolio__c IN :portfolioIds
             AND Status__c = 'Pending'

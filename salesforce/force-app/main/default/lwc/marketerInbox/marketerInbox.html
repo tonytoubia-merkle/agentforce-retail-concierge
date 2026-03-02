@@ -233,7 +233,12 @@
                                                     <div class="slds-col slds-size_1-of-2 slds-p-right_medium">
                                                         <div class="step-header">
                                                             <span class="step-number">Step {step.Step_Number__c}</span>
-                                                            <lightning-icon icon-name={step.channelIcon} size="x-small" class="channel-icon slds-m-left_x-small"></lightning-icon>
+                                                            <template if:true={step.isMediaChannel}>
+                                                                <img src={step.merkuryLogoUrl} alt="Merkury" class="merkury-logo-icon-sm slds-m-left_x-small"/>
+                                                            </template>
+                                                            <template if:false={step.isMediaChannel}>
+                                                                <lightning-icon icon-name={step.channelIcon} size="x-small" class="channel-icon slds-m-left_x-small"></lightning-icon>
+                                                            </template>
                                                             <span class="channel-label slds-m-left_xx-small">{step.Channel__c}</span>
                                                         </div>
                                                         <p class="subject-text slds-m-top_xx-small">{step.Suggested_Subject__c}</p>
@@ -294,7 +299,12 @@
                                             <!-- Center: Subject & Channel -->
                                             <div class="slds-col slds-size_1-of-3">
                                                 <div class="subject-preview">
-                                                    <lightning-icon icon-name={approval.channelIcon} size="x-small" class="channel-icon"></lightning-icon>
+                                                    <template if:true={approval.isMediaChannel}>
+                                                        <img src={approval.merkuryLogoUrl} alt="Merkury" class="merkury-logo-icon-sm"/>
+                                                    </template>
+                                                    <template if:false={approval.isMediaChannel}>
+                                                        <lightning-icon icon-name={approval.channelIcon} size="x-small" class="channel-icon"></lightning-icon>
+                                                    </template>
                                                     <span class="subject-text">{approval.Suggested_Subject__c}</span>
                                                 </div>
                                                 <template if:true={approval.isApproachingDeadline}>

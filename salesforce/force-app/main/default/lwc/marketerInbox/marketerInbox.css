@@ -217,6 +217,14 @@
     --slds-c-icon-color-foreground-default: #706e6b;
 }
 
+.merkury-logo-icon-sm {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
 .subject-text {
     font-size: 13px;
     color: #3e3e3c;

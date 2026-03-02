@@ -46,7 +46,7 @@
                                 <div class="product-grid-inline">
                                     <template for:each={displayProducts} for:item="product">
                                         <div key={product.productCode} class="product-card-inline">
-                                            <img src={product.imageUrl} alt={product.name} class="product-card-image-inline" />
+                                            <img src={product.imageUrl} alt={product.name} class="product-card-image-inline" onerror={handleProductImageError} data-code={product.productCode}/>
                                             <p class="product-card-name-inline">{product.name}</p>
                                         </div>
                                     </template>
@@ -133,10 +133,40 @@
                     </template>
                     <template if:true={body}>
                         <div class="video-companion-text">
-                            <p class="video-companion-label">Companion Message</p>
-                            <p class="video-companion-body">{smsPreviewBody}</p>
+                            <p class="video-companion-label">Companion Email</p>
+                            <div class="video-companion-body" lwc:dom="manual"></div>
                         </div>
                     </template>
+                </div>
+            </div>
+        </template>
+
+        <!-- Media Preview -->
+        <template if:true={isMediaChannel}>
+            <div class="media-preview">
+                <div class="media-preview-frame">
+                    <div class="media-preview-header">
+                        <span class="media-brand">MERKURY</span>
+                        <span class="media-label">Paid Media Activation</span>
+                    </div>
+                    <div class="media-preview-body">
+                        <div class="media-platform-row">
+                            <img src={merkuryLogoUrl} alt="Merkury" class="merkury-logo-icon slds-m-right_small"/>
+                            <div>
+                                <p class="media-platform-name">{mediaPlatform}</p>
+                                <p class="media-format-name">{mediaAdFormat}</p>
+                            </div>
+                            <template if:true={mediaEstimatedReach}>
+                                <span class="media-reach-tag">{mediaEstimatedReach} reach</span>
+                            </template>
+                        </div>
+                        <template if:true={body}>
+                            <div class="media-creative-brief">
+                                <p class="media-brief-label">Creative Brief</p>
+                                <pre class="media-brief-text">{body}</pre>
+                            </div>
+                        </template>
+                    </div>
                 </div>
             </div>
         </template>

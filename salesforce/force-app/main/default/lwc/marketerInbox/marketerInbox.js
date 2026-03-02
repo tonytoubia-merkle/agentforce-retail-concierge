@@ -9,11 +9,13 @@ import declineJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.decli
 import sendJourneyFromLWC from '@salesforce/apex/JourneyApprovalService.sendJourneyFromLWC';
 import regenerateImageFromLWC from '@salesforce/apex/JourneyApprovalService.regenerateImageFromLWC';
 import regenerateVideoFromLWC from '@salesforce/apex/JourneyApprovalService.regenerateVideoFromLWC';
+import checkVideoStatus from '@salesforce/apex/JourneyApprovalService.checkVideoStatus';
 import updateProductsFromLWC from '@salesforce/apex/JourneyApprovalService.updateProductsFromLWC';
 import approveAllJourneySteps from '@salesforce/apex/JourneyApprovalService.approveAllJourneySteps';
 import declineAllJourneySteps from '@salesforce/apex/JourneyApprovalService.declineAllJourneySteps';
 import sendJourneyToMarketingFlow from '@salesforce/apex/JourneyApprovalService.sendJourneyToMarketingFlow';
 import processEventsNow from '@salesforce/apex/JourneyApprovalService.processEventsNow';
+import sendMediaActivation from '@salesforce/apex/JourneyApprovalService.sendMediaActivation';
 import Id from '@salesforce/user/Id';
 
 /**
@@ -134,6 +136,8 @@ export default class MarketerInbox extends LightningElement {
             tierIcon: isPastDue ? 'utility:ban' : this.getTierIcon(approval.Approval_Tier__c),
             urgencyClass: this.getUrgencyClass(approval.Urgency__c),
             channelIcon: this.getChannelIcon(approval.Channel__c),
+            isMediaChannel: approval.Channel__c === 'Media',
+            merkuryLogoUrl: 'https://agentforce-retail-advisor.vercel.app/assets/merkury-logo.png',
             confidenceClass: this.getConfidenceClass(approval.Confidence_Score__c),
             deadlineDisplay: this.getDeadlineDisplay(approval.Auto_Send_Deadline__c),
             isApproachingDeadline: this.isApproachingDeadline(approval.Auto_Send_Deadline__c),
@@ -437,7 +441,8 @@ export default class MarketerInbox extends LightningElement {
             'Email': 'utility:email',
             'SMS': 'utility:chat',
             'Push': 'utility:notification',
-            'Video': 'utility:video'
+            'Video': 'utility:video',
+            'Media': 'utility:broadcast'
         };
         return icons[channel] || 'utility:email';
     }
@@ -822,6 +827,12 @@ export default class MarketerInbox extends LightningElement {
                     });
                     break;
 
+                case 'sendMedia':
+                    result = await sendMediaActivation({
+                        approvalId: approvalId
+                    });
+                    break;
+
                 default:
                     console.warn('[MarketerInbox] Unknown action:', action);
                     this.isLoading = false;
@@ -829,6 +840,17 @@ export default class MarketerInbox extends LightningElement {
             }
 
             console.log('[MarketerInbox] Action result:', result);
+
+            // Video generation: intercept successful submit and start client-side polling
+            if (action === 'regenerate_video' && result && result.success && result.newImageUrl) {
+                const jobId = result.newImageUrl; // jobId stored in newImageUrl field from Apex
+                console.log('[MarketerInbox] Video job submitted, starting polling for jobId:', jobId);
+                this.showToastMessage('Your personalized video is being created — this typically takes 1-2 minutes.', 'info');
+                this._pollVideoJob(approvalId, jobId);
+                this.isLoading = false;
+                return;
+            }
+
             if (result.success) {
                 this.showToastMessage(result.message || 'Action completed', 'success');
                 console.log('[MarketerInbox] Refreshing approvals data...');
@@ -865,6 +887,62 @@ export default class MarketerInbox extends LightningElement {
         } finally {
             this.isLoading = false;
         }
+    }
+
+    /**
+     * Poll for video generation completion from the client side.
+     * Calls checkVideoStatus every 5 seconds until the job succeeds or fails.
+     */
+    _pollVideoJob(approvalId, jobId) {
+        const MAX_POLLS = 60; // 5 minutes max (60 × 5s)
+        let pollCount = 0;
+
+        const pollInterval = setInterval(async () => {
+            pollCount++;
+            console.log(`[MarketerInbox] Polling video job ${jobId} (attempt ${pollCount}/${MAX_POLLS})`);
+
+            try {
+                const statusResult = await checkVideoStatus({
+                    approvalId: approvalId,
+                    jobId: jobId
+                });
+
+                console.log('[MarketerInbox] Video poll result:', statusResult);
+
+                if (statusResult.message === 'running') {
+                    // Still generating — continue polling
+                    if (pollCount >= MAX_POLLS) {
+                        clearInterval(pollInterval);
+                        this.showToastMessage('Video generation timed out after 5 minutes. Please try again.', 'error');
+                    }
+                    return;
+                }
+
+                // Job is done (succeeded or failed) — stop polling
+                clearInterval(pollInterval);
+
+                if (statusResult.success && statusResult.message === 'succeeded') {
+                    this.showToastMessage('Video generated successfully!', 'success');
+                    // Refresh data to pick up the new video URL
+                    await refreshApex(this.wiredApprovalsResult);
+                    if (this.selectedApproval && this.approvals?.length > 0) {
+                        const refreshed = this.approvals.find(a => a.Id === approvalId);
+                        if (refreshed) {
+                            this.selectedApproval = { ...refreshed };
+                        }
+                    }
+                } else {
+                    this.showToastMessage(statusResult.errorMessage || 'Video generation failed', 'error');
+                }
+            } catch (error) {
+                console.error('[MarketerInbox] Video poll error:', error);
+                // Don't stop polling on transient errors — just log and continue
+                if (pollCount >= MAX_POLLS) {
+                    clearInterval(pollInterval);
+                    this.showToastMessage('Video generation polling failed: ' + (error.body?.message || error.message), 'error');
+                }
+            }
+        }, 5000); // Poll every 5 seconds
     }
 
     /**

@@ -69,7 +69,11 @@ public with sharing class JourneyApprovalService {
                            Video_Prompt__c,
                            Firefly_Prompt__c, Event_Summary__c, Event_Type__c,
                            Recommended_Products__c, Channel__c,
-                           Reviewed_By__c, Reviewed_At__c
+                           Reviewed_By__c, Reviewed_At__c,
+                           // Media activation fields
+                           Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
+                           Media_Audience_Signals__c, Media_Estimated_Reach__c,
+                           Merkury_Activation_Status__c
                     FROM Journey_Approval__c
                     WHERE Id = :req.approvalId
                     LIMIT 1
@@ -249,8 +253,8 @@ public with sharing class JourneyApprovalService {
     }
 
     /**
-     * Regenerate the Firefly video with a new or modified prompt.
-     * Uses FireflyApexService.generateVideo() for full orchestration.
+     * Submit a video generation job (non-blocking).
+     * Returns immediately with the jobId. LWC polls checkVideoJobStatus separately.
      */
     private static ApprovalActionResult regenerateVideo(Journey_Approval__c approval, ApprovalActionRequest req) {
         ApprovalActionResult result = new ApprovalActionResult();
@@ -264,27 +268,20 @@ public with sharing class JourneyApprovalService {
             return result;
         }
 
-        FireflyApexService.VideoGenerationResult videoResult = FireflyApexService.generateVideo(prompt);
+        // IMPORTANT: Callout MUST happen before any DML in this transaction
+        FireflyApexService.VideoGenerationResult submitResult = FireflyApexService.submitVideoJob(prompt);
 
-        if (videoResult != null && videoResult.success) {
-            // Use Salesforce internal file URL for authenticated access in LWC
-            String videoUrl = videoResult.videoUrl;
-            if (String.isNotBlank(videoResult.contentVersionId)) {
-                videoUrl = '/sfc/servlet.shepherd/version/download/' + videoResult.contentVersionId;
-            }
-
-            approval.Generated_Video_URL__c = videoUrl;
-            approval.Video_Content_Version_Id__c = videoResult.contentVersionId;
+        if (submitResult != null && submitResult.success) {
+            // DML after callout — save the prompt back to the approval
             approval.Video_Prompt__c = prompt;
-
             update approval;
 
             result.success = true;
-            result.message = 'Video generated successfully';
-            result.newImageUrl = videoUrl; // Reuse newImageUrl field for video URL
+            result.message = 'Video generation started — your personalized video is being created.';
+            result.newImageUrl = submitResult.videoUrl; // jobId for LWC to poll
         } else {
             result.success = false;
-            result.errorMessage = videoResult == null ? 'No result' : videoResult.errorMessage;
+            result.errorMessage = submitResult == null ? 'No result' : submitResult.errorMessage;
         }
 
         return result;
@@ -529,7 +526,11 @@ public with sharing class JourneyApprovalService {
                    // Marketing Flow and Content links
                    Marketing_Flow__c, Marketing_Flow__r.Name,
                    Email_Content_Version_Id__c, Image_Content_Version_Id__c,
-                   Auto_Send_Deadline__c, Approval_Tier__c
+                   Auto_Send_Deadline__c, Approval_Tier__c,
+                   // Media activation fields
+                   Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
+                   Media_Audience_Signals__c, Media_Estimated_Reach__c,
+                   Merkury_Activation_Status__c, Customer_Value_Score__c
             FROM Journey_Approval__c
             WHERE Status__c = 'Pending'
             ORDER BY Journey_Id__c NULLS LAST, Step_Number__c ASC, Days_Until_Event__c ASC NULLS LAST, CreatedDate DESC
@@ -684,6 +685,53 @@ public with sharing class JourneyApprovalService {
         return results[0];
     }
 
+    /**
+     * Check status of a video generation job. Called by LWC during polling.
+     * When the video is ready, saves it to SF Files and updates the approval record.
+     *
+     * Returns result.message = 'running' | 'succeeded' | error message
+     * On success, result.newImageUrl = the video download URL
+     */
+    @AuraEnabled
+    public static ApprovalActionResult checkVideoStatus(Id approvalId, String jobId) {
+        ApprovalActionResult result = new ApprovalActionResult();
+
+        try {
+            FireflyApexService.VideoGenerationResult statusResult = FireflyApexService.checkVideoJobStatus(jobId);
+
+            if (statusResult.errorMessage == 'running') {
+                // Still generating
+                result.success = true;
+                result.message = 'running';
+            } else if (statusResult.errorMessage == 'succeeded' && statusResult.success) {
+                // Video is ready — update the approval record
+                Journey_Approval__c approval = [
+                    SELECT Id, Generated_Video_URL__c, Video_Content_Version_Id__c
+                    FROM Journey_Approval__c
+                    WHERE Id = :approvalId
+                    LIMIT 1
+                ];
+
+                approval.Generated_Video_URL__c = statusResult.videoUrl;
+                approval.Video_Content_Version_Id__c = statusResult.contentVersionId;
+                update approval;
+
+                result.success = true;
+                result.message = 'succeeded';
+                result.newImageUrl = statusResult.videoUrl; // Video download URL for LWC
+            } else {
+                // Failed
+                result.success = false;
+                result.errorMessage = statusResult.errorMessage;
+            }
+        } catch (Exception e) {
+            result.success = false;
+            result.errorMessage = e.getMessage();
+        }
+
+        return result;
+    }
+
     @AuraEnabled
     public static ApprovalActionResult regenerateImageFromLWC(Id approvalId, String newPrompt, String productsJson) {
         ApprovalActionRequest req = new ApprovalActionRequest();
@@ -704,6 +752,37 @@ public with sharing class JourneyApprovalService {
 
         List<ApprovalActionResult> results = processActions(new List<ApprovalActionRequest>{req});
         return results[0];
+    }
+
+    /**
+     * Submit a Media channel approval to Merkury for paid media activation.
+     * Delegates to MerkuryActivationService for the actual submission.
+     */
+    @AuraEnabled
+    public static ApprovalActionResult sendMediaActivation(Id approvalId) {
+        ApprovalActionResult result = new ApprovalActionResult();
+        try {
+            String message = MerkuryActivationService.submitActivation(approvalId);
+
+            // Mark the approval as Approved + Sent
+            Journey_Approval__c approval = [
+                SELECT Id, Status__c FROM Journey_Approval__c WHERE Id = :approvalId LIMIT 1
+            ];
+            approval.Status__c = 'Approved';
+            approval.Reviewed_By__c = UserInfo.getUserId();
+            approval.Reviewed_At__c = DateTime.now();
+            update approval;
+
+            result.success = true;
+            result.message = message;
+        } catch (AuraHandledException e) {
+            result.success = false;
+            result.errorMessage = e.getMessage();
+        } catch (Exception e) {
+            result.success = false;
+            result.errorMessage = 'Media activation failed: ' + e.getMessage();
+        }
+        return result;
     }
 
     /**
@@ -778,7 +857,11 @@ public with sharing class JourneyApprovalService {
                        SMS_Body__c, Generated_Image_URL__c, Event_Type__c,
                        Step_Number__c, Total_Steps__c, Channel__c,
                        Send_Delay_Days__c, Scheduled_Send_Date__c,
-                       Meaningful_Event__c
+                       Meaningful_Event__c,
+                       // Media activation fields
+                       Media_Platform__c, Media_Ad_Format__c, Media_Creative_Brief__c,
+                       Media_Audience_Signals__c, Media_Estimated_Reach__c,
+                       Merkury_Activation_Status__c
                 FROM Journey_Approval__c
                 WHERE Journey_Id__c = :journeyId
                 AND Status__c = 'Approved'

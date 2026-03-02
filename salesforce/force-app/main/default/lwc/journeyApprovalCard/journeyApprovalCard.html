@@ -196,7 +196,10 @@
                         contact-name={approval.contactName}
                         contact-email={approval.contactEmail}
                         products={displayProducts}
-                        channel={channel}>
+                        channel={channel}
+                        media-platform={mediaPlatform}
+                        media-ad-format={mediaAdFormat}
+                        media-estimated-reach={mediaEstimatedReach}>
                     </c-journey-email-preview>
                 </div>
             </template>
@@ -325,7 +328,7 @@
                             <div class="slds-box slds-theme_default slds-text-align_center" style="border: 2px dashed #d8dde6; padding: 2rem; min-height: 180px;">
                                 <lightning-spinner alternative-text="Generating video..." size="medium"></lightning-spinner>
                                 <p class="slds-text-body_regular slds-m-top_medium slds-text-color_weak">Generating personalized video with Adobe Firefly...</p>
-                                <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">This may take 30-60 seconds</p>
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">This typically takes 1-2 minutes. Please wait.</p>
                             </div>
                         </div>
                     </template>
@@ -367,6 +370,66 @@
                                 </div>
                             </div>
                         </template>
+                    </template>
+                </template>
+
+                <!-- Media Channel Section -->
+                <template if:true={isMediaChannel}>
+                    <!-- Media Activation Header -->
+                    <div class="media-activation-header slds-m-bottom_small">
+                        <div class="slds-grid slds-grid_vertical-align-center slds-p-around_small">
+                            <img src={merkuryLogoUrl} alt="Merkury" class="merkury-logo-icon slds-m-right_small"/>
+                            <div class="slds-grow">
+                                <p class="slds-text-heading_small" style="font-weight: 700;">{platformLabel}</p>
+                                <p class="slds-text-body_small">{mediaAdFormat}</p>
+                            </div>
+                            <span class="slds-badge media-reach-badge">
+                                <lightning-icon icon-name="utility:groups" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                {mediaEstimatedReach} est. reach
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Distribution Destinations -->
+                    <div class="slds-m-bottom_small">
+                        <p class="slds-text-title_caps slds-m-bottom_xx-small">Distribution Destinations</p>
+                        <p class="slds-text-body_regular">{mediaDestinations}</p>
+                    </div>
+
+                    <!-- Merkury Activation Status -->
+                    <div class="slds-m-bottom_small">
+                        <p class="slds-text-title_caps slds-m-bottom_xx-small">Merkury Status</p>
+                        <span class={merkuryStatusClass}>{merkuryActivationStatus}</span>
+                    </div>
+
+                    <!-- Customer Value Score -->
+                    <div class="slds-m-bottom_small">
+                        <p class="slds-text-title_caps slds-m-bottom_xx-small">Customer Value Score</p>
+                        <p class="slds-text-body_regular">{customerValueScore} / 100</p>
+                    </div>
+
+                    <!-- Creative Brief (Editable) -->
+                    <div class="slds-m-bottom_small">
+                        <lightning-textarea
+                            label="Creative Brief"
+                            value={mediaCreativeBrief}
+                            onchange={handleCreativeBriefChange}
+                            max-length="5000">
+                        </lightning-textarea>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                            AI-generated creative direction sent to the ad platform for content production.
+                        </p>
+                    </div>
+
+                    <!-- Audience Signals (Accordion) -->
+                    <template if:true={hasMediaAudienceSignals}>
+                        <div class="slds-m-bottom_small">
+                            <lightning-accordion allow-multiple-sections-open>
+                                <lightning-accordion-section name="audienceSignals" label="Audience Signals (Merkury Payload)">
+                                    <pre class="audience-signals-json">{mediaAudienceSignalsFormatted}</pre>
+                                </lightning-accordion-section>
+                            </lightning-accordion>
+                        </div>
                     </template>
                 </template>
 
@@ -575,13 +638,25 @@
                         onclick={handleApprove}
                         class="slds-m-left_small">
                     </lightning-button>
-                    <lightning-button
-                        variant="success"
-                        label="Approve & Send"
-                        icon-name={channelIcon}
-                        onclick={handleApproveAndSend}
-                        class="slds-m-left_small">
-                    </lightning-button>
+                    <template if:true={isMediaChannel}>
+                        <lightning-button
+                            variant="success"
+                            label="Approve & Activate"
+                            icon-name="utility:broadcast"
+                            onclick={handleActivateMedia}
+                            class="slds-m-left_small"
+                            disabled={isMediaActivateDisabled}>
+                        </lightning-button>
+                    </template>
+                    <template if:false={isMediaChannel}>
+                        <lightning-button
+                            variant="success"
+                            label="Approve & Send"
+                            icon-name={channelIcon}
+                            onclick={handleApproveAndSend}
+                            class="slds-m-left_small">
+                        </lightning-button>
+                    </template>
                 </div>
             </div>
         </footer>

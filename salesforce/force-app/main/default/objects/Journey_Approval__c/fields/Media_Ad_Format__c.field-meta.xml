@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Channel__c</fullName>
-    <description>The communication channel for this journey step</description>
+    <fullName>Media_Ad_Format__c</fullName>
+    <description>Ad format/placement within the selected media platform</description>
     <externalId>false</externalId>
-    <label>Channel</label>
+    <label>Media Ad Format</label>
     <required>false</required>
-    <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>
     <valueSet>
@@ -13,29 +12,24 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value>
-                <fullName>Email</fullName>
-                <default>true</default>
-                <label>Email</label>
+                <fullName>Pre-Roll Video</fullName>
+                <default>false</default>
+                <label>Pre-Roll Video</label>
             </value>
             <value>
-                <fullName>SMS</fullName>
+                <fullName>Story Ad</fullName>
                 <default>false</default>
-                <label>SMS</label>
+                <label>Story Ad</label>
             </value>
             <value>
-                <fullName>Push</fullName>
+                <fullName>Feed Ad</fullName>
                 <default>false</default>
-                <label>Push</label>
+                <label>Feed Ad</label>
             </value>
             <value>
-                <fullName>Video</fullName>
+                <fullName>Sponsored Post</fullName>
                 <default>false</default>
-                <label>Video</label>
-            </value>
-            <value>
-                <fullName>Media</fullName>
-                <default>false</default>
-                <label>Media</label>
+                <label>Sponsored Post</label>
             </value>
         </valueSetDefinition>
     </valueSet>

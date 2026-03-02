@@ -209,12 +209,21 @@ export default class JourneyApprovalCard extends LightningElement {
         return this.channel === 'Video';
     }
 
+    get isMediaChannel() {
+        return this.channel === 'Media';
+    }
+
+    get merkuryLogoUrl() {
+        return 'https://agentforce-retail-advisor.vercel.app/assets/merkury-logo.png';
+    }
+
     get channelIcon() {
         switch (this.channel) {
             case 'Email': return 'utility:email';
             case 'SMS': return 'utility:chat';
             case 'Push': return 'utility:notification';
             case 'Video': return 'utility:video';
+            case 'Media': return 'utility:broadcast';
             default: return 'utility:email';
         }
     }
@@ -226,6 +235,7 @@ export default class JourneyApprovalCard extends LightningElement {
             case 'SMS': return `${base} channel-sms`;
             case 'Push': return `${base} channel-push`;
             case 'Video': return `${base} channel-video`;
+            case 'Media': return `${base} channel-media`;
             default: return base;
         }
     }
@@ -866,6 +876,109 @@ export default class JourneyApprovalCard extends LightningElement {
                 approvalId: this.approval.Id,
                 data: {
                     prompt: this.editedVideoPrompt
+                }
+            }
+        }));
+    }
+
+    // ─── Media Channel Methods ───────────────────────────────────────
+
+    @track editedCreativeBrief = '';
+    @track showAudienceSignals = false;
+
+    get mediaPlatform() {
+        return this.approval?.Media_Platform__c || '';
+    }
+
+    get mediaAdFormat() {
+        return this.approval?.Media_Ad_Format__c || '';
+    }
+
+    get mediaCreativeBrief() {
+        return this.approval?.Media_Creative_Brief__c || '';
+    }
+
+    get mediaEstimatedReach() {
+        const reach = this.approval?.Media_Estimated_Reach__c;
+        if (!reach) return '—';
+        if (reach >= 1000000) return (reach / 1000000).toFixed(1) + 'M';
+        if (reach >= 1000) return Math.round(reach / 1000) + 'K';
+        return reach.toString();
+    }
+
+    get merkuryActivationStatus() {
+        return this.approval?.Merkury_Activation_Status__c || 'Staged';
+    }
+
+    get merkuryStatusClass() {
+        const status = this.merkuryActivationStatus;
+        const base = 'slds-badge merkury-status-badge';
+        if (status === 'Active' || status === 'Completed') return `${base} merkury-status-active`;
+        if (status === 'Submitted') return `${base} merkury-status-submitted`;
+        if (status === 'Failed') return `${base} merkury-status-failed`;
+        return `${base} merkury-status-staged`;
+    }
+
+    get mediaDestinations() {
+        if (this.mediaPlatform === 'CTV') return 'Hulu, Roku';
+        if (this.mediaPlatform === 'Social') return 'Facebook, Instagram';
+        return '';
+    }
+
+    get platformIcon() {
+        return this.mediaPlatform === 'CTV' ? 'utility:tv' : 'utility:socialshare';
+    }
+
+    get platformLabel() {
+        return this.mediaPlatform === 'CTV' ? 'Connected TV' : 'Social Media';
+    }
+
+    get mediaAudienceSignals() {
+        if (!this.approval?.Media_Audience_Signals__c) return null;
+        try {
+            return JSON.parse(this.approval.Media_Audience_Signals__c);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    get mediaAudienceSignalsFormatted() {
+        const signals = this.mediaAudienceSignals;
+        if (!signals) return '';
+        return JSON.stringify(signals, null, 2);
+    }
+
+    get hasMediaAudienceSignals() {
+        return !!this.mediaAudienceSignals;
+    }
+
+    get customerValueScore() {
+        return this.approval?.Customer_Value_Score__c || 0;
+    }
+
+    get isMediaActivatable() {
+        return this.merkuryActivationStatus === 'Staged';
+    }
+
+    get isMediaActivateDisabled() {
+        return !this.isMediaActivatable;
+    }
+
+    handleCreativeBriefChange(event) {
+        this.editedCreativeBrief = event.target.value;
+    }
+
+    handleToggleAudienceSignals() {
+        this.showAudienceSignals = !this.showAudienceSignals;
+    }
+
+    handleActivateMedia() {
+        this.dispatchEvent(new CustomEvent('action', {
+            detail: {
+                action: 'sendMedia',
+                approvalId: this.approval.Id,
+                data: {
+                    creativeBrief: this.editedCreativeBrief || this.mediaCreativeBrief
                 }
             }
         }));
