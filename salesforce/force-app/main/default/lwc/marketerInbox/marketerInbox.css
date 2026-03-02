@@ -252,6 +252,19 @@
     --slds-c-icon-color-foreground-default: white;
 }
 
+.status-badge-group {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #e8f4ff;
+    color: #0176d3;
+}
+
 .subject-text {
     font-size: 13px;
     color: #3e3e3c;

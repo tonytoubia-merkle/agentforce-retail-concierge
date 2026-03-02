@@ -50,6 +50,9 @@ export default class MarketerInbox extends LightningElement {
     @track userIsManager = false;
     @track showPortfolioFilter = false;
 
+    // Status filter state
+    @track selectedStatus = 'pending'; // pending, in-progress, sent, all-statuses
+
     currentUserId = Id;
     wiredApprovalsResult;
     wiredStatsResult;
@@ -81,8 +84,8 @@ export default class MarketerInbox extends LightningElement {
         }
     }
 
-    // Get approvals filtered by selected portfolio
-    @wire(getApprovalsByPortfolio, { portfolioId: '$selectedPortfolio' })
+    // Get approvals filtered by selected portfolio and status
+    @wire(getApprovalsByPortfolio, { portfolioId: '$selectedPortfolio', statusFilter: '$selectedStatus' })
     wiredApprovals(result) {
         console.log('[MarketerInbox] wiredApprovals callback triggered');
         this.wiredApprovalsResult = result;
@@ -114,6 +117,25 @@ export default class MarketerInbox extends LightningElement {
         this.selectedPortfolio = event.detail.value;
         this.isLoading = true;
         // Wire will automatically refresh with new portfolioId
+    }
+
+    // Handle status filter change
+    handleStatusFilterChange(event) {
+        this.selectedStatus = event.detail.value;
+        this.isLoading = true;
+    }
+
+    get statusFilterOptions() {
+        return [
+            { label: 'Pending', value: 'pending' },
+            { label: 'In Progress', value: 'in-progress' },
+            { label: 'Sent', value: 'sent' },
+            { label: 'All Statuses', value: 'all-statuses' }
+        ];
+    }
+
+    get isReadOnlyView() {
+        return this.selectedStatus !== 'pending';
     }
 
     /**
@@ -264,6 +286,8 @@ export default class MarketerInbox extends LightningElement {
                     worstTier: null,
                     worstTierClass: null,
                     worstTierIcon: null,
+                    // Journey status (for read-only views)
+                    journeyStatus: approval.Status__c || 'Pending',
                     // Priority (highest in group)
                     highestPriority: 0,
                     // Urgency (most urgent in group)

@@ -722,7 +722,7 @@ public with sharing class PortfolioAssignmentService {
      * - A specific portfolio Id
      */
     @AuraEnabled(cacheable=true)
-    public static List<Journey_Approval__c> getApprovalsByPortfolio(String portfolioId) {
+    public static List<Journey_Approval__c> getApprovalsByPortfolio(String portfolioId, String statusFilter) {
         Id currentUserId = UserInfo.getUserId();
         Set<Id> portfolioIds = new Set<Id>();
 
@@ -809,10 +809,26 @@ public with sharing class PortfolioAssignmentService {
                    Merkury_Activation_Status__c
             FROM Journey_Approval__c
             WHERE Assigned_Portfolio__c IN :portfolioIds
-            AND Status__c = 'Pending'
+            AND Status__c IN :getStatusValues(statusFilter)
             ORDER BY Priority_Score__c DESC NULLS LAST, CreatedDate ASC
             LIMIT 200
         ];
+    }
+
+    /**
+     * Convert status filter string to list of status values for SOQL IN clause.
+     */
+    private static List<String> getStatusValues(String statusFilter) {
+        if (String.isBlank(statusFilter) || statusFilter == 'pending') {
+            return new List<String>{ 'Pending' };
+        } else if (statusFilter == 'in-progress') {
+            return new List<String>{ 'Approved' };
+        } else if (statusFilter == 'sent') {
+            return new List<String>{ 'Sent' };
+        } else if (statusFilter == 'all-statuses') {
+            return new List<String>{ 'Pending', 'Approved', 'Sent', 'Failed' };
+        }
+        return new List<String>{ 'Pending' };
     }
 
     /**

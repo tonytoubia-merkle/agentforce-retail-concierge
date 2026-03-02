@@ -25,6 +25,14 @@
                 </lightning-combobox>
             </template>
             <lightning-combobox
+                name="statusFilter"
+                value={selectedStatus}
+                options={statusFilterOptions}
+                onchange={handleStatusFilterChange}
+                variant="label-hidden"
+                class="slds-m-right_small filter-combo">
+            </lightning-combobox>
+            <lightning-combobox
                 name="filter"
                 value={activeFilter}
                 options={filterOptions}
@@ -174,33 +182,38 @@
 
                                             <!-- Bulk Actions -->
                                             <div class="slds-col slds-size_4-of-12 slds-text-align_right">
-                                                <template if:true={group.isPastDue}>
-                                                    <span class="past-due-badge">Past Due</span>
+                                                <template if:true={isReadOnlyView}>
+                                                    <span class="status-badge-group">{group.journeyStatus}</span>
                                                 </template>
-                                                <template if:false={group.isPastDue}>
-                                                    <lightning-button
-                                                        label="Reject All"
-                                                        variant="destructive"
-                                                        icon-name="utility:close"
-                                                        data-journey-id={group.journeyId}
-                                                        onclick={handleDeclineAllSteps}
-                                                        class="slds-m-right_x-small">
-                                                    </lightning-button>
-                                                    <lightning-button
-                                                        label="Approve All"
-                                                        variant="brand"
-                                                        icon-name="utility:check"
-                                                        data-journey-id={group.journeyId}
-                                                        onclick={handleApproveAllSteps}
-                                                        class="slds-m-right_x-small">
-                                                    </lightning-button>
-                                                    <lightning-button
-                                                        label="Send Flow"
-                                                        variant="success"
-                                                        icon-name="utility:send"
-                                                        data-journey-id={group.journeyId}
-                                                        onclick={handleSendFlow}>
-                                                    </lightning-button>
+                                                <template if:false={isReadOnlyView}>
+                                                    <template if:true={group.isPastDue}>
+                                                        <span class="past-due-badge">Past Due</span>
+                                                    </template>
+                                                    <template if:false={group.isPastDue}>
+                                                        <lightning-button
+                                                            label="Reject All"
+                                                            variant="destructive"
+                                                            icon-name="utility:close"
+                                                            data-journey-id={group.journeyId}
+                                                            onclick={handleDeclineAllSteps}
+                                                            class="slds-m-right_x-small">
+                                                        </lightning-button>
+                                                        <lightning-button
+                                                            label="Approve All"
+                                                            variant="brand"
+                                                            icon-name="utility:check"
+                                                            data-journey-id={group.journeyId}
+                                                            onclick={handleApproveAllSteps}
+                                                            class="slds-m-right_x-small">
+                                                        </lightning-button>
+                                                        <lightning-button
+                                                            label="Send Flow"
+                                                            variant="success"
+                                                            icon-name="utility:send"
+                                                            data-journey-id={group.journeyId}
+                                                            onclick={handleSendFlow}>
+                                                        </lightning-button>
+                                                    </template>
                                                 </template>
                                             </div>
                                         </div>
