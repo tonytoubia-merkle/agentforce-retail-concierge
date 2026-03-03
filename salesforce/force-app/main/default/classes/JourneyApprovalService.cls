@@ -593,8 +593,33 @@ public with sharing class JourneyApprovalService {
                 return result;
             }
 
-            // ── Phase 1: Callouts (before any DML) ──
-            // Generate images for Email steps that don't have one yet
+            // ── Phase 1a: Callout — Create Salesforce Flow via Tooling API ──
+            // This MUST run before Firefly, because Firefly does DML (insert ContentVersion)
+            // and Salesforce blocks callouts after uncommitted DML.
+            MarketingFlowBuilderService.FlowResult flowResult;
+            try {
+                flowResult = MarketingFlowBuilderService.createDraftFlow(journeyId, steps, contact);
+                if (flowResult.success) {
+                    System.debug('Created Salesforce Flow: ' + flowResult.flowId);
+                    // Activate the flow immediately since we're approving
+                    if (String.isNotBlank(flowResult.flowDefinitionId)) {
+                        MarketingFlowBuilderService.FlowResult activateResult =
+                            MarketingFlowBuilderService.activateFlow(flowResult.flowDefinitionId);
+                        if (!activateResult.success) {
+                            System.debug(LoggingLevel.WARN, 'Flow activation failed: ' + activateResult.errorMessage);
+                        }
+                    }
+                } else {
+                    System.debug(LoggingLevel.WARN, 'Flow creation failed: ' + flowResult.errorMessage);
+                }
+            } catch (Exception flowEx) {
+                System.debug(LoggingLevel.WARN, 'Salesforce Flow creation failed: ' + flowEx.getMessage());
+                flowResult = null; // Continue with approval even if flow creation fails
+            }
+
+            // ── Phase 1b: Callouts + DML — Generate Firefly images ──
+            // Firefly does HTTP callouts AND inserts ContentVersion (DML), so no
+            // further pure callouts can happen after this block.
             Integer imagesGenerated = 0;
             for (Journey_Approval__c step : steps) {
                 if (step.Channel__c == 'Email'
@@ -636,28 +661,6 @@ public with sharing class JourneyApprovalService {
                         System.debug(LoggingLevel.WARN, 'Image generation failed for step ' + step.Step_Number__c + ': ' + imgEx.getMessage());
                     }
                 }
-            }
-
-            // ── Phase 1b: Callout — Create Salesforce Flow via Tooling API ──
-            MarketingFlowBuilderService.FlowResult flowResult;
-            try {
-                flowResult = MarketingFlowBuilderService.createDraftFlow(journeyId, steps, contact);
-                if (flowResult.success) {
-                    System.debug('Created Salesforce Flow: ' + flowResult.flowId);
-                    // Activate the flow immediately since we're approving
-                    if (String.isNotBlank(flowResult.flowDefinitionId)) {
-                        MarketingFlowBuilderService.FlowResult activateResult =
-                            MarketingFlowBuilderService.activateFlow(flowResult.flowDefinitionId);
-                        if (!activateResult.success) {
-                            System.debug(LoggingLevel.WARN, 'Flow activation failed: ' + activateResult.errorMessage);
-                        }
-                    }
-                } else {
-                    System.debug(LoggingLevel.WARN, 'Flow creation failed: ' + flowResult.errorMessage);
-                }
-            } catch (Exception flowEx) {
-                System.debug(LoggingLevel.WARN, 'Salesforce Flow creation failed: ' + flowEx.getMessage());
-                flowResult = null; // Continue with approval even if flow creation fails
             }
 
             // ── Phase 2: DML — Create Marketing Flow tracking record ──
