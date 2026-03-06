@@ -79,11 +79,13 @@ function buildSessionContext(customer: CustomerProfile, campaignAttribution?: im
     const fieldLabel: Record<string, string> = {
       birthday: 'Birthday', anniversary: 'Anniversary', partnerName: 'Partner name',
       giftsFor: 'Buys gifts for', upcomingOccasions: 'Upcoming occasions',
-      morningRoutineTime: 'Morning routine', makeupFrequency: 'Makeup frequency',
-      exerciseRoutine: 'Exercise', workEnvironment: 'Work environment',
-      beautyPriority: 'Beauty priority', priceRange: 'Price sensitivity',
-      sustainabilityPref: 'Sustainability', climateContext: 'Climate',
-      waterIntake: 'Hydration habits', sleepPattern: 'Sleep pattern',
+      dailyIntakeGoal: 'Daily intake goal', activityLevel: 'Activity level',
+      workEnvironment: 'Work environment', climateContext: 'Climate',
+      hydrationChallenges: 'Hydration challenges', flavorsPreferred: 'Flavor preferences',
+      sparklingPreference: 'Sparkling preference', tapWaterQuality: 'Tap water quality',
+      deliveryPreference: 'Delivery preference', householdContext: 'Household context',
+      officeContext: 'Office context', sustainabilityGoals: 'Sustainability',
+      budgetContext: 'Budget context', priceRange: 'Price sensitivity',
     };
     for (const [key, label] of Object.entries(fieldLabel)) {
       const field = captured[key as keyof AgentCapturedProfile] as CapturedProfileField | undefined;
@@ -97,26 +99,33 @@ function buildSessionContext(customer: CustomerProfile, campaignAttribution?: im
   } else {
     // No captured profile at all — everything is missing
     missingProfileFields.push(
-      'Birthday', 'Anniversary', 'Morning routine', 'Exercise',
-      'Work environment', 'Beauty priority', 'Price sensitivity',
+      'Daily intake goal', 'Activity level', 'Household size',
+      'Work environment', 'Climate', 'Delivery frequency',
     );
   }
 
   // ─── Build provenance-tagged context ───────────────────────────
   const taggedContext: TaggedContextField[] = [];
 
-  // 1P-EXPLICIT (declared): beauty profile from preference center
-  if (customer.beautyProfile?.skinType) {
-    taggedContext.push({ value: `Skin type: ${customer.beautyProfile.skinType}`, provenance: 'declared', usage: 'direct' });
+  // 1P-EXPLICIT (declared): hydration profile from preference center
+  const hp = customer.hydrationProfile;
+  if (hp?.primaryUse) {
+    taggedContext.push({ value: `Primary use: ${hp.primaryUse}`, provenance: 'declared', usage: 'direct' });
   }
-  if (customer.beautyProfile?.concerns?.length) {
-    taggedContext.push({ value: `Concerns: ${customer.beautyProfile.concerns.join(', ')}`, provenance: 'declared', usage: 'direct' });
+  if (hp?.dailyIntakeGoalOz) {
+    taggedContext.push({ value: `Daily intake goal: ${hp.dailyIntakeGoalOz}oz`, provenance: 'declared', usage: 'direct' });
   }
-  if (customer.beautyProfile?.allergies?.length) {
-    taggedContext.push({ value: `Allergies: ${customer.beautyProfile.allergies.join(', ')}`, provenance: 'declared', usage: 'direct' });
+  if (hp?.waterPreferences?.length) {
+    taggedContext.push({ value: `Water preferences: ${hp.waterPreferences.join(', ')}`, provenance: 'declared', usage: 'direct' });
   }
-  if (customer.beautyProfile?.fragrancePreference) {
-    taggedContext.push({ value: `Fragrance preference: ${customer.beautyProfile.fragrancePreference}`, provenance: 'declared', usage: 'direct' });
+  if (hp?.deliveryFrequency) {
+    taggedContext.push({ value: `Delivery frequency: ${hp.deliveryFrequency}`, provenance: 'declared', usage: 'direct' });
+  }
+  if (hp?.householdSize) {
+    taggedContext.push({ value: `Household size: ${hp.householdSize} people`, provenance: 'declared', usage: 'direct' });
+  }
+  if (hp?.hasDispenser !== undefined) {
+    taggedContext.push({ value: `Has dispenser: ${hp.hasDispenser ? 'yes' : 'no'}`, provenance: 'declared', usage: 'direct' });
   }
 
   // 1P-BEHAVIORAL (observed): purchase history
@@ -185,8 +194,8 @@ function buildSessionContext(customer: CustomerProfile, campaignAttribution?: im
     // for action inputs (Create_Meaningful_Event, Update_Contact_Profile, etc.)
     contactId: isSalesforceId ? customer.id : customer.email,
     identityTier: customer.merkuryIdentity?.identityTier || 'anonymous',
-    skinType: customer.beautyProfile?.skinType,
-    concerns: customer.beautyProfile?.concerns,
+    primaryUse: customer.hydrationProfile?.primaryUse,
+    waterPreferences: customer.hydrationProfile?.waterPreferences,
     recentPurchases,
     recentActivity,
     appendedInterests: customer.appendedProfile?.interests || [],

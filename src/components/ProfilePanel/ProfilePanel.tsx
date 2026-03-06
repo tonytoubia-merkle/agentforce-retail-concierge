@@ -44,18 +44,22 @@ const Field: React.FC<{ label: string; value: string | undefined | null }> = ({ 
 };
 
 function formatProfile(customer: CustomerProfile) {
-  const bp = customer.beautyProfile;
+  const hp = customer.hydrationProfile;
   const sections: React.ReactNode[] = [];
 
-  // Beauty Profile
-  sections.push(
-    <Section key="beauty" title="Beauty Profile" source="Contact">
-      <Field label="Skin Type" value={bp.skinType} />
-      <Field label="Concerns" value={bp.concerns?.join(', ')} />
-      <Field label="Allergies" value={bp.allergies?.join(', ')} />
-      <Field label="Preferred Brands" value={bp.preferredBrands?.join(', ')} />
-    </Section>
-  );
+  // Hydration Profile
+  if (hp) {
+    sections.push(
+      <Section key="hydration" title="Hydration Profile" source="Contact">
+        <Field label="Primary Use" value={hp.primaryUse} />
+        <Field label="Daily Goal" value={hp.dailyIntakeGoalOz ? `${hp.dailyIntakeGoalOz}oz` : undefined} />
+        <Field label="Water Prefs" value={hp.waterPreferences?.join(', ')} />
+        <Field label="Delivery" value={hp.deliveryFrequency} />
+        <Field label="Household" value={hp.householdSize ? `${hp.householdSize} people` : undefined} />
+        <Field label="Preferred Brands" value={hp.preferredBrands?.join(', ')} />
+      </Section>
+    );
+  }
 
   // Orders
   if (customer.orders.length > 0) {

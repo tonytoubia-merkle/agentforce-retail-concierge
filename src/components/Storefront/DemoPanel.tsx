@@ -94,15 +94,16 @@ const ClearableField: React.FC<{
 
 function renderProfileDetail(customer: CustomerProfile, manage?: ManageOptions) {
   const sections: React.ReactNode[] = [];
-  const bp = customer.beautyProfile;
+  const hp = customer.hydrationProfile;
 
-  if (bp?.skinType) {
+  if (hp?.primaryUse || hp?.waterPreferences?.length || hp?.preferredBrands?.length) {
     sections.push(
-      <DetailSection key="beauty" title="Beauty Profile" source="Contact">
-        <ClearableField label="Skin Type" value={bp.skinType} manage={manage} contactId={customer.id} fieldApi="Skin_Type__c" onCleared={manage?.onCleared} />
-        <ClearableField label="Concerns" value={bp.concerns?.join(', ')} manage={manage} contactId={customer.id} fieldApi="Skin_Concerns__c" onCleared={manage?.onCleared} />
-        <ClearableField label="Allergies" value={bp.allergies?.join(', ')} manage={manage} contactId={customer.id} fieldApi="Allergies__c" onCleared={manage?.onCleared} />
-        <ClearableField label="Brands" value={bp.preferredBrands?.join(', ')} manage={manage} contactId={customer.id} fieldApi="Preferred_Brands__c" onCleared={manage?.onCleared} />
+      <DetailSection key="hydration" title="Hydration Profile" source="Contact">
+        <DetailField label="Primary Use" value={hp.primaryUse} />
+        <DetailField label="Daily Goal" value={hp.dailyIntakeGoalOz ? `${hp.dailyIntakeGoalOz}oz` : undefined} />
+        <DetailField label="Water Prefs" value={hp.waterPreferences?.join(', ')} />
+        <DetailField label="Delivery" value={hp.deliveryFrequency} />
+        <ClearableField label="Brands" value={hp.preferredBrands?.join(', ')} manage={manage} contactId={customer.id} fieldApi="Preferred_Brands__c" onCleared={manage?.onCleared} />
       </DetailSection>
     );
   }

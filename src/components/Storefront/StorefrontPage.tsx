@@ -52,34 +52,25 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
     return products.slice(0, 8);
   }, [products]);
 
-  // Skincare products
-  const skincareProducts = useMemo(() => {
+  // Delivery & dispenser products
+  const deliveryProducts = useMemo(() => {
     return products
-      .filter((p) =>
-        ['moisturizer', 'cleanser', 'serum', 'sunscreen', 'mask', 'toner', 'eye-cream', 'spot-treatment'].includes(
-          p.category
-        )
-      )
+      .filter((p) => ['dispenser', 'delivery'].includes(p.category))
       .slice(0, 4);
   }, [products]);
 
-  // Makeup products
-  const makeupProducts = useMemo(() => {
+  // Sparkling & flavored products
+  const sparklingProducts = useMemo(() => {
     return products
-      .filter((p) => ['foundation', 'lipstick', 'mascara', 'blush'].includes(p.category))
+      .filter((p) => ['sparkling', 'flavored'].includes(p.category))
       .slice(0, 4);
   }, [products]);
 
-  // Haircare products
-  const haircareProducts = useMemo(() => {
+  // Still water & accessories
+  const stillProducts = useMemo(() => {
     return products
-      .filter((p) => ['shampoo', 'conditioner', 'hair-treatment'].includes(p.category))
+      .filter((p) => ['still', 'bottle', 'filter'].includes(p.category))
       .slice(0, 4);
-  }, [products]);
-
-  // Fragrance products
-  const fragranceProducts = useMemo(() => {
-    return products.filter((p) => p.category === 'fragrance').slice(0, 4);
   }, [products]);
 
   const renderContent = () => {
@@ -116,7 +107,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
         return (
           <>
             <HeroBanner
-              onShopNow={() => navigateToCategory('moisturizer' as ProductCategory)}
+              onShopNow={() => navigateToCategory('delivery' as ProductCategory)}
               customer={customer}
               isAuthenticated={isAuthenticated}
             />
@@ -154,58 +145,39 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
                 <h2 className="text-2xl sm:text-3xl font-medium text-stone-900 mb-8 text-center">
                   Shop by Category
                 </h2>
-                {/* Skincare row */}
+                {/* Delivery & Dispensers row */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                   {[
-                    { label: 'Moisturizers', category: 'moisturizer' as ProductCategory, color: 'from-rose-100 to-pink-100' },
-                    { label: 'Cleansers', category: 'cleanser' as ProductCategory, color: 'from-sky-100 to-blue-100' },
-                    { label: 'Serums', category: 'serum' as ProductCategory, color: 'from-purple-100 to-violet-100' },
-                    { label: 'Sun Care', category: 'sunscreen' as ProductCategory, color: 'from-amber-100 to-yellow-100' },
+                    { label: 'Dispensers', category: 'dispenser' as ProductCategory, color: 'from-blue-100 to-sky-100' },
+                    { label: 'Home Delivery', category: 'delivery' as ProductCategory, color: 'from-cyan-100 to-teal-100' },
+                    { label: 'Sparkling', category: 'sparkling' as ProductCategory, color: 'from-sky-100 to-blue-100' },
+                    { label: 'Flavored Water', category: 'flavored' as ProductCategory, color: 'from-green-100 to-teal-100' },
                   ].map((cat) => (
                     <button
                       key={cat.category}
                       onClick={() => navigateToCategory(cat.category)}
                       className={`bg-gradient-to-br ${cat.color} rounded-2xl p-6 sm:p-8 text-center hover:shadow-lg transition-shadow group`}
                     >
-                      <span className="text-lg font-medium text-stone-900 group-hover:text-rose-600 transition-colors">
+                      <span className="text-lg font-medium text-stone-900 group-hover:text-blue-600 transition-colors">
                         {cat.label}
                       </span>
                     </button>
                   ))}
                 </div>
-                {/* Makeup row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                  {[
-                    { label: 'Foundation', category: 'foundation' as ProductCategory, color: 'from-orange-100 to-amber-100' },
-                    { label: 'Lipstick', category: 'lipstick' as ProductCategory, color: 'from-red-100 to-rose-100' },
-                    { label: 'Mascara', category: 'mascara' as ProductCategory, color: 'from-stone-200 to-stone-100' },
-                    { label: 'Blush', category: 'blush' as ProductCategory, color: 'from-pink-100 to-rose-100' },
-                  ].map((cat) => (
-                    <button
-                      key={cat.category}
-                      onClick={() => navigateToCategory(cat.category)}
-                      className={`bg-gradient-to-br ${cat.color} rounded-2xl p-6 sm:p-8 text-center hover:shadow-lg transition-shadow group`}
-                    >
-                      <span className="text-lg font-medium text-stone-900 group-hover:text-rose-600 transition-colors">
-                        {cat.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                {/* Hair & Fragrance row */}
+                {/* Accessories row */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {[
-                    { label: 'Shampoo', category: 'shampoo' as ProductCategory, color: 'from-teal-100 to-cyan-100' },
-                    { label: 'Conditioner', category: 'conditioner' as ProductCategory, color: 'from-emerald-100 to-green-100' },
-                    { label: 'Hair Care', category: 'hair-treatment' as ProductCategory, color: 'from-lime-100 to-green-100' },
-                    { label: 'Fragrance', category: 'fragrance' as ProductCategory, color: 'from-violet-100 to-purple-100' },
+                    { label: 'Still Water', category: 'still' as ProductCategory, color: 'from-slate-100 to-blue-100' },
+                    { label: 'Bottles', category: 'bottle' as ProductCategory, color: 'from-indigo-100 to-blue-100' },
+                    { label: 'Filters', category: 'filter' as ProductCategory, color: 'from-emerald-100 to-teal-100' },
+                    { label: 'Primo Perks', category: 'subscription' as ProductCategory, color: 'from-amber-100 to-yellow-100' },
                   ].map((cat) => (
                     <button
                       key={cat.category}
                       onClick={() => navigateToCategory(cat.category)}
                       className={`bg-gradient-to-br ${cat.color} rounded-2xl p-6 sm:p-8 text-center hover:shadow-lg transition-shadow group`}
                     >
-                      <span className="text-lg font-medium text-stone-900 group-hover:text-rose-600 transition-colors">
+                      <span className="text-lg font-medium text-stone-900 group-hover:text-blue-600 transition-colors">
                         {cat.label}
                       </span>
                     </button>
@@ -214,74 +186,63 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
               </div>
             </section>
 
-            {/* Skincare Section */}
-            {skincareProducts.length > 0 && (
+            {/* Delivery & Dispensers Section */}
+            {deliveryProducts.length > 0 && (
               <ProductSection
-                title="Skincare Essentials"
-                subtitle="Build your perfect routine"
-                products={skincareProducts}
+                title="Delivery & Dispensers"
+                subtitle="Pure water, delivered to your door"
+                products={deliveryProducts}
                 showViewAll
-                onViewAll={() => navigateToCategory('moisturizer' as ProductCategory)}
+                onViewAll={() => navigateToCategory('delivery' as ProductCategory)}
               />
             )}
 
-            {/* Beauty Advisor CTA */}
-            <section className="py-16 bg-gradient-to-br from-rose-50 via-purple-50 to-rose-50">
+            {/* Hydration Concierge CTA */}
+            <section className="py-16 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50">
               <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-rose-400 to-purple-500 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center">
                   <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                   </svg>
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-medium text-stone-900 mb-4">
-                  Not sure what to get?
+                  Not sure what's right for you?
                 </h2>
                 <p className="text-lg text-stone-600 mb-8 max-w-2xl mx-auto">
-                  Our AI-powered Beauty Advisor provides personalized recommendations based on your unique skin type,
-                  concerns, and preferences.
+                  Our AI-powered Hydration Intelligence Concierge builds a personalized hydration plan based on your
+                  lifestyle, activity level, household size, and wellness goals.
                 </p>
                 <button
                   onClick={() => navigateToAdvisor()}
-                  className="px-8 py-4 bg-gradient-to-r from-rose-500 to-purple-500 text-white font-medium rounded-full hover:shadow-xl hover:shadow-rose-500/30 transition-all text-lg"
+                  className="px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-full hover:shadow-xl hover:shadow-blue-500/30 transition-all text-lg"
                 >
-                  Talk to Beauty Advisor
+                  Build My Hydration Plan
                 </button>
               </div>
             </section>
 
-            {/* Makeup Section */}
-            {makeupProducts.length > 0 && (
+            {/* Sparkling & Flavored Section */}
+            {sparklingProducts.length > 0 && (
               <ProductSection
-                title="Makeup Must-Haves"
-                subtitle="Color that inspires"
-                products={makeupProducts}
+                title="Sparkling & Flavored"
+                subtitle="Zero sugar, all the refreshment"
+                products={sparklingProducts}
                 showViewAll
-                onViewAll={() => navigateToCategory('foundation' as ProductCategory)}
+                onViewAll={() => navigateToCategory('sparkling' as ProductCategory)}
               />
             )}
 
-            {/* Haircare Section */}
-            {haircareProducts.length > 0 && (
+            {/* Still Water & Accessories Section */}
+            {stillProducts.length > 0 && (
               <div className="bg-stone-50">
                 <ProductSection
-                  title="Hair Care"
-                  subtitle="Healthy hair, beautiful you"
-                  products={haircareProducts}
+                  title="Bottles, Filters & Still Water"
+                  subtitle="Hydration essentials for every lifestyle"
+                  products={stillProducts}
                   showViewAll
-                  onViewAll={() => navigateToCategory('shampoo' as ProductCategory)}
+                  onViewAll={() => navigateToCategory('bottle' as ProductCategory)}
                 />
               </div>
-            )}
-
-            {/* Fragrance Section */}
-            {fragranceProducts.length > 0 && (
-              <ProductSection
-                title="Signature Scents"
-                subtitle="Find your perfect fragrance"
-                products={fragranceProducts}
-                showViewAll
-                onViewAll={() => navigateToCategory('fragrance' as ProductCategory)}
-              />
             )}
 
             {/* New Arrivals */}
@@ -304,22 +265,22 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
                   <div>
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-purple-500 flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">B</span>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">P</span>
                       </div>
-                      <span className="text-xl font-semibold">BEAUTÉ</span>
+                      <span className="text-xl font-semibold">PRIMO</span>
                     </div>
                     <p className="text-stone-400 text-sm">
-                      Curated beauty for the modern you.
+                      Pure water, delivered your way.
                     </p>
                   </div>
                   <div>
                     <h4 className="font-medium mb-4">Shop</h4>
                     <ul className="space-y-2 text-sm text-stone-400">
-                      <li><button className="hover:text-white transition-colors">Skincare</button></li>
-                      <li><button className="hover:text-white transition-colors">Makeup</button></li>
-                      <li><button className="hover:text-white transition-colors">Fragrance</button></li>
-                      <li><button className="hover:text-white transition-colors">Haircare</button></li>
+                      <li><button className="hover:text-white transition-colors">Dispensers</button></li>
+                      <li><button className="hover:text-white transition-colors">Home Delivery</button></li>
+                      <li><button className="hover:text-white transition-colors">Sparkling Water</button></li>
+                      <li><button className="hover:text-white transition-colors">Primo Perks</button></li>
                     </ul>
                   </div>
                   <div>
@@ -348,7 +309,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
                   </div>
                 </div>
                 <div className="border-t border-stone-800 mt-12 pt-8 text-center text-sm text-stone-500">
-                  <p>© 2024 BEAUTÉ. All rights reserved. Demo site for Merkle x Agentforce.</p>
+                  <p>© 2025 Primo Brands. All rights reserved. Demo site — Primo Brands x Merkury x Agentforce.</p>
                 </div>
               </div>
             </footer>

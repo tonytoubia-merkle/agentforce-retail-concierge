@@ -62,12 +62,12 @@ export const ProductHero: React.FC<ProductHeroProps> = ({ product }) => {
         </p>
 
         <div className="flex flex-wrap gap-2 mt-2">
-          {product.attributes?.skinType?.map((type) => (
+          {product.attributes?.waterType?.map((type) => (
             <span
               key={type}
               className="px-3 py-1 bg-white/20 rounded-full text-sm"
             >
-              {type} skin
+              {type}
             </span>
           ))}
         </div>

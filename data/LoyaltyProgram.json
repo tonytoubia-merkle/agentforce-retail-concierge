@@ -1,12 +1,7 @@
 [
   {
-    "Name": "Beauty Rewards",
-    "Description": "Earn points on every purchase and redeem for discounts",
-    "Currency": "USD"
-  },
-  {
-    "Name": "Premium Beauty Club",
-    "Description": "Exclusive rewards for our most valued customers",
+    "Name": "Primo Perks",
+    "Description": "Earn points on every delivery and purchase, unlock exclusive member benefits",
     "Currency": "USD"
   }
 ]

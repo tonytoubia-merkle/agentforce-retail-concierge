@@ -14,12 +14,12 @@ interface HeroBannerProps {
 
 // Hero image mapping for personalization scenarios
 const HERO_IMAGES = {
-  authenticated: '/assets/hero/hero-glowing-skin.png',      // Known + signed in → radiant glow
-  pseudonymous: '/assets/hero/hero-face-wash.png',          // Known + not signed in → fresh start
-  cleanBeauty: '/assets/hero/hero-clean-botanicals.png',    // 3P clean/natural interests
-  luxury: '/assets/hero/hero-luxury-textures.png',          // 3P luxury/premium interests
-  wellness: '/assets/hero/hero-wellness-lifestyle.png',     // 3P wellness/fitness interests
-  default: '/assets/hero/hero-spa-mask.png',                // Anonymous → aspirational spa
+  authenticated: '/assets/hero/hero-dispenser-home.png',    // Known + signed in → home dispenser
+  pseudonymous: '/assets/hero/hero-sparkling-pour.png',     // Known + not signed in → fresh pour
+  fitness: '/assets/hero/hero-athlete-hydration.png',       // 3P fitness/active interests
+  wellness: '/assets/hero/hero-wellness-water.png',         // 3P wellness interests
+  family: '/assets/hero/hero-family-kitchen.png',           // 3P family interests
+  default: '/assets/hero/hero-water-fresh.png',             // Anonymous → aspirational clean water
 };
 
 interface HeroVariant {
@@ -35,15 +35,15 @@ interface HeroVariant {
 
 // Map campaign themes to hero badge + copy overrides
 const CAMPAIGN_HERO_MAP: Record<string, { badge: string; headlineTop: string; headlineBottom: string; subtitle: string }> = {
-  'summer-glow': { badge: 'Summer Collection', headlineTop: 'Your Summer', headlineBottom: 'Glow Awaits', subtitle: 'Sun-kissed radiance starts with the right serums and SPF.' },
-  'anti-aging': { badge: 'Science of Skin', headlineTop: 'Ageless Beauty,', headlineBottom: 'Backed by Science', subtitle: 'Clinically proven retinol and peptide formulas for radiant, youthful skin.' },
-  'bridal-beauty': { badge: 'Wedding Season', headlineTop: 'Your Perfect', headlineBottom: 'Bridal Look', subtitle: 'Curated beauty for your most beautiful day.' },
-  'luxury-fragrance': { badge: 'Luxury Fragrance', headlineTop: 'Discover', headlineBottom: 'Luxury, Bottled', subtitle: 'An immersive fragrance collection for those who demand the extraordinary.' },
-  'k-beauty': { badge: 'K-Beauty Edit', headlineTop: 'Glass Skin', headlineBottom: 'Essentials', subtitle: 'The Korean skincare routine, simplified for effortless glow.' },
-  'spf-season': { badge: 'SPF Season', headlineTop: 'Protect Your', headlineBottom: 'Glow', subtitle: 'Lightweight, invisible sunscreens that actually feel good.' },
-  'glow-up': { badge: 'Glow Up', headlineTop: 'Your Glow Up', headlineBottom: 'Starts Here', subtitle: 'Join 10K+ creators showing off their BEAUTE transformations.' },
-  'mens-skincare': { badge: "Men's Edit", headlineTop: 'Skincare.', headlineBottom: 'No BS.', subtitle: 'Simple, effective routines built for guys who want great skin.' },
-  'loyalty-engagement': { badge: '2x Points Weekend', headlineTop: 'Double Points', headlineBottom: 'This Weekend', subtitle: 'Earn 2x loyalty points on every purchase. Exclusive for Gold+ members.' },
+  'summer-hydration': { badge: 'Summer Hydration', headlineTop: 'Stay Cool,', headlineBottom: 'Stay Hydrated', subtitle: 'Beat the heat with pure, refreshing water delivered to your door.' },
+  'fitness-fuel': { badge: 'Fuel Your Performance', headlineTop: 'Hydrate Like', headlineBottom: 'A Champion', subtitle: 'Elite athletes know hydration is everything. Your personalized plan starts here.' },
+  'clean-water': { badge: 'Pure & Clean', headlineTop: 'Pure Water,', headlineBottom: 'Purified Process', subtitle: 'Multi-step purification removes 99% of contaminants for water you can trust.' },
+  'sparkling-new': { badge: 'New Sparkling Flavors', headlineTop: 'Discover', headlineBottom: 'Bold New Flavors', subtitle: 'Crisp, zero-calorie sparkling water in flavors you will love.' },
+  'family-wellness': { badge: 'Family Wellness', headlineTop: 'Keep Your Family', headlineBottom: 'Hydrated', subtitle: 'The whole family, properly hydrated — with the right delivery plan for your home.' },
+  'office-solution': { badge: 'Office Hydration', headlineTop: 'Your Office,', headlineBottom: 'Refreshed', subtitle: 'Replace your bottled water service with Primo and save up to 60%.' },
+  'eco-refill': { badge: 'Go Greener', headlineTop: 'Reduce Plastic,', headlineBottom: 'Not Taste', subtitle: 'Refillable jugs and exchange programs to help you cut single-use plastic waste.' },
+  'loyalty-engagement': { badge: '2x Points Weekend', headlineTop: 'Double Points', headlineBottom: 'This Weekend', subtitle: 'Earn 2x Primo Perks points on every order. Exclusive for Active+ members.' },
+  'new-delivery': { badge: 'Introducing Delivery+', headlineTop: 'Water, Delivered', headlineBottom: 'Your Way', subtitle: 'Set your schedule, skip when you want, never run out. Starting at $12.99/jug.' },
 };
 
 function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boolean, campaign?: CampaignAttribution | null): HeroVariant {
@@ -69,14 +69,14 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
       ? `${customer.loyalty.tier.charAt(0).toUpperCase() + customer.loyalty.tier.slice(1)} Member · ${customer.loyalty.pointsBalance?.toLocaleString()} pts`
       : null;
     return {
-      badge: 'For You',
-      headlineTop: `Your Beauty Edit,`,
+      badge: 'Your Hydration Hub',
+      headlineTop: `Welcome back,`,
       headlineBottom: firstName,
       subtitle: loyaltyLine
-        ? `Curated picks for you. ${loyaltyLine}.`
-        : 'Curated skincare and beauty essentials, just for you.',
+        ? `Great to see you. ${loyaltyLine}.`
+        : 'Your personalized hydration plan and next delivery, right here.',
       heroImage: HERO_IMAGES.authenticated,
-      imageAlt: 'Radiant glowing skin',
+      imageAlt: 'Home water dispenser',
       source: 'authenticated' as const,
     };
   }
@@ -87,36 +87,36 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
   // Appended (3P Merkury data)
   if (tier === 'appended' && customer?.appendedProfile?.interests) {
     const interests = customer.appendedProfile.interests.map((i) => i.toLowerCase());
-    if (interests.some((i) => i.includes('clean') || i.includes('natural'))) {
+    if (interests.some((i) => i.includes('fitness') || i.includes('running') || i.includes('triathlon') || i.includes('cycling'))) {
       return {
-        badge: 'Trending in Clean Beauty',
-        headlineTop: 'Clean Beauty,',
-        headlineBottom: 'Naturally You',
-        subtitle: 'Curated clean and natural beauty essentials for a conscious routine.',
-        heroImage: HERO_IMAGES.cleanBeauty,
-        imageAlt: 'Natural botanical ingredients',
+        badge: 'Fuel Your Performance',
+        headlineTop: 'Hydrate Like',
+        headlineBottom: 'An Athlete',
+        subtitle: 'High-performance hydration for runners, cyclists, and athletes. Your personalized plan starts here.',
+        heroImage: HERO_IMAGES.fitness,
+        imageAlt: 'Athlete hydrating on a trail run',
         source: 'appended' as const,
       };
     }
-    if (interests.some((i) => i.includes('luxury') || i.includes('premium'))) {
+    if (interests.some((i) => i.includes('wellness') || i.includes('yoga') || i.includes('organic') || i.includes('clean'))) {
       return {
-        badge: 'Luxury Picks',
-        headlineTop: 'Luxury Essentials,',
-        headlineBottom: 'Curated for You',
-        subtitle: 'Premium skincare and beauty from the brands you love.',
-        heroImage: HERO_IMAGES.luxury,
-        imageAlt: 'Luxurious beauty textures',
-        source: 'appended' as const,
-      };
-    }
-    if (interests.some((i) => i.includes('wellness') || i.includes('yoga') || i.includes('fitness'))) {
-      return {
-        badge: 'Beauty Meets Wellness',
-        headlineTop: 'Beauty Meets',
-        headlineBottom: 'Wellness',
-        subtitle: 'Skincare and beauty that complements your active lifestyle.',
+        badge: 'Wellness Starts with Water',
+        headlineTop: 'Pure Water,',
+        headlineBottom: 'Whole Body Wellness',
+        subtitle: 'Clean, sustainably sourced water for your wellness lifestyle.',
         heroImage: HERO_IMAGES.wellness,
-        imageAlt: 'Wellness and self-care lifestyle',
+        imageAlt: 'Wellness spa water setting',
+        source: 'appended' as const,
+      };
+    }
+    if (interests.some((i) => i.includes('family') || i.includes('kids') || i.includes('parent'))) {
+      return {
+        badge: 'Family Hydration',
+        headlineTop: 'Keep Your Family',
+        headlineBottom: 'Refreshed',
+        subtitle: 'Safe, pure water for the whole family — with delivery that fits your home.',
+        heroImage: HERO_IMAGES.family,
+        imageAlt: 'Family in kitchen with water dispenser',
         source: 'appended' as const,
       };
     }
@@ -124,12 +124,12 @@ function getHeroVariant(customer?: CustomerProfile | null, isAuthenticated?: boo
 
   // Anonymous / default
   return {
-    badge: 'New Season Collection',
-    headlineTop: 'Discover Your',
-    headlineBottom: 'Perfect Glow',
-    subtitle: 'Curated skincare and beauty essentials, personalized to your unique needs. Experience the future of beauty with our AI-powered recommendations.',
+    badge: 'Pure Water, Delivered',
+    headlineTop: 'Hydration That',
+    headlineBottom: 'Fits Your Life',
+    subtitle: 'Personalized water solutions for every lifestyle — from home delivery to sparkling flavors. Find your perfect hydration plan.',
     heroImage: HERO_IMAGES.default,
-    imageAlt: 'Luxurious spa treatment',
+    imageAlt: 'Fresh clean water',
     source: 'default' as const,
   };
 }
@@ -138,7 +138,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
   const [sfpDecision, setSfpDecision] = useState<PersonalizationDecision | null>(null);
   const { campaign } = useCampaign();
   const navigate = useNavigate();
-  const onBeautyAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
+  const onHydrationConcierge = useCallback(() => navigate('/advisor'), [navigate]);
 
   // Try SF Personalization campaign decision when customer changes.
   // Only adopt the decision if it carries at least one meaningful display field —
@@ -174,11 +174,11 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
   }, [sfpDecision, customer, isAuthenticated, campaign]);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-stone-100 via-rose-50 to-purple-50">
+    <section className="relative overflow-hidden bg-gradient-to-br from-stone-100 via-blue-50 to-cyan-50">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-rose-200 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-20 w-96 h-96 bg-purple-200 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-20 w-96 h-96 bg-cyan-200 rounded-full blur-3xl" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
@@ -189,12 +189,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-block px-3 py-1 bg-rose-100 text-rose-600 text-xs font-medium rounded-full mb-6">
+            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-600 text-xs font-medium rounded-full mb-6">
               {variant.badge}
             </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-light text-stone-900 leading-tight mb-6">
               {variant.headlineTop}
-              <span className="block font-medium bg-gradient-to-r from-rose-500 to-purple-500 bg-clip-text text-transparent">
+              <span className="block font-medium bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
                 {variant.headlineBottom}
               </span>
             </h1>
@@ -209,31 +209,31 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onShopNow, customer, isA
                 Shop Collection
               </button>
               <button
-                onClick={onBeautyAdvisor}
-                className="group px-8 py-3 bg-white text-stone-900 font-medium rounded-full border border-stone-200 hover:border-rose-300 hover:bg-rose-50 transition-all flex items-center gap-2"
+                onClick={onHydrationConcierge}
+                className="group px-8 py-3 bg-white text-stone-900 font-medium rounded-full border border-stone-200 hover:border-blue-300 hover:bg-blue-50 transition-all flex items-center gap-2"
               >
-                <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                Talk to Beauty Advisor
+                Hydration Concierge
               </button>
             </div>
 
             {/* Trust badges */}
             <div className="flex items-center gap-6 mt-10 pt-8 border-t border-stone-200/50">
               <div className="text-center">
-                <div className="text-2xl font-semibold text-stone-900">50K+</div>
+                <div className="text-2xl font-semibold text-stone-900">1M+</div>
                 <div className="text-xs text-stone-500">Happy Customers</div>
               </div>
               <div className="w-px h-10 bg-stone-200" />
               <div className="text-center">
-                <div className="text-2xl font-semibold text-stone-900">4.9</div>
+                <div className="text-2xl font-semibold text-stone-900">4.8</div>
                 <div className="text-xs text-stone-500">Average Rating</div>
               </div>
               <div className="w-px h-10 bg-stone-200" />
               <div className="text-center">
-                <div className="text-2xl font-semibold text-stone-900">100%</div>
-                <div className="text-xs text-stone-500">Clean Beauty</div>
+                <div className="text-2xl font-semibold text-stone-900">99%</div>
+                <div className="text-xs text-stone-500">Contaminants Removed</div>
               </div>
             </div>
           </motion.div>

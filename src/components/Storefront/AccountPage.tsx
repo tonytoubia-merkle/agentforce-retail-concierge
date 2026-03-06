@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomer } from '@/contexts/CustomerContext';
 import { useStore } from '@/contexts/StoreContext';
-import { getDataCloudWriteService, type BeautyPreferencesUpdate, type CommunicationPreferencesUpdate } from '@/services/datacloud/writeProfile';
+import { getDataCloudWriteService, type HydrationPreferencesUpdate, type CommunicationPreferencesUpdate } from '@/services/datacloud/writeProfile';
 import type { OrderRecord, AgentCapturedProfile, CapturedProfileField, ProfilePreferences } from '@/types/customer';
 
 const TIER_THRESHOLDS: Record<string, { next: string; points: number }> = {
-  bronze: { next: 'Silver', points: 1000 },
-  silver: { next: 'Gold', points: 2500 },
-  gold: { next: 'Platinum', points: 5000 },
-  platinum: { next: 'Platinum', points: 999999 },
+  hydrated: { next: 'Active', points: 1000 },
+  active: { next: 'Elite', points: 2500 },
+  elite: { next: 'Champion', points: 5000 },
+  champion: { next: 'Champion', points: 999999 },
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -19,16 +19,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 // ─── Constants for preference options ────────────────────────────
-const SKIN_TYPES: ProfilePreferences['skinType'][] = ['normal', 'dry', 'oily', 'combination', 'sensitive'];
-const COMMON_CONCERNS = [
-  'acne', 'aging', 'dark spots', 'dryness', 'dullness', 'fine lines',
-  'hyperpigmentation', 'large pores', 'oiliness', 'redness', 'sensitivity',
-  'texture', 'uneven tone', 'wrinkles',
-];
-const COMMON_ALLERGIES = [
-  'fragrance', 'parabens', 'sulfates', 'alcohol', 'retinol', 'vitamin C',
-  'essential oils', 'lanolin', 'formaldehyde', 'silicones', 'nuts', 'soy',
-];
+const PRIMARY_USE_OPTIONS: ProfilePreferences['primaryUse'][] = ['home', 'office', 'fitness', 'travel', 'mixed'];
+const WATER_PREF_OPTIONS = ['still', 'sparkling', 'flavored', 'mineral'];
+const DELIVERY_FREQ_OPTIONS: ProfilePreferences['deliveryFrequency'][] = ['weekly', 'biweekly', 'monthly', 'on-demand'];
 
 export const AccountPage: React.FC = () => {
   const { customer, isAuthenticated, refreshProfile } = useCustomer();
@@ -43,10 +36,9 @@ export const AccountPage: React.FC = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Editable form state
-  const [editSkinType, setEditSkinType] = useState<ProfilePreferences['skinType']>('normal');
-  const [editConcerns, setEditConcerns] = useState<string[]>([]);
-  const [editAllergies, setEditAllergies] = useState<string[]>([]);
-  const [newAllergyInput, setNewAllergyInput] = useState('');
+  const [editPrimaryUse, setEditPrimaryUse] = useState<ProfilePreferences['primaryUse']>('home');
+  const [editWaterPrefs, setEditWaterPrefs] = useState<string[]>([]);
+  const [editDeliveryFreq, setEditDeliveryFreq] = useState<ProfilePreferences['deliveryFrequency']>('biweekly');
 
   // Communication preferences
   const [emailOptIn, setEmailOptIn] = useState(true);
@@ -55,14 +47,14 @@ export const AccountPage: React.FC = () => {
 
   // Initialize form state from customer profile
   useEffect(() => {
-    if (customer?.beautyProfile) {
-      const bp = customer.beautyProfile;
-      setEditSkinType(bp.skinType || 'normal');
-      setEditConcerns(bp.concerns || []);
-      setEditAllergies(bp.allergies || []);
-      setEmailOptIn(bp.communicationPrefs?.email ?? true);
-      setSmsOptIn(bp.communicationPrefs?.sms ?? false);
-      setPushOptIn(bp.communicationPrefs?.push ?? false);
+    if (customer?.hydrationProfile) {
+      const hp = customer.hydrationProfile;
+      setEditPrimaryUse(hp.primaryUse || 'home');
+      setEditWaterPrefs(hp.waterPreferences || []);
+      setEditDeliveryFreq(hp.deliveryFrequency || 'biweekly');
+      setEmailOptIn(hp.communicationPrefs?.email ?? true);
+      setSmsOptIn(hp.communicationPrefs?.sms ?? false);
+      setPushOptIn(hp.communicationPrefs?.push ?? false);
     }
   }, [customer]);
 
@@ -89,7 +81,7 @@ export const AccountPage: React.FC = () => {
 
   const firstName = customer.name?.split(' ')[0] || 'Guest';
   const loyalty = customer.loyalty;
-  const bp = customer.beautyProfile;
+  const hp = customer.hydrationProfile;
   const tierInfo = loyalty ? TIER_THRESHOLDS[loyalty.tier] : null;
   const tierProgress = loyalty && tierInfo
     ? Math.min(100, (loyalty.lifetimePoints / tierInfo.points) * 100)
@@ -111,13 +103,13 @@ export const AccountPage: React.FC = () => {
     try {
       const writeService = getDataCloudWriteService();
 
-      // Update beauty preferences
-      const beautyUpdate: BeautyPreferencesUpdate = {
-        skinType: editSkinType,
-        concerns: editConcerns,
-        allergies: editAllergies,
+      // Update hydration preferences
+      const hydrationUpdate: HydrationPreferencesUpdate = {
+        primaryUse: editPrimaryUse,
+        waterPreferences: editWaterPrefs,
+        deliveryFrequency: editDeliveryFreq,
       };
-      await writeService.updateBeautyPreferences(customer.id, beautyUpdate);
+      await writeService.updateHydrationPreferences(customer.id, hydrationUpdate);
 
       // Update communication preferences
       const commUpdate: CommunicationPreferencesUpdate = {
@@ -142,41 +134,25 @@ export const AccountPage: React.FC = () => {
 
   const handleCancelEdit = () => {
     // Reset to original values
-    if (customer?.beautyProfile) {
-      const bp = customer.beautyProfile;
-      setEditSkinType(bp.skinType || 'normal');
-      setEditConcerns(bp.concerns || []);
-      setEditAllergies(bp.allergies || []);
-      setEmailOptIn(bp.communicationPrefs?.email ?? true);
-      setSmsOptIn(bp.communicationPrefs?.sms ?? false);
-      setPushOptIn(bp.communicationPrefs?.push ?? false);
+    if (customer?.hydrationProfile) {
+      const hp = customer.hydrationProfile;
+      setEditPrimaryUse(hp.primaryUse || 'home');
+      setEditWaterPrefs(hp.waterPreferences || []);
+      setEditDeliveryFreq(hp.deliveryFrequency || 'biweekly');
+      setEmailOptIn(hp.communicationPrefs?.email ?? true);
+      setSmsOptIn(hp.communicationPrefs?.sms ?? false);
+      setPushOptIn(hp.communicationPrefs?.push ?? false);
     }
     setIsEditingPrefs(false);
     setSaveError(null);
   };
 
-  const toggleConcern = (concern: string) => {
-    setEditConcerns(prev =>
-      prev.includes(concern)
-        ? prev.filter(c => c !== concern)
-        : [...prev, concern]
+  const toggleWaterPref = (pref: string) => {
+    setEditWaterPrefs(prev =>
+      prev.includes(pref)
+        ? prev.filter(p => p !== pref)
+        : [...prev, pref]
     );
-  };
-
-  const toggleAllergy = (allergy: string) => {
-    setEditAllergies(prev =>
-      prev.includes(allergy)
-        ? prev.filter(a => a !== allergy)
-        : [...prev, allergy]
-    );
-  };
-
-  const addCustomAllergy = () => {
-    const trimmed = newAllergyInput.trim().toLowerCase();
-    if (trimmed && !editAllergies.includes(trimmed)) {
-      setEditAllergies(prev => [...prev, trimmed]);
-      setNewAllergyInput('');
-    }
   };
 
   return (
@@ -200,7 +176,7 @@ export const AccountPage: React.FC = () => {
           className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm mb-6"
         >
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-rose-400 to-purple-500 flex items-center justify-center text-white text-2xl font-medium flex-shrink-0">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white text-2xl font-medium flex-shrink-0">
               {firstName.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1">
@@ -209,10 +185,10 @@ export const AccountPage: React.FC = () => {
               {loyalty && (
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${
-                    loyalty.tier === 'platinum' ? 'bg-purple-100 text-purple-700'
-                    : loyalty.tier === 'gold' ? 'bg-amber-100 text-amber-700'
-                    : loyalty.tier === 'silver' ? 'bg-slate-100 text-slate-700'
-                    : 'bg-orange-100 text-orange-700'
+                    loyalty.tier === 'champion' ? 'bg-purple-100 text-purple-700'
+                    : loyalty.tier === 'elite' ? 'bg-blue-100 text-blue-700'
+                    : loyalty.tier === 'active' ? 'bg-cyan-100 text-cyan-700'
+                    : 'bg-teal-100 text-teal-700'
                   }`}>
                     {loyalty.tier} Member
                   </span>
@@ -226,7 +202,7 @@ export const AccountPage: React.FC = () => {
         </motion.div>
 
         <div className="grid gap-6">
-          {/* ─── BEAUTY PREFERENCES (Editable) ─── */}
+          {/* ─── HYDRATION PREFERENCES (Editable) ─── */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -235,13 +211,13 @@ export const AccountPage: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-medium text-stone-900">Beauty Preferences</h2>
-                <p className="text-xs text-stone-500 mt-0.5">Your self-declared beauty profile helps us personalize recommendations</p>
+                <h2 className="text-lg font-medium text-stone-900">Hydration Preferences</h2>
+                <p className="text-xs text-stone-500 mt-0.5">Your hydration profile helps us personalize product recommendations</p>
               </div>
               {!isEditingPrefs && (
                 <button
                   onClick={() => setIsEditingPrefs(true)}
-                  className="text-sm text-rose-600 hover:text-rose-700 font-medium"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Edit
                 </button>
@@ -272,107 +248,70 @@ export const AccountPage: React.FC = () => {
             {isEditingPrefs ? (
               /* ─── EDIT MODE ─── */
               <div className="space-y-6">
-                {/* Skin Type */}
+                {/* Primary Use */}
                 <div>
                   <label className="text-xs font-medium text-stone-500 uppercase tracking-wider block mb-2">
-                    Skin Type
+                    Primary Use
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {SKIN_TYPES.map(type => (
+                    {PRIMARY_USE_OPTIONS.map(use => (
                       <button
-                        key={type}
-                        onClick={() => setEditSkinType(type)}
+                        key={use}
+                        onClick={() => setEditPrimaryUse(use)}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                          editSkinType === type
-                            ? 'bg-rose-500 text-white'
+                          editPrimaryUse === use
+                            ? 'bg-blue-500 text-white'
                             : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                         }`}
                       >
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                        {use!.charAt(0).toUpperCase() + use!.slice(1)}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Skin Concerns */}
+                {/* Water Preferences */}
                 <div>
                   <label className="text-xs font-medium text-stone-500 uppercase tracking-wider block mb-2">
-                    Skin Concerns <span className="text-stone-400 font-normal">(select all that apply)</span>
+                    Water Preferences <span className="text-stone-400 font-normal">(select all that apply)</span>
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {COMMON_CONCERNS.map(concern => (
+                    {WATER_PREF_OPTIONS.map(pref => (
                       <button
-                        key={concern}
-                        onClick={() => toggleConcern(concern)}
+                        key={pref}
+                        onClick={() => toggleWaterPref(pref)}
                         className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                          editConcerns.includes(concern)
-                            ? 'bg-rose-100 text-rose-700 border-2 border-rose-300'
+                          editWaterPrefs.includes(pref)
+                            ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
                             : 'bg-stone-50 text-stone-600 border border-stone-200 hover:border-stone-300'
                         }`}
                       >
-                        {concern}
+                        {pref}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Allergies */}
+                {/* Delivery Frequency */}
                 <div>
                   <label className="text-xs font-medium text-stone-500 uppercase tracking-wider block mb-2">
-                    Allergies & Sensitivities <span className="text-stone-400 font-normal">(helps us avoid recommending products with these ingredients)</span>
+                    Delivery Frequency
                   </label>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {COMMON_ALLERGIES.map(allergy => (
+                  <div className="flex flex-wrap gap-2">
+                    {DELIVERY_FREQ_OPTIONS.map(freq => (
                       <button
-                        key={allergy}
-                        onClick={() => toggleAllergy(allergy)}
-                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                          editAllergies.includes(allergy)
-                            ? 'bg-red-100 text-red-700 border-2 border-red-300'
-                            : 'bg-stone-50 text-stone-600 border border-stone-200 hover:border-stone-300'
+                        key={freq}
+                        onClick={() => setEditDeliveryFreq(freq)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          editDeliveryFreq === freq
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                         }`}
                       >
-                        {allergy}
+                        {freq!.charAt(0).toUpperCase() + freq!.slice(1)}
                       </button>
                     ))}
                   </div>
-                  {/* Custom allergy input */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newAllergyInput}
-                      onChange={(e) => setNewAllergyInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && addCustomAllergy()}
-                      placeholder="Add other..."
-                      className="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
-                    />
-                    <button
-                      onClick={addCustomAllergy}
-                      disabled={!newAllergyInput.trim()}
-                      className="px-4 py-2 text-sm font-medium bg-stone-100 text-stone-600 rounded-lg hover:bg-stone-200 disabled:opacity-50"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  {/* Show custom allergies */}
-                  {editAllergies.filter(a => !COMMON_ALLERGIES.includes(a)).length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {editAllergies.filter(a => !COMMON_ALLERGIES.includes(a)).map(allergy => (
-                        <span
-                          key={allergy}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm bg-red-100 text-red-700 border-2 border-red-300"
-                        >
-                          {allergy}
-                          <button
-                            onClick={() => toggleAllergy(allergy)}
-                            className="ml-1 text-red-500 hover:text-red-700"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* Communication Preferences */}
@@ -386,7 +325,7 @@ export const AccountPage: React.FC = () => {
                       <button
                         onClick={() => setEmailOptIn(!emailOptIn)}
                         className={`relative w-12 h-6 rounded-full transition-colors ${
-                          emailOptIn ? 'bg-rose-500' : 'bg-stone-300'
+                          emailOptIn ? 'bg-blue-500' : 'bg-stone-300'
                         }`}
                       >
                         <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
@@ -399,7 +338,7 @@ export const AccountPage: React.FC = () => {
                       <button
                         onClick={() => setSmsOptIn(!smsOptIn)}
                         className={`relative w-12 h-6 rounded-full transition-colors ${
-                          smsOptIn ? 'bg-rose-500' : 'bg-stone-300'
+                          smsOptIn ? 'bg-blue-500' : 'bg-stone-300'
                         }`}
                       >
                         <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
@@ -412,7 +351,7 @@ export const AccountPage: React.FC = () => {
                       <button
                         onClick={() => setPushOptIn(!pushOptIn)}
                         className={`relative w-12 h-6 rounded-full transition-colors ${
-                          pushOptIn ? 'bg-rose-500' : 'bg-stone-300'
+                          pushOptIn ? 'bg-blue-500' : 'bg-stone-300'
                         }`}
                       >
                         <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
@@ -444,30 +383,28 @@ export const AccountPage: React.FC = () => {
             ) : (
               /* ─── VIEW MODE ─── */
               <div className="space-y-4">
-                <div>
-                  <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Skin Type</span>
-                  <p className="text-sm text-stone-900 mt-0.5 capitalize">{bp.skinType}</p>
-                </div>
-
-                {bp.concerns.length > 0 && (
+                {hp?.primaryUse && (
                   <div>
-                    <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Concerns</span>
+                    <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Primary Use</span>
+                    <p className="text-sm text-stone-900 mt-0.5 capitalize">{hp.primaryUse}</p>
+                  </div>
+                )}
+
+                {hp?.waterPreferences && hp.waterPreferences.length > 0 && (
+                  <div>
+                    <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Water Preferences</span>
                     <div className="flex flex-wrap gap-1.5 mt-1">
-                      {bp.concerns.map((c) => (
-                        <span key={c} className="text-xs bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full">{c}</span>
+                      {hp.waterPreferences.map((p) => (
+                        <span key={p} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{p}</span>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {bp.allergies.length > 0 && (
+                {hp?.deliveryFrequency && (
                   <div>
-                    <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Allergies</span>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {bp.allergies.map((a) => (
-                        <span key={a} className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full">{a}</span>
-                      ))}
-                    </div>
+                    <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Delivery Frequency</span>
+                    <p className="text-sm text-stone-900 mt-0.5 capitalize">{hp.deliveryFrequency}</p>
                   </div>
                 )}
 
@@ -475,14 +412,14 @@ export const AccountPage: React.FC = () => {
                 <div className="pt-3 border-t border-stone-100">
                   <span className="text-xs font-medium text-stone-400 uppercase tracking-wider">Communication</span>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${bp.communicationPrefs?.email !== false ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
-                      {bp.communicationPrefs?.email !== false ? '✓' : '✗'} Email
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${hp?.communicationPrefs?.email !== false ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
+                      {hp?.communicationPrefs?.email !== false ? '✓' : '✗'} Email
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${bp.communicationPrefs?.sms ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
-                      {bp.communicationPrefs?.sms ? '✓' : '✗'} SMS
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${hp?.communicationPrefs?.sms ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
+                      {hp?.communicationPrefs?.sms ? '✓' : '✗'} SMS
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${bp.communicationPrefs?.push ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
-                      {bp.communicationPrefs?.push ? '✓' : '✗'} Push
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${hp?.communicationPrefs?.push ? 'bg-emerald-50 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
+                      {hp?.communicationPrefs?.push ? '✓' : '✗'} Push
                     </span>
                   </div>
                 </div>
@@ -491,7 +428,7 @@ export const AccountPage: React.FC = () => {
           </motion.div>
 
           {/* ─── INFERRED PREFERENCES (Read-only) ─── */}
-          {bp.preferredBrands.length > 0 && (
+          {(hp?.preferredBrands?.length ?? 0) > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -510,8 +447,8 @@ export const AccountPage: React.FC = () => {
                     Based on your purchase history and browsing behavior
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {bp.preferredBrands.map((b) => (
-                      <span key={b} className="text-xs bg-white/80 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200">{b}</span>
+                    {(hp?.preferredBrands || []).map((b) => (
+                      <span key={b} className="text-xs bg-white/80 text-blue-700 px-2.5 py-1 rounded-full border border-blue-200">{b}</span>
                     ))}
                   </div>
                 </div>
@@ -545,7 +482,7 @@ export const AccountPage: React.FC = () => {
                 </div>
 
                 {/* Tier progress */}
-                {tierInfo && loyalty.tier !== 'platinum' && (
+                {tierInfo && loyalty.tier !== 'champion' && (
                   <div>
                     <div className="flex justify-between text-xs text-stone-500 mb-1">
                       <span className="capitalize">{loyalty.tier}</span>
@@ -553,7 +490,7 @@ export const AccountPage: React.FC = () => {
                     </div>
                     <div className="w-full bg-stone-100 rounded-full h-2">
                       <div
-                        className="bg-gradient-to-r from-rose-400 to-purple-500 h-2 rounded-full transition-all"
+                        className="bg-gradient-to-r from-blue-400 to-cyan-500 h-2 rounded-full transition-all"
                         style={{ width: `${tierProgress}%` }}
                       />
                     </div>
@@ -684,9 +621,9 @@ export const AccountPage: React.FC = () => {
                       </svg>
                     }
                   >
-                    <DataField label="Skin Type" value={bp.skinType} />
-                    <DataField label="Concerns" value={bp.concerns.join(', ') || '—'} />
-                    <DataField label="Allergies" value={bp.allergies.join(', ') || '—'} />
+                    <DataField label="Primary Use" value={hp?.primaryUse || '—'} />
+                    <DataField label="Water Prefs" value={hp?.waterPreferences?.join(', ') || '—'} />
+                    <DataField label="Delivery" value={hp?.deliveryFrequency || '—'} />
                     {loyalty && (
                       <>
                         <DataField label="Loyalty Tier" value={loyalty.tier} />

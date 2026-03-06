@@ -17,7 +17,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
   const { goBack, navigateToCart } = useStore();
   const { addItem, isInCart, items } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'details' | 'ingredients' | 'reviews'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'nutrition' | 'reviews'>('details');
 
   const cartItem = items.find((item) => item.product.id === product.id);
   const inCart = !!cartItem;
@@ -208,7 +208,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
             {/* Tabs */}
             <div className="mt-12 border-t border-stone-200 pt-8">
               <div className="flex gap-8 border-b border-stone-200">
-                {(['details', 'ingredients', 'reviews'] as const).map((tab) => (
+                {(['details', 'nutrition', 'reviews'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -234,32 +234,16 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
                   <div className="prose prose-stone max-w-none">
                     <p className="text-stone-600 leading-relaxed">{product.description}</p>
 
-                    {product.attributes?.skinType && (
+                    {product.attributes?.waterType && (
                       <div className="mt-6">
-                        <h4 className="font-medium text-stone-900 mb-2">Suitable for</h4>
+                        <h4 className="font-medium text-stone-900 mb-2">Water type</h4>
                         <div className="flex flex-wrap gap-2">
-                          {product.attributes.skinType.map((type) => (
+                          {product.attributes.waterType.map((type) => (
                             <span
                               key={type}
                               className="px-3 py-1 bg-stone-100 text-stone-600 text-sm rounded-full capitalize"
                             >
-                              {type} skin
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {product.attributes?.concerns && (
-                      <div className="mt-6">
-                        <h4 className="font-medium text-stone-900 mb-2">Addresses</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {product.attributes.concerns.map((concern) => (
-                            <span
-                              key={concern}
-                              className="px-3 py-1 bg-rose-50 text-rose-600 text-sm rounded-full capitalize"
-                            >
-                              {concern}
+                              {type}
                             </span>
                           ))}
                         </div>
@@ -268,22 +252,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product })
                   </div>
                 )}
 
-                {activeTab === 'ingredients' && (
+                {activeTab === 'nutrition' && (
                   <div>
-                    {product.attributes?.ingredients ? (
-                      <div className="flex flex-wrap gap-2">
-                        {product.attributes.ingredients.map((ingredient) => (
-                          <span
-                            key={ingredient}
-                            className="px-3 py-1.5 bg-stone-100 text-stone-700 text-sm rounded-lg"
-                          >
-                            {ingredient}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-stone-500">Ingredient information coming soon.</p>
-                    )}
+                    <p className="text-stone-500">Nutrition and quality information coming soon.</p>
                   </div>
                 )}
 

@@ -37,7 +37,7 @@ export async function resolveMerkuryIdentity(personaId?: string): Promise<Merkur
   const identity = persona.profile.merkuryIdentity;
   const appendedData = persona.profile.appendedProfile;
 
-  // Look up Merkury archetype for beauty hints
+  // Look up Merkury archetype for hydration hints
   const merkuryId = identity?.merkuryId;
   const archetype = merkuryId ? getMerkuryArchetypeByMerkuryId(merkuryId) : undefined;
 
@@ -53,9 +53,7 @@ export async function resolveMerkuryIdentity(personaId?: string): Promise<Merkur
     householdIncome: appendedData?.householdIncome,
     lifestyleSignals: appendedData?.lifestyleSignals,
     geoRegion: appendedData?.geoRegion,
-    skinType: archetype?.beautyHints?.skinType,
-    skinConcerns: archetype?.beautyHints?.concerns,
-    preferredBrands: archetype?.beautyHints?.preferredBrands,
+    preferredBrands: archetype?.hydrationHints?.preferredBrands,
   });
 
   return {

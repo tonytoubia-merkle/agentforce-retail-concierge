@@ -33,13 +33,11 @@ export interface MerkuryDataLayer {
   householdIncome?: string;
   lifestyleSignals?: string[];
   geoRegion?: string;
-  /** Beauty profile hints */
-  skinType?: string;
-  skinConcerns?: string[];
+  /** Hydration profile hints */
   preferredBrands?: string[];
 }
 
-export interface BeauteDataLayer {
+export interface PrimoDataLayer {
   merkury?: MerkuryDataLayer;
   /** UTM params from the current URL (captured by the page before React) */
   utm?: {
@@ -51,7 +49,7 @@ export interface BeauteDataLayer {
 
 declare global {
   interface Window {
-    dataLayer: BeauteDataLayer;
+    dataLayer: PrimoDataLayer;
   }
 }
 
@@ -86,6 +84,6 @@ export function getMerkuryFromDataLayer(): MerkuryDataLayer | undefined {
 }
 
 /** Read UTM data from the global dataLayer. */
-export function getUtmFromDataLayer(): BeauteDataLayer['utm'] | undefined {
+export function getUtmFromDataLayer(): PrimoDataLayer['utm'] | undefined {
   return window.dataLayer?.utm;
 }

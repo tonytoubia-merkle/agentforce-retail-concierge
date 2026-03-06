@@ -86,7 +86,7 @@ export class DataCloudCustomerService {
   async getCustomerProfile(customerId: string): Promise<CustomerProfile> {
     // Look up Contact by Merkury_Id__c via SOQL
     const contactData = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,FirstName,LastName,Email,Merkury_Id__c,Skin_Type__c,Skin_Concerns__c,Allergies__c,Preferred_Brands__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry+FROM+Contact+WHERE+Merkury_Id__c='${customerId}'+LIMIT+1`
+      `/services/data/v60.0/query/?q=SELECT+Id,FirstName,LastName,Email,Merkury_Id__c,Preferred_Brands__c,Primary_Use__c,Water_Preferences__c,Delivery_Frequency__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry+FROM+Contact+WHERE+Merkury_Id__c='${customerId}'+LIMIT+1`
     );
 
     const records = contactData.records || [];
@@ -114,12 +114,11 @@ export class DataCloudCustomerService {
       id: contactId,
       name: raw.FirstName || 'Guest',
       email: raw.Email || '',
-      beautyProfile: {
-        skinType: (raw.Skin_Type__c || 'normal').toLowerCase(),
-        concerns: parseSemicolon(raw.Skin_Concerns__c),
-        allergies: parseSemicolon(raw.Allergies__c),
+      hydrationProfile: {
         preferredBrands: parseSemicolon(raw.Preferred_Brands__c),
-        ageRange: '',
+        primaryUse: (raw.Primary_Use__c || undefined) as any,
+        waterPreferences: parseSemicolon(raw.Water_Preferences__c) as any,
+        deliveryFrequency: (raw.Delivery_Frequency__c || undefined) as any,
       },
       orders,
       chatSummaries,
@@ -141,7 +140,6 @@ export class DataCloudCustomerService {
         country: raw.MailingCountry || '',
         isDefault: true,
       }] : [],
-      travelPreferences: undefined,
     };
   }
 
@@ -149,7 +147,7 @@ export class DataCloudCustomerService {
 
   async getCustomerProfileByEmail(email: string): Promise<CustomerProfile> {
     const contactData = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,FirstName,LastName,Email,Merkury_Id__c,Skin_Type__c,Skin_Concerns__c,Allergies__c,Preferred_Brands__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry+FROM+Contact+WHERE+Email='${encodeURIComponent(email)}'+LIMIT+1`
+      `/services/data/v60.0/query/?q=SELECT+Id,FirstName,LastName,Email,Merkury_Id__c,Preferred_Brands__c,Primary_Use__c,Water_Preferences__c,Delivery_Frequency__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry+FROM+Contact+WHERE+Email='${encodeURIComponent(email)}'+LIMIT+1`
     );
 
     const records = contactData.records || [];
@@ -176,12 +174,11 @@ export class DataCloudCustomerService {
       id: contactId,
       name: raw.FirstName || 'Guest',
       email: raw.Email || '',
-      beautyProfile: {
-        skinType: (raw.Skin_Type__c || 'normal').toLowerCase(),
-        concerns: parseSemicolon(raw.Skin_Concerns__c),
-        allergies: parseSemicolon(raw.Allergies__c),
+      hydrationProfile: {
         preferredBrands: parseSemicolon(raw.Preferred_Brands__c),
-        ageRange: '',
+        primaryUse: (raw.Primary_Use__c || undefined) as any,
+        waterPreferences: parseSemicolon(raw.Water_Preferences__c) as any,
+        deliveryFrequency: (raw.Delivery_Frequency__c || undefined) as any,
       },
       orders,
       chatSummaries,
@@ -203,7 +200,6 @@ export class DataCloudCustomerService {
         country: raw.MailingCountry || '',
         isDefault: true,
       }] : [],
-      travelPreferences: undefined,
     };
   }
 
@@ -211,7 +207,7 @@ export class DataCloudCustomerService {
 
   async getCustomerProfileById(contactId: string): Promise<CustomerProfile> {
     const contactData = await this.fetchJson(
-      `/services/data/v60.0/query/?q=SELECT+Id,FirstName,LastName,Email,Merkury_Id__c,Skin_Type__c,Skin_Concerns__c,Allergies__c,Preferred_Brands__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry+FROM+Contact+WHERE+Id='${contactId}'+LIMIT+1`
+      `/services/data/v60.0/query/?q=SELECT+Id,FirstName,LastName,Email,Merkury_Id__c,Preferred_Brands__c,Primary_Use__c,Water_Preferences__c,Delivery_Frequency__c,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry+FROM+Contact+WHERE+Id='${contactId}'+LIMIT+1`
     );
 
     const records = contactData.records || [];
@@ -237,12 +233,11 @@ export class DataCloudCustomerService {
       id: contactId,
       name: raw.FirstName || 'Guest',
       email: raw.Email || '',
-      beautyProfile: {
-        skinType: (raw.Skin_Type__c || 'normal').toLowerCase(),
-        concerns: parseSemicolon(raw.Skin_Concerns__c),
-        allergies: parseSemicolon(raw.Allergies__c),
+      hydrationProfile: {
         preferredBrands: parseSemicolon(raw.Preferred_Brands__c),
-        ageRange: '',
+        primaryUse: (raw.Primary_Use__c || undefined) as any,
+        waterPreferences: parseSemicolon(raw.Water_Preferences__c) as any,
+        deliveryFrequency: (raw.Delivery_Frequency__c || undefined) as any,
       },
       orders,
       chatSummaries,
@@ -269,7 +264,6 @@ export class DataCloudCustomerService {
         country: raw.MailingCountry || '',
         isDefault: true,
       }] : [],
-      travelPreferences: undefined,
     };
   }
 
@@ -378,8 +372,8 @@ export class DataCloudCustomerService {
     // 2. Get tier from LoyaltyMemberTier → LoyaltyTier
     // Query all tiers and pick the highest-ranked one (CreatedDate ordering is
     // unreliable when tiers are seeded at the same instant)
-    const tierRank: Record<string, number> = { bronze: 1, silver: 2, gold: 3, platinum: 4 };
-    let tier: LoyaltyData['tier'] = 'bronze';
+    const tierRank: Record<string, number> = { hydrated: 1, active: 2, elite: 3, champion: 4 };
+    let tier: LoyaltyData['tier'] = 'hydrated';
     try {
       const memberTierData = await this.fetchJson(
         `/services/data/v60.0/query/?q=SELECT+LoyaltyTierId,LoyaltyTier.Name+FROM+LoyaltyMemberTier+WHERE+LoyaltyMemberId='${memberId}'`
@@ -427,9 +421,10 @@ export class DataCloudCustomerService {
         );
         const email = contactData.records?.[0]?.Email;
         const demoPoints: Record<string, [number, number]> = {
-          'sarah.chen@example.com': [2450, 4800],
-          'maya.thompson@example.com': [5200, 12400],
-          'aisha.patel@example.com': [980, 1460],
+          'alex.rivera@example.com': [2800, 5600],
+          'jennifer.walsh@example.com': [6200, 14200],
+          'maria.santos@example.com': [1400, 2800],
+          'carlos.mendez@example.com': [350, 700],
         };
         if (email && demoPoints[email]) {
           [pointsBalance, lifetimePoints] = demoPoints[email];

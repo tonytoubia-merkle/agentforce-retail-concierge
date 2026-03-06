@@ -1,37 +1,28 @@
 export type ProductCategory =
-  | 'moisturizer'
-  | 'cleanser'
-  | 'serum'
-  | 'sunscreen'
-  | 'mask'
-  | 'toner'
-  | 'travel-kit'
-  | 'eye-cream'
-  | 'foundation'
-  | 'lipstick'
-  | 'mascara'
-  | 'blush'
-  | 'fragrance'
-  | 'shampoo'
-  | 'conditioner'
-  | 'hair-treatment'
-  | 'spot-treatment';
+  | 'dispenser'
+  | 'delivery'
+  | 'sparkling'
+  | 'flavored'
+  | 'still'
+  | 'bottle'
+  | 'filter'
+  | 'subscription'
+  | 'accessory';
 
 export interface ProductAttributes {
-  skinType?: ('dry' | 'oily' | 'combination' | 'sensitive' | 'normal')[];
-  concerns?: string[];
-  ingredients?: string[];
+  primaryUse?: ('home' | 'office' | 'fitness' | 'travel' | 'outdoor')[];
+  waterType?: ('still' | 'sparkling' | 'flavored' | 'mineral' | 'purified' | 'spring')[];
+  flavor?: string;
   size?: string;
-  isTravel?: boolean;
-  // Consumer preference flags
-  isFragranceFree?: boolean;
-  isVegan?: boolean;
-  isCrueltyFree?: boolean;
-  isParabenFree?: boolean;
-  isHypoallergenic?: boolean;
-  isDermatologistTested?: boolean;
-  // Key ingredients for matching/avoidance
-  keyIngredients?: string[];
+  capacity?: string;
+  material?: string;
+  isSubscribable?: boolean;
+  isExchangeProgram?: boolean;
+  deliveryIncluded?: boolean;
+  isBPAfree?: boolean;
+  isRecyclable?: boolean;
+  isSustainable?: boolean;
+  servingsPerContainer?: number;
 }
 
 export interface Product {

@@ -3,12 +3,16 @@ import type { DataCloudConfig } from './types';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
-/** User-editable beauty preferences for the preference center */
-export interface BeautyPreferencesUpdate {
-  skinType?: ProfilePreferences['skinType'];
-  concerns?: string[];
-  allergies?: string[];
+/** User-editable hydration preferences for the preference center */
+export interface HydrationPreferencesUpdate {
+  primaryUse?: ProfilePreferences['primaryUse'];
+  waterPreferences?: string[];
+  deliveryFrequency?: ProfilePreferences['deliveryFrequency'];
+  householdSize?: number;
 }
+
+/** @deprecated Use HydrationPreferencesUpdate */
+export type BeautyPreferencesUpdate = HydrationPreferencesUpdate;
 
 /** Communication preferences */
 export interface CommunicationPreferencesUpdate {
@@ -252,46 +256,48 @@ export class DataCloudWriteService {
   }
 
   /**
-   * Update Contact beauty preferences (user-editable fields in preference center).
+   * Update Contact hydration preferences (user-editable fields in preference center).
    * Maps to Contact custom fields in Salesforce.
    *
    * @param contactId - Salesforce Contact ID (starts with 003)
-   * @param preferences - Beauty preferences to update
+   * @param preferences - Hydration preferences to update
    */
-  async updateBeautyPreferences(
+  async updateHydrationPreferences(
     contactId: string,
-    preferences: BeautyPreferencesUpdate,
+    preferences: HydrationPreferencesUpdate,
   ): Promise<void> {
     if (useMockData) {
-      console.log('[mock] Would update beauty preferences for', contactId, ':', preferences);
+      console.log('[mock] Would update hydration preferences for', contactId, ':', preferences);
       return;
     }
 
-    // Map skinType values to Salesforce picklist format (capitalize first letter)
-    const skinTypeMap: Record<string, string> = {
-      dry: 'Dry',
-      oily: 'Oily',
-      combination: 'Combination',
-      sensitive: 'Sensitive',
-      normal: 'Normal',
-    };
-
     const record: Record<string, unknown> = {};
 
-    if (preferences.skinType) {
-      record.Skin_Type__c = skinTypeMap[preferences.skinType] || preferences.skinType;
+    if (preferences.primaryUse) {
+      record.Primary_Use__c = preferences.primaryUse;
     }
-    if (preferences.concerns !== undefined) {
-      record.Skin_Concerns__c = preferences.concerns.join(';');
+    if (preferences.waterPreferences !== undefined) {
+      record.Water_Preferences__c = preferences.waterPreferences.join(';');
     }
-    if (preferences.allergies !== undefined) {
-      record.Allergies__c = preferences.allergies.join(';');
+    if (preferences.deliveryFrequency) {
+      record.Delivery_Frequency__c = preferences.deliveryFrequency;
+    }
+    if (preferences.householdSize !== undefined) {
+      record.Household_Size__c = preferences.householdSize;
     }
 
     if (Object.keys(record).length === 0) return;
 
     await this.patchJson(`/services/data/v60.0/sobjects/Contact/${contactId}`, record);
-    console.log('[datacloud] Updated beauty preferences for', contactId);
+    console.log('[datacloud] Updated hydration preferences for', contactId);
+  }
+
+  /** @deprecated Use updateHydrationPreferences */
+  async updateBeautyPreferences(
+    contactId: string,
+    preferences: HydrationPreferencesUpdate,
+  ): Promise<void> {
+    return this.updateHydrationPreferences(contactId, preferences);
   }
 
   /**

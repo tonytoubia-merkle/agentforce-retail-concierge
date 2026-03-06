@@ -10,14 +10,14 @@ import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 import type { ProductCategory } from '@/types/product';
 
 const CATEGORIES: { label: string; value: ProductCategory }[] = [
-  { label: 'Skincare', value: 'moisturizer' },
-  { label: 'Cleansers', value: 'cleanser' },
-  { label: 'Serums', value: 'serum' },
-  { label: 'Sunscreen', value: 'sunscreen' },
-  { label: 'Makeup', value: 'foundation' },
-  { label: 'Lips', value: 'lipstick' },
-  { label: 'Fragrance', value: 'fragrance' },
-  { label: 'Haircare', value: 'shampoo' },
+  { label: 'Dispensers', value: 'dispenser' },
+  { label: 'Delivery', value: 'delivery' },
+  { label: 'Sparkling', value: 'sparkling' },
+  { label: 'Flavored', value: 'flavored' },
+  { label: 'Still Water', value: 'still' },
+  { label: 'Bottles', value: 'bottle' },
+  { label: 'Filters', value: 'filter' },
+  { label: 'Memberships', value: 'subscription' },
 ];
 
 export const StoreHeader: React.FC = () => {
@@ -45,12 +45,12 @@ export const StoreHeader: React.FC = () => {
         {isPseudonymous && isKnown && customer?.name && (
           <span className="hidden sm:inline">Welcome back, {customer.name.split(' ')[0]} · </span>
         )}
-        <span className="hidden sm:inline">Complimentary shipping on orders over $50 | </span>
+        <span className="hidden sm:inline">Free delivery on orders over $50 | </span>
         <button
           onClick={onBeautyAdvisorClick}
-          className="underline hover:text-rose-300 transition-colors font-medium"
+          className="underline hover:text-blue-300 transition-colors font-medium"
         >
-          Try our AI Beauty Advisor
+          Try our Hydration Intelligence Concierge
         </button>
       </div>
 
@@ -62,11 +62,11 @@ export const StoreHeader: React.FC = () => {
             onClick={navigateHome}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-purple-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">B</span>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">P</span>
             </div>
             <span className="text-xl font-semibold tracking-tight text-stone-900">
-              BEAUTÉ
+              PRIMO
             </span>
           </button>
 
@@ -120,12 +120,12 @@ export const StoreHeader: React.FC = () => {
             {/* Beauty Advisor button - desktop */}
             <button
               onClick={onBeautyAdvisorClick}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-rose-500 to-purple-500 text-white text-sm font-medium rounded-full hover:shadow-lg hover:shadow-rose-500/25 transition-all"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-medium rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
-              <span>Beauty Advisor</span>
+              <span>Hydration Concierge</span>
             </button>
 
             {/* Cart */}
@@ -225,9 +225,9 @@ export const StoreHeader: React.FC = () => {
                   onBeautyAdvisorClick();
                   setShowMobileMenu(false);
                 }}
-                className="block w-full text-left px-4 py-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors font-medium"
+                className="block w-full text-left px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors font-medium"
               >
-                Talk to Beauty Advisor
+                Talk to Hydration Concierge
               </button>
             </nav>
           </motion.div>

@@ -8,230 +8,550 @@ export interface PersonaMeta {
   profile: CustomerProfile;
 }
 
-// ─── Sarah Chen: Known Customer, Loyalty Gold ───────────────────
-// Sensitive skin, fragrance-free preference, loyal repeat buyer
-const sarahChen: CustomerProfile = {
-  id: 'persona-sarah',
-  name: 'Sarah',
-  email: 'sarah.chen@example.com',
+// ─── Alex Rivera: Known Customer, Primo Perks Elite ─────────────
+// Triathlete, high daily intake goal, Sparkling + delivery subscriber
+const alexRivera: CustomerProfile = {
+  id: 'persona-alex',
+  name: 'Alex',
+  email: 'alex.rivera@example.com',
 
-  beautyProfile: {
-    skinType: 'sensitive',
-    concerns: ['hydration'],
-    allergies: ['fragrance'],
-    fragrancePreference: 'fragrance-free',
-    communicationPrefs: { email: true, sms: true, push: false },
-    preferredBrands: ['SERENE'],
+  hydrationProfile: {
+    primaryUse: 'fitness',
+    dailyIntakeGoalOz: 120,
+    waterPreferences: ['still', 'sparkling'],
+    deliveryFrequency: 'weekly',
+    householdSize: 2,
+    hasDispenser: true,
+    communicationPrefs: { email: true, sms: true, push: true },
+    preferredBrands: ['Primo Water', 'Primo Sparkling'],
     ageRange: '30-40',
   },
 
   orders: [
     {
-      orderId: 'ORD-2025-0847',
-      orderDate: '2025-06-12',
+      orderId: 'ORD-2025-0991',
+      orderDate: '2025-10-08',
       channel: 'online',
       status: 'completed',
-      totalAmount: 94.00,
+      totalAmount: 59.97,
       lineItems: [
-        { productId: 'cleanser-gentle', productName: 'Cloud Cream Cleanser', quantity: 1, unitPrice: 36.00 },
-        { productId: 'moisturizer-sensitive', productName: 'Hydra-Calm Sensitive Moisturizer', quantity: 1, unitPrice: 58.00 },
+        { productId: 'sparkling-lemon', productName: 'Primo Sparkling — Lemon (12-Pack)', quantity: 2, unitPrice: 12.99 },
+        { productId: 'bottle-stainless-32oz', productName: 'Primo Stainless Steel Bottle 32oz', quantity: 1, unitPrice: 34.99 },
       ],
     },
     {
-      orderId: 'ORD-2025-1456',
-      orderDate: '2025-11-15',
-      channel: 'online',
+      orderId: 'ORD-2026-0114',
+      orderDate: '2026-01-14',
+      channel: 'mobile-app',
       status: 'completed',
-      totalAmount: 94.00,
+      totalAmount: 38.97,
       lineItems: [
-        { productId: 'cleanser-gentle', productName: 'Cloud Cream Cleanser', quantity: 1, unitPrice: 36.00 },
-        { productId: 'moisturizer-sensitive', productName: 'Hydra-Calm Sensitive Moisturizer', quantity: 1, unitPrice: 58.00 },
+        { productId: 'sparkling-original', productName: 'Primo Sparkling — Original (12-Pack)', quantity: 3, unitPrice: 12.99 },
       ],
     },
   ],
 
-  chatSummaries: [],
-  meaningfulEvents: [],
-  agentCapturedProfile: {},
+  chatSummaries: [
+    {
+      sessionDate: '2026-01-14',
+      summary: 'Alex discussed hydration strategies for marathon training. Interested in electrolyte pairing with Primo sparkling. Asked about bulk delivery options.',
+      sentiment: 'positive',
+      topicsDiscussed: ['marathon training', 'sparkling water', 'bulk delivery'],
+    },
+  ],
+  meaningfulEvents: [
+    {
+      eventType: 'hydration-goal',
+      description: 'Training for Chicago Marathon — targeting 120oz/day hydration',
+      capturedAt: '2026-01-14',
+      agentNote: 'High-priority engagement window. Marathon is April 2026.',
+      urgency: 'This Month',
+    },
+  ],
+  agentCapturedProfile: {
+    activityLevel: { value: 'Triathlete — runs 40+ miles/week, swims 3x/week', capturedAt: '2026-01-14', capturedFrom: 'chat session 2026-01-14', confidence: 'stated' },
+    dailyIntakeGoal: { value: '120oz per day during training, 80oz on rest days', capturedAt: '2026-01-14', capturedFrom: 'chat session 2026-01-14', confidence: 'stated' },
+    flavorsPreferred: { value: 'Citrus and original — nothing sweet', capturedAt: '2026-01-14', capturedFrom: 'chat session 2026-01-14', confidence: 'stated' },
+    sparklingPreference: { value: 'Loves sparkling post-workout for the carbonation', capturedAt: '2026-01-14', capturedFrom: 'chat session 2026-01-14', confidence: 'stated' },
+  },
 
   browseSessions: [
     {
-      sessionDate: '2026-01-22',
-      categoriesBrowsed: ['serum'],
-      productsViewed: ['serum-retinol', 'serum-anti-aging'],
-      durationMinutes: 8,
+      sessionDate: '2026-02-10',
+      categoriesBrowsed: ['sparkling', 'bottle'],
+      productsViewed: ['sparkling-lime', 'sparkling-berry', 'bottle-stainless-32oz'],
+      durationMinutes: 11,
       device: 'mobile',
     },
   ],
 
   loyalty: {
-    tier: 'gold',
-    pointsBalance: 2450,
-    lifetimePoints: 4800,
-    memberSince: '2024-11-01',
+    tier: 'elite',
+    pointsBalance: 3420,
+    lifetimePoints: 6800,
+    memberSince: '2024-09-01',
     rewardsAvailable: [
-      { name: '$10 off next purchase', pointsCost: 1000 },
+      { name: 'Free monthly delivery', pointsCost: 1500 },
+      { name: '$10 off accessories', pointsCost: 1000 },
     ],
-    nextTierThreshold: 6000,
-    tierExpiryDate: '2026-11-01',
+    nextTierThreshold: 10000,
+    tierExpiryDate: '2026-09-01',
   },
 
   merkuryIdentity: {
-    merkuryId: 'MRK-SC-90210',
+    merkuryId: 'MRK-AR-10001',
+    merkuryPid: 'PID-AR-10001',
+    merkuryHid: 'HID-H001',
     identityTier: 'known',
     confidence: 0.97,
     resolvedAt: new Date().toISOString(),
   },
 
-  purchaseHistory: [
-    { productId: 'cleanser-gentle', productName: 'Cloud Cream Cleanser', purchaseDate: '2025-11-15', quantity: 1, rating: 5 },
-    { productId: 'moisturizer-sensitive', productName: 'Hydra-Calm Sensitive Moisturizer', purchaseDate: '2025-11-15', quantity: 1, rating: 5 },
-  ],
+  purchaseHistory: [],
   savedPaymentMethods: [
     { id: 'pm-1', type: 'card', last4: '4242', brand: 'visa', isDefault: true },
   ],
   shippingAddresses: [
-    { id: 'addr-1', name: 'Sarah Chen', line1: '123 Main St', city: 'San Francisco', state: 'CA', postalCode: '94102', country: 'US', isDefault: true },
+    { id: 'addr-1', name: 'Alex Rivera', line1: '220 Lake Shore Dr', city: 'Chicago', state: 'IL', postalCode: '60601', country: 'US', isDefault: true },
   ],
-  travelPreferences: { upcomingTrips: [], prefersTravelSize: true },
   recentActivity: [],
-  loyaltyTier: 'gold',
-  lifetimeValue: 188,
+  loyaltyTier: 'elite',
+  lifetimeValue: 412,
 };
 
-// ─── James Rodriguez: Known Customer, NO Loyalty ────────────────
-// Oily skin, 1 order, anniversary gift search — not yet a loyalty member
-const jamesRodriguez: CustomerProfile = {
-  id: 'persona-james',
-  name: 'James',
-  email: 'james.rodriguez@example.com',
+// ─── Maria Santos: Known Customer, Primo Perks Active ───────────
+// Family of 5, weekly delivery, home dispenser, kids hydration focus
+const mariaSantos: CustomerProfile = {
+  id: 'persona-maria',
+  name: 'Maria',
+  email: 'maria.santos@example.com',
 
-  beautyProfile: {
-    skinType: 'oily',
-    concerns: ['oil control'],
-    allergies: [],
-    communicationPrefs: { email: true, sms: false, push: false },
-    preferredBrands: [],
-    ageRange: '25-35',
+  hydrationProfile: {
+    primaryUse: 'home',
+    dailyIntakeGoalOz: 80,
+    waterPreferences: ['still', 'flavored'],
+    deliveryFrequency: 'weekly',
+    householdSize: 5,
+    hasDispenser: true,
+    communicationPrefs: { email: true, sms: true, push: false },
+    preferredBrands: ['Primo Water', 'Pure Life'],
+    ageRange: '35-45',
   },
 
   orders: [
     {
-      orderId: 'ORD-2025-0612',
-      orderDate: '2025-07-10',
+      orderId: 'ORD-2025-0734',
+      orderDate: '2025-08-22',
       channel: 'online',
       status: 'completed',
-      totalAmount: 32.00,
+      totalAmount: 63.94,
       lineItems: [
-        { productId: 'cleanser-acne', productName: 'Clear Start Salicylic Cleanser', quantity: 1, unitPrice: 32.00 },
+        { productId: 'primo-5gal-delivery-weekly', productName: 'Primo 5-Gallon Weekly Delivery', quantity: 4, unitPrice: 12.99 },
+        { productId: 'primo-sanitizer-kit', productName: 'Primo Dispenser Sanitizer Kit', quantity: 1, unitPrice: 14.99 },
+      ],
+    },
+    {
+      orderId: 'ORD-2026-0208',
+      orderDate: '2026-02-08',
+      channel: 'online',
+      status: 'shipped',
+      totalAmount: 59.96,
+      lineItems: [
+        { productId: 'primo-5gal-delivery-weekly', productName: 'Primo 5-Gallon Weekly Delivery', quantity: 4, unitPrice: 12.99 },
+        { productId: 'bottle-kids-16oz', productName: 'Primo Kids Bottle 16oz', quantity: 2, unitPrice: 19.99 },
+      ],
+      trackingNumber: 'PW2026020800123',
+      carrier: 'Primo Direct',
+      estimatedDelivery: '2026-02-12',
+    },
+  ],
+
+  chatSummaries: [],
+  meaningfulEvents: [
+    {
+      eventType: 'life-event',
+      description: 'Moving to new home — asked about dispenser setup for new kitchen',
+      capturedAt: '2026-01-05',
+      agentNote: 'Potential upsell to bottom-loading dispenser. New house, likely wants upgraded setup.',
+      urgency: 'This Month',
+    },
+  ],
+  agentCapturedProfile: {
+    householdContext: { value: 'Family of 5 — husband, 3 kids (ages 4, 8, 12)', capturedAt: '2026-01-05', capturedFrom: 'chat session 2026-01-05', confidence: 'stated' },
+    hydrationChallenges: { value: 'Kids forget to drink water — trying flavored options to help', capturedAt: '2026-01-05', capturedFrom: 'chat session 2026-01-05', confidence: 'stated' },
+    sustainabilityGoals: { value: 'Wants to cut down on single-use plastic bottles', capturedAt: '2026-01-05', capturedFrom: 'chat session 2026-01-05', confidence: 'stated' },
+  },
+
+  browseSessions: [
+    {
+      sessionDate: '2026-02-15',
+      categoriesBrowsed: ['flavored', 'bottle', 'dispenser'],
+      productsViewed: ['flavored-watermelon', 'bottle-kids-16oz', 'primo-dispenser-bottom'],
+      durationMinutes: 18,
+      device: 'mobile',
+    },
+  ],
+
+  loyalty: {
+    tier: 'active',
+    pointsBalance: 1340,
+    lifetimePoints: 2800,
+    memberSince: '2024-06-01',
+    rewardsAvailable: [
+      { name: '$5 off next order', pointsCost: 500 },
+    ],
+    nextTierThreshold: 5000,
+    tierExpiryDate: '2026-06-01',
+  },
+
+  merkuryIdentity: {
+    merkuryId: 'MRK-MS-10002',
+    merkuryPid: 'PID-MS-10002',
+    merkuryHid: 'HID-H002',
+    identityTier: 'known',
+    confidence: 0.93,
+    resolvedAt: new Date().toISOString(),
+  },
+
+  purchaseHistory: [],
+  savedPaymentMethods: [
+    { id: 'pm-2', type: 'card', last4: '8811', brand: 'mastercard', isDefault: true },
+  ],
+  shippingAddresses: [
+    { id: 'addr-2', name: 'Maria Santos', line1: '412 Maplewood Dr', city: 'Austin', state: 'TX', postalCode: '78759', country: 'US', isDefault: true },
+  ],
+  recentActivity: [],
+  loyaltyTier: 'active',
+  lifetimeValue: 248,
+};
+
+// ─── David Park: Known Customer, NO Loyalty ─────────────────────
+// Office manager, evaluating bulk delivery + dispenser for 25-person team
+const davidPark: CustomerProfile = {
+  id: 'persona-david',
+  name: 'David',
+  email: 'david.park@example.com',
+
+  hydrationProfile: {
+    primaryUse: 'office',
+    waterPreferences: ['still', 'sparkling'],
+    deliveryFrequency: 'weekly',
+    householdSize: 25,
+    hasDispenser: false,
+    communicationPrefs: { email: true, sms: false, push: false },
+    preferredBrands: [],
+    ageRange: '35-45',
+  },
+
+  orders: [
+    {
+      orderId: 'ORD-2025-1121',
+      orderDate: '2025-11-21',
+      channel: 'online',
+      status: 'completed',
+      totalAmount: 199.99,
+      lineItems: [
+        { productId: 'primo-dispenser-bottom', productName: 'Primo Bottom-Loading Dispenser', quantity: 1, unitPrice: 199.99 },
       ],
     },
   ],
 
   chatSummaries: [],
   meaningfulEvents: [],
-  agentCapturedProfile: {},
+  agentCapturedProfile: {
+    officeContext: { value: 'Office of 25 people, replacing existing bottled water service', capturedAt: '2026-01-18', capturedFrom: 'chat session 2026-01-18', confidence: 'stated' },
+    budgetContext: { value: 'Currently spending ~$400/month on bottled water for the office', capturedAt: '2026-01-18', capturedFrom: 'chat session 2026-01-18', confidence: 'stated' },
+    hydrationChallenges: { value: 'People forget to stay hydrated during long meetings', capturedAt: '2026-01-18', capturedFrom: 'chat session 2026-01-18', confidence: 'stated' },
+  },
 
   browseSessions: [
     {
-      sessionDate: '2026-01-25',
-      categoriesBrowsed: ['fragrance'],
-      productsViewed: ['fragrance-floral', 'fragrance-woody'],
-      durationMinutes: 12,
-      device: 'mobile',
+      sessionDate: '2026-01-18',
+      categoriesBrowsed: ['dispenser', 'delivery', 'subscription'],
+      productsViewed: ['primo-dispenser-bottom', 'primo-5gal-delivery-weekly', 'subscription-primo-perks-elite'],
+      durationMinutes: 22,
+      device: 'desktop',
     },
   ],
 
   loyalty: null,
 
   merkuryIdentity: {
-    merkuryId: 'MRK-JR-78701',
+    merkuryId: 'MRK-DP-10003',
+    merkuryPid: 'PID-DP-10003',
+    merkuryHid: 'HID-H003',
     identityTier: 'known',
-    confidence: 0.92,
+    confidence: 0.89,
     resolvedAt: new Date().toISOString(),
   },
 
-  purchaseHistory: [
-    { productId: 'cleanser-acne', productName: 'Clear Start Salicylic Cleanser', purchaseDate: '2025-07-10', quantity: 1, rating: 4 },
-  ],
+  purchaseHistory: [],
   savedPaymentMethods: [
-    { id: 'pm-2', type: 'card', last4: '8888', brand: 'mastercard', isDefault: true },
+    { id: 'pm-3', type: 'card', last4: '3311', brand: 'amex', isDefault: true },
   ],
   shippingAddresses: [
-    { id: 'addr-2', name: 'James Rodriguez', line1: '456 Oak Ave', city: 'Austin', state: 'TX', postalCode: '78701', country: 'US', isDefault: true },
+    { id: 'addr-3', name: 'David Park', line1: '1500 Tech Blvd Ste 400', city: 'San Jose', state: 'CA', postalCode: '95128', country: 'US', isDefault: true },
   ],
   recentActivity: [],
   loyaltyTier: undefined,
-  lifetimeValue: 32,
+  lifetimeValue: 200,
 };
 
-// ─── Aisha Patel: Appended Only (Unknown to Brand) ─────────────
-// Zero brand data. Only Merkury appended 3P data.
-const aishaPatel: CustomerProfile = {
-  id: 'persona-aisha',
-  name: 'Aisha',
+// ─── Emma Thompson: Appended Only (Merkury-Recognized, No CRM) ──
+// Wellness enthusiast — Merkury has hydration/sustainability signals
+const emmaThompson: CustomerProfile = {
+  id: 'persona-emma',
+  name: 'Emma',
   email: '',
 
-  beautyProfile: {
-    skinType: 'combination',
-    concerns: [],
-    allergies: [],
+  hydrationProfile: {
     preferredBrands: [],
-  },
-
-  orders: [],
-  chatSummaries: [],
-  meaningfulEvents: [],
-  browseSessions: [],
-  loyalty: null,
-  purchaseHistory: [],
-  savedPaymentMethods: [],
-  shippingAddresses: [],
-  recentActivity: [],
-
-  merkuryIdentity: {
-    merkuryId: 'MRK-AP-10001',
-    identityTier: 'appended',
-    confidence: 0.74,
-    resolvedAt: new Date().toISOString(),
   },
 
   appendedProfile: {
-    ageRange: '28-35',
+    ageRange: '28-38',
     gender: 'female',
-    householdIncome: '$100k-$150k',
+    householdIncome: '$70k-$110k',
     hasChildren: false,
     homeOwnership: 'rent',
-    educationLevel: "bachelor's",
-    interests: ['luxury beauty', 'clean beauty', 'yoga', 'wellness'],
-    lifestyleSignals: ['wellness-focused', 'urban professional', 'fitness enthusiast'],
-    geoRegion: 'New York Metro',
+    educationLevel: "master's",
+    interests: ['wellness', 'clean hydration', 'sustainability', 'yoga', 'organic living'],
+    lifestyleSignals: ['wellness-focused', 'eco-conscious', 'health-driven'],
+    geoRegion: 'Portland, OR',
   },
+
+  orders: [],
+  chatSummaries: [],
+  meaningfulEvents: [],
+  agentCapturedProfile: {},
+  browseSessions: [],
+  loyalty: null,
+
+  merkuryIdentity: {
+    merkuryId: 'MRK-ET-10004',
+    merkuryPid: 'PID-ET-10004',
+    merkuryHid: 'HID-H004',
+    identityTier: 'appended',
+    confidence: 0.81,
+    resolvedAt: new Date().toISOString(),
+  },
+
+  purchaseHistory: [],
+  savedPaymentMethods: [],
+  shippingAddresses: [],
+  recentActivity: [],
 };
 
-// ─── Anonymous Visitor ──────────────────────────────────────────
-// Merkury fired but found no match at all.
+// ─── Carlos Mendez: Known Customer, Primo Perks Hydrated ────────
+// Eco-conscious homeowner in Phoenix — filter user, zero-waste goal
+const carlosMendez: CustomerProfile = {
+  id: 'persona-carlos',
+  name: 'Carlos',
+  email: 'carlos.mendez@example.com',
+
+  hydrationProfile: {
+    primaryUse: 'home',
+    waterPreferences: ['still'],
+    deliveryFrequency: 'biweekly',
+    householdSize: 3,
+    hasDispenser: false,
+    communicationPrefs: { email: true, sms: false, push: false },
+    preferredBrands: ['Primo Water'],
+    ageRange: '30-40',
+  },
+
+  orders: [
+    {
+      orderId: 'ORD-2025-0502',
+      orderDate: '2025-05-02',
+      channel: 'online',
+      status: 'completed',
+      totalAmount: 64.97,
+      lineItems: [
+        { productId: 'filter-pitcher-10cup', productName: 'Primo Filter Pitcher 10-Cup', quantity: 1, unitPrice: 39.99 },
+        { productId: 'filter-replacement-3pack', productName: 'Primo Filter Replacement 3-Pack', quantity: 1, unitPrice: 24.99 },
+      ],
+    },
+  ],
+
+  chatSummaries: [],
+  meaningfulEvents: [],
+  agentCapturedProfile: {
+    sustainabilityGoals: { value: 'Eliminated single-use plastic bottles — trying to go fully zero-waste', capturedAt: '2025-12-10', capturedFrom: 'chat session 2025-12-10', confidence: 'stated' },
+    tapWaterQuality: { value: 'Phoenix tap water is hard and tastes bad', capturedAt: '2025-12-10', capturedFrom: 'chat session 2025-12-10', confidence: 'stated' },
+    climateContext: { value: 'Phoenix, AZ — very hot and dry, high daily intake needed', capturedAt: '2025-12-10', capturedFrom: 'chat session 2025-12-10', confidence: 'stated' },
+  },
+
+  browseSessions: [
+    {
+      sessionDate: '2026-01-30',
+      categoriesBrowsed: ['filter', 'delivery'],
+      productsViewed: ['filter-replacement-3pack', 'water-quality-test-kit', 'primo-5gal-delivery-biweekly'],
+      durationMinutes: 9,
+      device: 'desktop',
+    },
+  ],
+
+  loyalty: {
+    tier: 'hydrated',
+    pointsBalance: 320,
+    lifetimePoints: 680,
+    memberSince: '2025-05-01',
+    rewardsAvailable: [],
+    nextTierThreshold: 1000,
+    tierExpiryDate: '2026-05-01',
+  },
+
+  merkuryIdentity: {
+    merkuryId: 'MRK-CM-10005',
+    merkuryPid: 'PID-CM-10005',
+    merkuryHid: 'HID-H005',
+    identityTier: 'known',
+    confidence: 0.91,
+    resolvedAt: new Date().toISOString(),
+  },
+
+  purchaseHistory: [],
+  savedPaymentMethods: [
+    { id: 'pm-5', type: 'card', last4: '7744', brand: 'visa', isDefault: true },
+  ],
+  shippingAddresses: [
+    { id: 'addr-5', name: 'Carlos Mendez', line1: '3301 Desert Rose Blvd', city: 'Phoenix', state: 'AZ', postalCode: '85008', country: 'US', isDefault: true },
+  ],
+  recentActivity: [],
+  loyaltyTier: 'hydrated',
+  lifetimeValue: 65,
+};
+
+// ─── Jennifer Walsh: Known Customer, Primo Perks Champion ───────
+// High-LTV customer in Miami — premium sparkling devotee
+const jenniferWalsh: CustomerProfile = {
+  id: 'persona-jennifer',
+  name: 'Jennifer',
+  email: 'jennifer.walsh@example.com',
+
+  hydrationProfile: {
+    primaryUse: 'home',
+    dailyIntakeGoalOz: 96,
+    waterPreferences: ['sparkling', 'flavored'],
+    deliveryFrequency: 'weekly',
+    householdSize: 2,
+    hasDispenser: true,
+    communicationPrefs: { email: true, sms: true, push: true },
+    preferredBrands: ['Primo Sparkling', 'Primo Water'],
+    ageRange: '40-55',
+  },
+
+  orders: [
+    {
+      orderId: 'ORD-2025-0841',
+      orderDate: '2025-08-01',
+      channel: 'online',
+      status: 'completed',
+      totalAmount: 128.93,
+      lineItems: [
+        { productId: 'sparkling-lemon', productName: 'Primo Sparkling Lemon (12-Pack)', quantity: 3, unitPrice: 12.99 },
+        { productId: 'sparkling-original', productName: 'Primo Sparkling Original (12-Pack)', quantity: 3, unitPrice: 12.99 },
+        { productId: 'flavored-cucumber-mint', productName: 'Primo Flavored Cucumber Mint (12-Pack)', quantity: 3, unitPrice: 13.99 },
+      ],
+    },
+    {
+      orderId: 'ORD-2026-0122',
+      orderDate: '2026-01-22',
+      channel: 'online',
+      status: 'completed',
+      totalAmount: 159.90,
+      lineItems: [
+        { productId: 'sparkling-lemon', productName: 'Primo Sparkling Lemon (12-Pack)', quantity: 4, unitPrice: 12.99 },
+        { productId: 'sparkling-lime', productName: 'Primo Sparkling Lime (12-Pack)', quantity: 4, unitPrice: 12.99 },
+        { productId: 'bottle-stainless-32oz', productName: 'Primo Stainless Steel Bottle 32oz', quantity: 1, unitPrice: 34.99 },
+      ],
+    },
+  ],
+
+  chatSummaries: [
+    {
+      sessionDate: '2026-01-22',
+      summary: 'Jennifer explored new sparkling flavors and asked about cucumber mint. Expressed interest in brand ambassador program. Mentioned planning a wellness retreat.',
+      sentiment: 'positive',
+      topicsDiscussed: ['new flavors', 'brand ambassador', 'wellness retreat'],
+    },
+  ],
+  meaningfulEvents: [
+    {
+      eventType: 'milestone',
+      description: 'Reached 10,000 lifetime points — Champion tier unlocked',
+      capturedAt: '2026-01-22',
+      agentNote: 'Reward with exclusive Champion welcome kit offer.',
+      urgency: 'Immediate',
+    },
+  ],
+  agentCapturedProfile: {
+    climateContext: { value: 'Miami, FL — hot and humid year-round', capturedAt: '2026-01-22', capturedFrom: 'chat session 2026-01-22', confidence: 'stated' },
+    sparklingPreference: { value: 'Exclusively sparkling — bubbly water is non-negotiable', capturedAt: '2026-01-22', capturedFrom: 'chat session 2026-01-22', confidence: 'stated' },
+    priceRange: { value: 'Premium is fine — quality and taste matter more than price', capturedAt: '2026-01-22', capturedFrom: 'chat session 2026-01-22', confidence: 'stated' },
+  },
+
+  browseSessions: [
+    {
+      sessionDate: '2026-02-18',
+      categoriesBrowsed: ['sparkling', 'flavored', 'subscription'],
+      productsViewed: ['sparkling-berry', 'flavored-peach-ginger', 'subscription-primo-perks-elite'],
+      durationMinutes: 16,
+      device: 'tablet',
+    },
+  ],
+
+  loyalty: {
+    tier: 'champion',
+    pointsBalance: 1890,
+    lifetimePoints: 11200,
+    memberSince: '2023-12-01',
+    rewardsAvailable: [
+      { name: 'Free monthly sparkling case', pointsCost: 1500 },
+      { name: 'Exclusive wellness event access', pointsCost: 2000 },
+      { name: '$25 off next order', pointsCost: 2500 },
+    ],
+    tierExpiryDate: '2026-12-01',
+  },
+
+  merkuryIdentity: {
+    merkuryId: 'MRK-JW-10006',
+    merkuryPid: 'PID-JW-10006',
+    merkuryHid: 'HID-H006',
+    identityTier: 'known',
+    confidence: 0.98,
+    resolvedAt: new Date().toISOString(),
+  },
+
+  purchaseHistory: [],
+  savedPaymentMethods: [
+    { id: 'pm-6', type: 'card', last4: '9900', brand: 'amex', isDefault: true },
+  ],
+  shippingAddresses: [
+    { id: 'addr-6', name: 'Jennifer Walsh', line1: '8800 Brickell Ave Apt 1201', city: 'Miami', state: 'FL', postalCode: '33131', country: 'US', isDefault: true },
+  ],
+  recentActivity: [],
+  loyaltyTier: 'champion',
+  lifetimeValue: 1640,
+};
+
+// ─── Anonymous Visitor ───────────────────────────────────────────
 const anonymousVisitor: CustomerProfile = {
   id: 'persona-anonymous',
-  name: 'Guest',
+  name: '',
   email: '',
 
-  beautyProfile: {
-    skinType: 'normal',
-    concerns: [],
-    allergies: [],
+  hydrationProfile: {
     preferredBrands: [],
   },
 
   orders: [],
   chatSummaries: [],
   meaningfulEvents: [],
+  agentCapturedProfile: {},
   browseSessions: [],
   loyalty: null,
-  purchaseHistory: [],
-  savedPaymentMethods: [],
-  shippingAddresses: [],
-  recentActivity: [],
 
   merkuryIdentity: {
     merkuryId: '',
@@ -239,366 +559,66 @@ const anonymousVisitor: CustomerProfile = {
     confidence: 0,
     resolvedAt: new Date().toISOString(),
   },
-};
 
-// ─── Maya Thompson: Known, Loyalty Platinum, Makeup Enthusiast ──
-// Frequent buyer, loves makeup and fragrance
-const mayaThompson: CustomerProfile = {
-  id: 'persona-maya',
-  name: 'Maya',
-  email: 'maya.thompson@example.com',
-
-  beautyProfile: {
-    skinType: 'normal',
-    concerns: ['brightening'],
-    allergies: [],
-    fragrancePreference: 'love',
-    communicationPrefs: { email: true, sms: true, push: true },
-    preferredBrands: ['LUMIERE'],
-    ageRange: '25-30',
-  },
-
-  orders: [
-    {
-      orderId: 'ORD-2025-0301',
-      orderDate: '2025-03-14',
-      channel: 'online',
-      status: 'completed',
-      totalAmount: 118.00,
-      lineItems: [
-        { productId: 'foundation-dewy', productName: 'Skin Glow Serum Foundation', quantity: 1, unitPrice: 52.00 },
-        { productId: 'blush-silk', productName: 'Silk Petal Blush', quantity: 1, unitPrice: 38.00 },
-        { productId: 'mascara-volume', productName: 'Lash Drama Volume Mascara', quantity: 1, unitPrice: 28.00 },
-      ],
-    },
-    {
-      orderId: 'ORD-2025-0589',
-      orderDate: '2025-06-02',
-      channel: 'in-store',
-      status: 'completed',
-      totalAmount: 159.00,
-      lineItems: [
-        { productId: 'lipstick-velvet', productName: 'Velvet Matte Lip Color', quantity: 1, unitPrice: 34.00 },
-        { productId: 'fragrance-floral', productName: 'Jardin de Nuit Eau de Parfum', quantity: 1, unitPrice: 125.00 },
-      ],
-    },
-    {
-      orderId: 'ORD-2025-0940',
-      orderDate: '2025-09-18',
-      channel: 'online',
-      status: 'completed',
-      totalAmount: 124.00,
-      lineItems: [
-        { productId: 'serum-vitamin-c', productName: 'Glow Boost Vitamin C Serum', quantity: 1, unitPrice: 72.00 },
-        { productId: 'foundation-dewy', productName: 'Skin Glow Serum Foundation', quantity: 1, unitPrice: 52.00 },
-      ],
-    },
-  ],
-
-  chatSummaries: [],
-  meaningfulEvents: [],
-  agentCapturedProfile: {},
-
-  browseSessions: [
-    {
-      sessionDate: '2026-01-20',
-      categoriesBrowsed: ['foundation', 'blush'],
-      productsViewed: ['foundation-dewy', 'blush-silk'],
-      durationMinutes: 6,
-      device: 'mobile',
-    },
-  ],
-
-  loyalty: {
-    tier: 'platinum',
-    pointsBalance: 5200,
-    lifetimePoints: 12400,
-    memberSince: '2024-03-01',
-    rewardsAvailable: [
-      { name: '$25 off next purchase', pointsCost: 2000 },
-    ],
-    tierExpiryDate: '2027-03-01',
-  },
-
-  merkuryIdentity: {
-    merkuryId: 'MRK-MT-30302',
-    identityTier: 'known',
-    confidence: 0.99,
-    resolvedAt: new Date().toISOString(),
-  },
-
-  purchaseHistory: [],
-  savedPaymentMethods: [
-    { id: 'pm-3', type: 'applepay', isDefault: true },
-  ],
-  shippingAddresses: [
-    { id: 'addr-3', name: 'Maya Thompson', line1: '789 Elm St', city: 'Los Angeles', state: 'CA', postalCode: '90028', country: 'US', isDefault: true },
-  ],
-  recentActivity: [],
-  lifetimeValue: 401,
-};
-
-// ─── David Kim: Known, Loyalty Silver, Routine Builder ──────────
-// Combination skin, methodical, building out his routine
-const davidKim: CustomerProfile = {
-  id: 'persona-david',
-  name: 'David',
-  email: 'david.kim@example.com',
-
-  beautyProfile: {
-    skinType: 'combination',
-    concerns: ['pores'],
-    allergies: [],
-    communicationPrefs: { email: true, sms: false, push: true },
-    preferredBrands: ['DERMAFIX'],
-    ageRange: '30-40',
-  },
-
-  orders: [
-    {
-      orderId: 'ORD-2025-0720',
-      orderDate: '2025-08-15',
-      channel: 'online',
-      status: 'completed',
-      totalAmount: 70.00,
-      lineItems: [
-        { productId: 'cleanser-acne', productName: 'Clear Start Salicylic Cleanser', quantity: 1, unitPrice: 32.00 },
-        { productId: 'serum-niacinamide', productName: 'Pore Refine Niacinamide Serum', quantity: 1, unitPrice: 38.00 },
-      ],
-    },
-    {
-      orderId: 'ORD-2025-1320',
-      orderDate: '2025-11-22',
-      channel: 'online',
-      status: 'completed',
-      totalAmount: 76.00,
-      lineItems: [
-        { productId: 'toner-aha', productName: 'Glow Tonic AHA Toner', quantity: 1, unitPrice: 34.00 },
-        { productId: 'sunscreen-lightweight', productName: 'Invisible Shield SPF 50', quantity: 1, unitPrice: 42.00 },
-      ],
-    },
-  ],
-
-  chatSummaries: [],
-  meaningfulEvents: [],
-  agentCapturedProfile: {},
-
-  browseSessions: [
-    {
-      sessionDate: '2026-01-15',
-      categoriesBrowsed: ['serum', 'moisturizer'],
-      productsViewed: ['serum-retinol', 'moisturizer-sensitive'],
-      durationMinutes: 11,
-      device: 'desktop',
-    },
-  ],
-
-  loyalty: {
-    tier: 'silver',
-    pointsBalance: 980,
-    lifetimePoints: 1460,
-    memberSince: '2025-08-15',
-    rewardsAvailable: [
-      { name: '$5 off next purchase', pointsCost: 500 },
-    ],
-    nextTierThreshold: 3000,
-    tierExpiryDate: '2026-08-15',
-  },
-
-  merkuryIdentity: {
-    merkuryId: 'MRK-DK-60614',
-    identityTier: 'known',
-    confidence: 0.94,
-    resolvedAt: new Date().toISOString(),
-  },
-
-  purchaseHistory: [],
-  savedPaymentMethods: [
-    { id: 'pm-4', type: 'card', last4: '1234', brand: 'amex', isDefault: true },
-  ],
-  shippingAddresses: [
-    { id: 'addr-4', name: 'David Kim', line1: '321 Lake Shore Dr', city: 'Chicago', state: 'IL', postalCode: '60614', country: 'US', isDefault: true },
-  ],
-  recentActivity: [],
-  lifetimeValue: 146,
-};
-
-// ─── Priya Sharma: Appended, Different Interests ────────────────
-// Merkury appended only, but different profile from Aisha — older, has children, luxury/anti-aging focus
-const priyaSharma: CustomerProfile = {
-  id: 'persona-priya',
-  name: 'Priya',
-  email: '',
-
-  beautyProfile: {
-    skinType: 'combination',
-    concerns: [],
-    allergies: [],
-    preferredBrands: [],
-  },
-
-  orders: [],
-  chatSummaries: [],
-  meaningfulEvents: [],
-  browseSessions: [],
-  loyalty: null,
   purchaseHistory: [],
   savedPaymentMethods: [],
   shippingAddresses: [],
   recentActivity: [],
-
-  merkuryIdentity: {
-    merkuryId: 'MRK-PS-75201',
-    identityTier: 'appended',
-    confidence: 0.68,
-    resolvedAt: new Date().toISOString(),
-  },
-
-  appendedProfile: {
-    ageRange: '40-50',
-    gender: 'female',
-    householdIncome: '$150k-$250k',
-    hasChildren: true,
-    homeOwnership: 'own',
-    educationLevel: "master's",
-    interests: ['luxury beauty', 'anti-aging', 'spa treatments', 'fine dining'],
-    lifestyleSignals: ['affluent suburban', 'self-care focused', 'frequent spa-goer'],
-    geoRegion: 'Dallas-Fort Worth',
-  },
 };
 
-// ─── Marcus Williams: Known, Brand New ──────────────────────────
-// Just getting started — 1 order, no loyalty yet
-const marcusWilliams: CustomerProfile = {
-  id: 'persona-marcus',
-  name: 'Marcus',
-  email: 'marcus.w@example.com',
+// ─── Persona Exports ─────────────────────────────────────────────
 
-  beautyProfile: {
-    skinType: 'dry',
-    concerns: ['hydration'],
-    allergies: [],
-    communicationPrefs: { email: false, sms: true, push: true },
-    preferredBrands: [],
-    ageRange: '20-25',
-  },
-
-  orders: [
-    {
-      orderId: 'ORD-2026-0102',
-      orderDate: '2026-01-24',
-      channel: 'online',
-      status: 'completed',
-      totalAmount: 36.00,
-      lineItems: [
-        { productId: 'cleanser-gentle', productName: 'Cloud Cream Cleanser', quantity: 1, unitPrice: 36.00 },
-      ],
-    },
-  ],
-
-  chatSummaries: [],
-  meaningfulEvents: [],
-  agentCapturedProfile: {},
-  browseSessions: [],
-  loyalty: null,
-
-  merkuryIdentity: {
-    merkuryId: 'MRK-MW-11201',
-    identityTier: 'known',
-    confidence: 0.88,
-    resolvedAt: new Date().toISOString(),
-  },
-
-  purchaseHistory: [],
-  savedPaymentMethods: [
-    { id: 'pm-6', type: 'card', last4: '5555', brand: 'visa', isDefault: true },
-  ],
-  shippingAddresses: [
-    { id: 'addr-6', name: 'Marcus Williams', line1: '55 W 46th St', city: 'New York', state: 'NY', postalCode: '10036', country: 'US', isDefault: true },
-  ],
-  recentActivity: [],
-  lifetimeValue: 36,
-};
-
-export const PERSONAS: PersonaMeta[] = [
+export const CUSTOMER_PERSONAS: PersonaMeta[] = [
   {
-    id: 'sarah',
-    label: 'Sarah Chen',
-    subtitle: 'Known · Loyalty Gold',
-    traits: ['Sensitive skin', 'Fragrance-free', '2 orders', '2,450 pts'],
-    profile: sarahChen,
+    id: 'alex-rivera',
+    label: 'Alex Rivera',
+    subtitle: 'Fitness Enthusiast • Elite Member',
+    traits: ['Triathlete', 'High volume', 'Sparkling fan', 'Weekly delivery'],
+    profile: alexRivera,
   },
   {
-    id: 'james',
-    label: 'James Rodriguez',
-    subtitle: 'Known · No Loyalty',
-    traits: ['Oily skin', '1 order', 'Anniversary gift search'],
-    profile: jamesRodriguez,
+    id: 'maria-santos',
+    label: 'Maria Santos',
+    subtitle: 'Family of 5 • Active Member',
+    traits: ['Home dispenser', 'Kids hydration', 'Sustainability-focused', 'Flavored water'],
+    profile: mariaSantos,
   },
   {
-    id: 'maya',
-    label: 'Maya Thompson',
-    subtitle: 'Known · Loyalty Platinum',
-    traits: ['Makeup enthusiast', '3 orders', '5,200 pts'],
-    profile: mayaThompson,
+    id: 'david-park',
+    label: 'David Park',
+    subtitle: 'Office Manager • No Loyalty Yet',
+    traits: ['25-person office', 'Evaluating delivery', 'Cost-conscious', 'B2B potential'],
+    profile: davidPark,
   },
   {
-    id: 'david',
-    label: 'David Kim',
-    subtitle: 'Known · Loyalty Silver',
-    traits: ['Combination skin', '2 orders', 'Routine builder'],
-    profile: davidKim,
+    id: 'emma-thompson',
+    label: 'Emma Thompson',
+    subtitle: 'Wellness Seeker • Merkury Appended',
+    traits: ['No brand record', 'Eco-conscious', 'Wellness signals', '3P enriched'],
+    profile: emmaThompson,
   },
   {
-    id: 'marcus',
-    label: 'Marcus Williams',
-    subtitle: 'Known · Brand New',
-    traits: ['Dry skin', '1 order', 'No loyalty yet'],
-    profile: marcusWilliams,
+    id: 'carlos-mendez',
+    label: 'Carlos Mendez',
+    subtitle: 'Eco Homeowner • Hydrated Member',
+    traits: ['Phoenix heat', 'Zero-waste goal', 'Filter user', 'Tap water concerns'],
+    profile: carlosMendez,
   },
   {
-    id: 'aisha',
-    label: 'Aisha Patel',
-    subtitle: 'Merkury Appended Only',
-    traits: ['Clean beauty interest', 'NYC', 'No purchase history'],
-    profile: aishaPatel,
+    id: 'jennifer-walsh',
+    label: 'Jennifer Walsh',
+    subtitle: 'Premium Lifestyle • Champion Member',
+    traits: ['Miami climate', 'Sparkling devotee', 'High LTV', 'Brand ambassador potential'],
+    profile: jenniferWalsh,
   },
   {
-    id: 'priya',
-    label: 'Priya Sharma',
-    subtitle: 'Merkury Appended Only',
-    traits: ['Anti-aging interest', 'Dallas', 'Has children'],
-    profile: priyaSharma,
-  },
-  {
-    id: 'anonymous',
+    id: 'anonymous-visitor',
     label: 'Anonymous Visitor',
-    subtitle: 'Merkury: No Match',
-    traits: ['No identity resolved', 'No history'],
+    subtitle: 'No identity resolved',
+    traits: ['No Merkury match', 'First visit', 'Top of funnel'],
     profile: anonymousVisitor,
   },
 ];
 
-export function getPersonaById(id: string): PersonaMeta | undefined {
-  return PERSONAS.find((p) => p.id === id);
-}
-
-/** Minimal stubs for persona selector — enough to render cards before profile loads. */
-export interface PersonaStub {
-  id: string;
-  merkuryId: string;
-  identityTier: 'known' | 'appended' | 'anonymous';
-  defaultLabel: string;
-  defaultSubtitle: string;
-}
-
-export const PERSONA_STUBS: PersonaStub[] = [
-  { id: 'sarah', merkuryId: 'MRK-SC-90210', identityTier: 'known', defaultLabel: 'Sarah Chen', defaultSubtitle: 'Merkury: Matched' },
-  { id: 'james', merkuryId: 'MRK-JR-78701', identityTier: 'known', defaultLabel: 'James Rodriguez', defaultSubtitle: 'Merkury: Matched' },
-  { id: 'maya', merkuryId: 'MRK-MT-30302', identityTier: 'known', defaultLabel: 'Maya Thompson', defaultSubtitle: 'Merkury: Matched' },
-  { id: 'david', merkuryId: 'MRK-DK-60614', identityTier: 'known', defaultLabel: 'David Kim', defaultSubtitle: 'Merkury: Matched' },
-  { id: 'marcus', merkuryId: 'MRK-MW-11201', identityTier: 'known', defaultLabel: 'Marcus Williams', defaultSubtitle: 'Merkury: Matched' },
-  { id: 'aisha', merkuryId: 'MRK-AP-10001', identityTier: 'appended', defaultLabel: 'Aisha Patel', defaultSubtitle: 'Merkury: Matched · Appended Only' },
-  { id: 'priya', merkuryId: 'MRK-PS-75201', identityTier: 'appended', defaultLabel: 'Priya Sharma', defaultSubtitle: 'Merkury: Matched · Appended Only' },
-  { id: 'anonymous', merkuryId: '', identityTier: 'anonymous', defaultLabel: 'Anonymous Visitor', defaultSubtitle: 'Merkury: No Match' },
-];
+// Default export for backward compat with existing persona selector
+export const DEMO_PERSONAS = CUSTOMER_PERSONAS;

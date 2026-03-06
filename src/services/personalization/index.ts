@@ -84,9 +84,9 @@ interface PersonalizationContext {
   householdIncome: string;
   lifestyle: string;          // comma-separated lifestyle signals
   geoRegion: string;
-  // Beauty profile (Merkury hints or Contact fields)
-  skinType: string;
-  skinConcerns: string;       // comma-separated
+  // Hydration profile (Merkury hints or Contact fields)
+  primaryUse: string;
+  waterPreferences: string;   // comma-separated
   preferredBrands: string;    // comma-separated
   // Identity
   identityTier: string;       // 'known' | 'appended' | 'anonymous'
@@ -114,7 +114,7 @@ const EMPTY_CONTEXT: PersonalizationContext = {
   utmCampaign: '', utmSource: '', utmMedium: '',
   interests: '', ageRange: '', gender: '', householdIncome: '',
   lifestyle: '', geoRegion: '',
-  skinType: '', skinConcerns: '', preferredBrands: '',
+  primaryUse: '', waterPreferences: '', preferredBrands: '',
   identityTier: 'anonymous',
 };
 let personalizationContext: PersonalizationContext = { ...EMPTY_CONTEXT };
@@ -147,8 +147,8 @@ function resolveCtx(field: keyof PersonalizationContext): string {
     case 'householdIncome': return merkury?.householdIncome || '';
     case 'lifestyle':       return merkury?.lifestyleSignals?.join(',') || '';
     case 'geoRegion':       return merkury?.geoRegion || '';
-    case 'skinType':        return merkury?.skinType || '';
-    case 'skinConcerns':    return merkury?.skinConcerns?.join(',') || '';
+    case 'primaryUse':      return '';
+    case 'waterPreferences': return '';
     case 'preferredBrands': return merkury?.preferredBrands?.join(',') || '';
     case 'identityTier':    return merkury?.identityTier || 'anonymous';
     default:                return '';
@@ -177,8 +177,8 @@ export function setPersonalizationProfile(profile: {
   householdIncome?: string;
   lifestyleSignals?: string[];
   geoRegion?: string;
-  skinType?: string;
-  skinConcerns?: string[];
+  primaryUse?: string;
+  waterPreferences?: string[];
   preferredBrands?: string[];
   identityTier?: string;
 }): void {
@@ -188,8 +188,8 @@ export function setPersonalizationProfile(profile: {
   personalizationContext.householdIncome = profile.householdIncome || '';
   personalizationContext.lifestyle = (profile.lifestyleSignals || []).join(',');
   personalizationContext.geoRegion = profile.geoRegion || '';
-  personalizationContext.skinType = profile.skinType || '';
-  personalizationContext.skinConcerns = (profile.skinConcerns || []).join(',');
+  personalizationContext.primaryUse = profile.primaryUse || '';
+  personalizationContext.waterPreferences = (profile.waterPreferences || []).join(',');
   personalizationContext.preferredBrands = (profile.preferredBrands || []).join(',');
   personalizationContext.identityTier = profile.identityTier || 'anonymous';
   console.log('[sfp] Personalization profile context updated:', personalizationContext);
@@ -407,30 +407,30 @@ function buildSitemapConfig() {
         { name: 'household_income', value: () => resolveCtx('householdIncome') },
         { name: 'lifestyle',        value: () => resolveCtx('lifestyle') },
         { name: 'geo_region',       value: () => resolveCtx('geoRegion') },
-        // Beauty profile (Merkury hints or CRM contact fields)
-        { name: 'skin_type',        value: () => resolveCtx('skinType') },
-        { name: 'skin_concerns',    value: () => resolveCtx('skinConcerns') },
-        { name: 'preferred_brands', value: () => resolveCtx('preferredBrands') },
+        // Hydration profile (Merkury hints or CRM contact fields)
+        { name: 'primary_use',        value: () => resolveCtx('primaryUse') },
+        { name: 'water_preferences',  value: () => resolveCtx('waterPreferences') },
+        { name: 'preferred_brands',   value: () => resolveCtx('preferredBrands') },
         // Identity resolution tier
         { name: 'identity_tier',    value: () => resolveCtx('identityTier') },
       ],
       onActionEvent: (event: any) => {
         // Enrich all events with source channel metadata
         event.source = event.source || {};
-        event.source.channel = 'beaute-web';
+        event.source.channel = 'primo-web';
         // Enrich with Merkury appended data (from dataLayer or React state)
         // so it flows to Product Browse Engagement as Related Attributes
         const interests = resolveCtx('interests');
         const ageRange = resolveCtx('ageRange');
         const gender = resolveCtx('gender');
         const lifestyle = resolveCtx('lifestyle');
-        const skinType = resolveCtx('skinType');
+        const primaryUse = resolveCtx('primaryUse');
         const idTier = resolveCtx('identityTier');
         if (interests) event.merkuryInterests = interests;
         if (ageRange) event.merkuryAgeRange = ageRange;
         if (gender) event.merkuryGender = gender;
         if (lifestyle) event.merkuryLifestyle = lifestyle;
-        if (skinType) event.merkurySkinType = skinType;
+        if (primaryUse) event.merkuryPrimaryUse = primaryUse;
         if (idTier) event.identityTier = idTier;
         return event;
       },
@@ -709,8 +709,8 @@ export function syncIdentity(
       ...(ctx.householdIncome && { merkuryHouseholdIncome: ctx.householdIncome }),
       ...(ctx.lifestyle && { merkuryLifestyle: ctx.lifestyle }),
       ...(ctx.geoRegion && { merkuryGeoRegion: ctx.geoRegion }),
-      ...(ctx.skinType && { merkurySkinType: ctx.skinType }),
-      ...(ctx.skinConcerns && { merkurySkinConcerns: ctx.skinConcerns }),
+      ...(ctx.primaryUse && { merkuryPrimaryUse: ctx.primaryUse }),
+      ...(ctx.waterPreferences && { merkuryWaterPreferences: ctx.waterPreferences }),
       ...(ctx.preferredBrands && { merkuryPreferredBrands: ctx.preferredBrands }),
       ...(ctx.identityTier && { identityTier: ctx.identityTier }),
     });

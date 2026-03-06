@@ -45,22 +45,19 @@ const findProduct = (id: string) => MOCK_PRODUCTS.find((p) => p.id === id);
 
 // ─── Subtle enrichment probes ────────────────────────────────────
 // Maps missing profile fields to conversationally natural follow-up prompts.
-// The agent slips one of these into suggested actions to capture profile data.
 const ENRICHMENT_PROBES: Record<string, string[]> = {
-  'Birthday': ['Any special occasions coming up?'],
-  'Anniversary': ['Shopping for someone special?', 'Any celebrations on the horizon?'],
-  'Morning routine': ['How much time do you usually have in the morning?'],
-  'Exercise': ['Do you work out regularly? It can affect your skin!'],
-  'Work environment': ['Do you work indoors or outdoors? Helps me pick the right SPF.'],
-  'Beauty priority': ['What matters most to you in skincare?'],
-  'Price sensitivity': ['Do you have a budget in mind?'],
+  'Daily intake goal': ['How much water are you aiming to drink each day?'],
+  'Activity level': ['Do you work out regularly? It affects how much water you need.'],
+  'Household size': ['How many people are you hydrating for at home?'],
+  'Work environment': ['Do you work from home or in an office?'],
+  'Climate': ['What's the climate like where you live? Heat and humidity change everything.'],
+  'Sparkling preference': ['Do you prefer still or sparkling water?'],
+  'Delivery frequency': ['How often would you want a delivery — weekly or every two weeks?'],
 };
 
-/** Pick a subtle enrichment probe based on missing fields, or null if none relevant. */
 function getEnrichmentProbe(): string | null {
   const missing = customerCtx?.missingProfileFields;
   if (!missing?.length) return null;
-  // Pick a random missing field that has probes
   const candidates = missing.filter((f) => ENRICHMENT_PROBES[f]);
   if (!candidates.length) return null;
   const field = candidates[Math.floor(Math.random() * candidates.length)];
@@ -79,226 +76,166 @@ function generateWelcomeResponse(): AgentResponse | null {
   const tier = customerCtx.identityTier;
 
   if (tier === 'known') {
-    // Check for meaningful events and context from the richer data
-    const hasTripEvent = customerCtx.meaningfulEvents?.some((e) => e.includes('Mumbai') || e.includes('trip'));
-    const hasAnniversary = customerCtx.meaningfulEvents?.some((e) => e.toLowerCase().includes('anniversary'));
-    const hasBrowseFragrance = customerCtx.browseInterests?.some((b) => b.includes('fragrance'));
-    const hasBrowseSerum = customerCtx.browseInterests?.some((b) => b.includes('serum'));
+    const hasDeliveryOrder = customerCtx.recentPurchases?.some((id) => id.includes('delivery') || id.includes('5gal'));
+    const hasSparklingOrder = customerCtx.recentPurchases?.some((id) => id.includes('sparkling'));
+    const hasHydrationGoal = customerCtx.meaningfulEvents?.some((e) => e.toLowerCase().includes('marathon') || e.toLowerCase().includes('training'));
+    const hasFamilyEvent = customerCtx.meaningfulEvents?.some((e) => e.toLowerCase().includes('moving') || e.toLowerCase().includes('family'));
+    const hasOfficeContext = customerCtx.primaryUse === 'office';
     const loyaltyInfo = customerCtx.loyaltyTier
       ? `${customerCtx.loyaltyTier} member${customerCtx.loyaltyPoints ? ` with ${customerCtx.loyaltyPoints.toLocaleString()} points` : ''}`
       : null;
     const isNotLoyalty = !customerCtx.loyaltyTier;
 
-    // Sarah-like: known + trip + loyalty
-    if (hasTripEvent && loyaltyInfo) {
+    // Alex-like: athlete with training goal
+    if (hasHydrationGoal && loyaltyInfo) {
       return {
         sessionId: 'mock-session',
-        message: `Welcome back, ${customerCtx.name}! How was the trip? Let me know if you need to restock anything.`,
+        message: `Welcome back, ${customerCtx.name}! Your marathon training is in full swing — let me help you stay ahead on hydration.`,
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: `Welcome back, ${customerCtx.name}!`,
-            welcomeSubtext: `How was the trip? Let me help you restock.`,
+            welcomeSubtext: `Marathon training starts with the right hydration. Let's talk.`,
             sceneContext: {
-              setting: 'lifestyle',
-              mood: 'warm-travel-return',
+              setting: 'fitness',
               generateBackground: true,
-              backgroundPrompt: 'Warm golden hour luxury lifestyle setting, welcoming atmosphere, soft ambient light, travel memories, elegant beauty space',
+              backgroundPrompt: 'Early morning trail run at golden hour, athlete holding water bottle, pine trees and mountain mist, energizing and fresh',
             },
           },
         },
-        suggestedActions: ['Restock my travel essentials', "What's new since I've been away?", 'Show me evening skincare'],
+        suggestedActions: ['Build my training hydration plan', 'Show me sparkling water', 'Adjust my delivery'],
         confidence: 0.98,
       };
     }
 
-    // James-like: known + anniversary + browsing fragrances + no loyalty
-    if (hasAnniversary && hasBrowseFragrance) {
+    // Maria-like: family, moving
+    if (hasFamilyEvent) {
       return {
         sessionId: 'mock-session',
-        message: `Welcome back, ${customerCtx.name}! Shopping for something special? I can help you find the perfect pick.`,
+        message: `Welcome back, ${customerCtx.name}! New place — let's make sure your hydration setup is ready for the whole family.`,
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: `Welcome back, ${customerCtx.name}!`,
-            welcomeSubtext: `Shopping for something special? I can help.`,
+            welcomeSubtext: `New home, same great water. Let's get you set up.`,
             sceneContext: {
-              setting: 'bedroom',
-              mood: 'elegant-gifting',
+              setting: 'home-kitchen',
               generateBackground: true,
-              backgroundPrompt: 'Elegant intimate bedroom setting, soft evening light, luxury fragrance display atmosphere, romantic gift-giving mood',
+              backgroundPrompt: 'Bright sunny kitchen with unpacked moving boxes, Primo water dispenser on counter, warm morning light, fresh start energy',
             },
           },
         },
-        suggestedActions: ['Show me fragrances', 'Help me find a gift', isNotLoyalty ? 'Tell me about loyalty' : 'Restock my cleanser'],
+        suggestedActions: ['Help me set up my dispenser', 'Show kids water bottles', 'Update my delivery address'],
         confidence: 0.96,
       };
     }
 
-    // Maya-like: known + platinum + had a return + makeup focus
-    const hasReturnEvent = customerCtx.meaningfulEvents?.some((e) => e.toLowerCase().includes('return'));
-    const hasBrowseMakeup = customerCtx.browseInterests?.some((b) => /foundation|blush|makeup|lipstick|mascara/.test(b));
-    if (hasReturnEvent && loyaltyInfo) {
+    // David-like: office manager
+    if (hasOfficeContext) {
       return {
         sessionId: 'mock-session',
-        message: `Welcome back, ${customerCtx.name}! I have some alternatives that might be a better fit. Want to take a look?`,
+        message: `Welcome back, ${customerCtx.name}! Let's make sure your office stays hydrated. I can help you optimize your delivery schedule.`,
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: `Welcome back, ${customerCtx.name}!`,
-            welcomeSubtext: `I found some alternatives that might be a better fit.`,
+            welcomeSubtext: `Keeping your team hydrated. Let's review your setup.`,
             sceneContext: {
-              setting: 'vanity',
-              mood: 'elegant-makeup',
+              setting: 'office',
               generateBackground: true,
-              backgroundPrompt: 'Luxurious makeup vanity setting, soft glamorous lighting, high-end beauty atmosphere, warm and inviting',
+              backgroundPrompt: 'Modern open-plan office with floor-to-ceiling windows, water dispenser station with team members, professional and energized atmosphere',
             },
           },
         },
-        suggestedActions: ['Show me lighter serums', 'Restock my makeup', 'What\'s new?'],
-        confidence: 0.97,
+        suggestedActions: ['Review my delivery schedule', 'Add another dispenser', 'Optimize my order'],
+        confidence: 0.95,
       };
     }
 
-    // Marcus-like: known + beginner + no loyalty + recent first order
-    const isBeginnerEvent = customerCtx.meaningfulEvents?.some((e) => e.toLowerCase().includes('beginner'));
-    if (isBeginnerEvent && isNotLoyalty) {
+    // Generic known customer with delivery
+    if (hasDeliveryOrder && loyaltyInfo) {
       return {
         sessionId: 'mock-session',
-        message: `Hey ${customerCtx.name}! Ready to add the next step to your routine?`,
-        uiDirective: {
-          action: 'WELCOME_SCENE' as UIAction,
-          payload: {
-            welcomeMessage: `Hey ${customerCtx.name}!`,
-            welcomeSubtext: `Ready for the next step in your routine?`,
-            sceneContext: {
-              setting: 'bathroom',
-              mood: 'fresh-start',
-              generateBackground: true,
-              backgroundPrompt: 'Clean modern bathroom setting, bright natural light, minimalist beauty space, fresh and inviting',
-            },
-          },
-        },
-        suggestedActions: ['What should I add next?', 'Show me moisturizers', 'Build me a simple routine'],
-        confidence: 0.96,
-      };
-    }
-
-    // Generic known with browse context
-    if (hasBrowseSerum || hasBrowseFragrance || hasBrowseMakeup) {
-      const browseContext = hasBrowseFragrance ? 'fragrances' : hasBrowseMakeup ? 'makeup' : 'serums';
-      const setting = hasBrowseFragrance ? 'bedroom' : hasBrowseMakeup ? 'vanity' : 'lifestyle';
-      return {
-        sessionId: 'mock-session',
-        message: `Welcome back, ${customerCtx.name}! Shall I pick up where you left off with ${browseContext}?`,
+        message: `Welcome back, ${customerCtx.name}! Your next delivery is on the way. Anything I can help you with today?`,
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: `Welcome back, ${customerCtx.name}!`,
-            welcomeSubtext: `Pick up where you left off?`,
+            welcomeSubtext: `Your water is on the way — anything else I can help with?`,
             sceneContext: {
-              setting,
-              mood: 'personalized-return',
+              setting: 'home-kitchen',
               generateBackground: true,
-              backgroundPrompt: hasBrowseFragrance
-                ? 'Elegant intimate bedroom setting, soft evening light, luxury fragrance display atmosphere'
-                : hasBrowseMakeup
-                  ? 'Luxurious makeup vanity setting, soft glamorous lighting, high-end beauty atmosphere'
-                  : 'Sophisticated lifestyle beauty setting, warm natural light, luxury skincare atmosphere',
+              backgroundPrompt: 'Clean bright kitchen with Primo dispenser, morning light through window, fresh fruit on the counter, calm and inviting',
             },
           },
         },
-        suggestedActions: [
-          browseContext === 'fragrances' ? 'Show me fragrances' : browseContext === 'makeup' ? 'Show me makeup' : 'Show me serums',
-          'Recommend something new',
-          'Restock my favorites',
-        ],
-        confidence: 0.96,
+        suggestedActions: ['Track my delivery', 'Show me new sparkling flavors', 'Manage my subscription'],
+        confidence: 0.95,
       };
     }
 
-    // Known customer, generic welcome
+    // Known customer, no specific context match
     const loyaltySubtext = loyaltyInfo
-      ? `Great to see you — what can I help you find today?`
-      : "What can I help you find today?";
+      ? `Great to see you — ${loyaltyInfo}. What can I help with today?`
+      : "What can I help you with today?";
     return {
       sessionId: 'mock-session',
-      message: `Welcome back, ${customerCtx.name}! What can I help you find today?`,
+      message: `Welcome back, ${customerCtx.name}! How can I help you stay hydrated today?`,
       uiDirective: {
         action: 'WELCOME_SCENE' as UIAction,
         payload: {
           welcomeMessage: `Welcome back, ${customerCtx.name}!`,
           welcomeSubtext: loyaltySubtext,
           sceneContext: {
-            setting: 'lifestyle',
-            mood: 'personalized-welcome',
+            setting: 'home-kitchen',
             generateBackground: true,
-            backgroundPrompt: 'Elegant luxury beauty lifestyle setting, warm welcoming atmosphere, soft golden light',
+            backgroundPrompt: 'Welcoming modern kitchen with natural light, water dispenser gleaming, clean minimalist surfaces, bright and fresh',
           },
         },
       },
-      suggestedActions: ['Show me what\'s new', 'Restock my favorites', 'Build me a routine'],
+      suggestedActions: ["What's new?", 'Build my hydration plan', 'Manage my delivery'],
       confidence: 0.95,
     };
   }
 
   if (tier === 'appended') {
-    // Appended tier: Merkury resolved identity and appended demographic/interest data,
-    // but this person never gave us their info directly. We must NOT:
-    //   - Greet by name (they didn't tell us their name)
-    //   - Reference specific interests directly ("I see you like wellness")
-    //   - Reveal we know anything about them
-    // We CAN subtly use appended signals to:
-    //   - Curate which products we lead with
-    //   - Choose an appropriate scene/mood
-    //   - Tailor suggested actions toward likely interests
+    // Appended: Merkury recognized, no CRM record. Don't reveal we know their interests.
     const interests = customerCtx.appendedInterests || [];
-    const isWellness = interests.some((i) => i.includes('wellness') || i.includes('yoga'));
-    const isClean = interests.some((i) => i.includes('clean'));
-    const isAntiAging = interests.some((i) => i.includes('anti-aging') || i.includes('spa'));
-    const isLuxury = interests.some((i) => i.includes('luxury'));
+    const isFitness = interests.some((i) => i.includes('fitness') || i.includes('running') || i.includes('triathlon'));
+    const isWellness = interests.some((i) => i.includes('wellness') || i.includes('yoga') || i.includes('organic'));
+    const isFamily = interests.some((i) => i.includes('family') || i.includes('kids'));
 
-    // Priya-like: anti-aging + luxury + spa — lead with premium, don't say why
-    if (isAntiAging && isLuxury) {
+    if (isFitness) {
       return {
         sessionId: 'mock-session',
-        message: "Welcome! We have some incredible new arrivals this season. I'd love to help you find something perfect.",
+        message: "Welcome! Staying properly hydrated can transform your performance. Want me to help you find the right setup?",
         uiDirective: {
           action: 'WELCOME_SCENE' as UIAction,
           payload: {
             welcomeMessage: 'Welcome!',
-            welcomeSubtext: "Discover our latest collection — from targeted treatments to everyday essentials.",
-            sceneContext: {
-              setting: 'neutral',
-              generateBackground: false,
-            },
+            welcomeSubtext: "Let's find the hydration plan that fits your lifestyle.",
+            sceneContext: { setting: 'fitness', generateBackground: false },
           },
         },
-        // Subtly surface anti-aging and premium options without saying "we know you want this"
-        suggestedActions: ['Show me your bestsellers', "What's trending in skincare?", 'Help me build a routine'],
+        suggestedActions: ['Show me sparkling water', 'Help me build a hydration plan', 'Show me water bottles'],
         confidence: 0.9,
       };
     }
 
-    // Aisha-like: clean beauty + wellness — set a calming tone, don't reference interests
     return {
       sessionId: 'mock-session',
-      message: "Welcome! I'm here to help you discover something you'll love. What are you looking for today?",
+      message: "Welcome! I'm your Hydration Intelligence Concierge — here to help you discover the best water for your life.",
       uiDirective: {
         action: 'WELCOME_SCENE' as UIAction,
         payload: {
           welcomeMessage: 'Welcome!',
-          welcomeSubtext: "Your personal beauty advisor — let's find your perfect match.",
-          sceneContext: {
-            setting: 'neutral',
-            generateBackground: false,
-          },
+          welcomeSubtext: "Your personal hydration advisor — let's get you started.",
+          sceneContext: { setting: 'wellness', generateBackground: false },
         },
       },
-      // Subtly steer toward likely interests without being explicit
       suggestedActions: [
-        isClean ? 'Show me clean beauty brands' : 'Show me skincare',
-        isWellness ? 'Help me build a routine' : 'What do you recommend?',
+        isWellness ? 'Show me clean hydration options' : 'Show me what you offer',
+        isFamily ? 'Solutions for the whole family' : 'Help me build a hydration plan',
         'Show me bestsellers',
       ],
       confidence: 0.9,
@@ -308,20 +245,19 @@ function generateWelcomeResponse(): AgentResponse | null {
   // Anonymous
   return {
     sessionId: 'mock-session',
-    message: "Welcome to your personal beauty advisor! What can I help you discover today?",
+    message: "Welcome to Primo Brands! I'm your Hydration Intelligence Concierge — here to help you find the perfect water solution.",
     uiDirective: {
       action: 'WELCOME_SCENE' as UIAction,
       payload: {
-        welcomeMessage: 'Welcome!',
-        welcomeSubtext: 'Your personal beauty advisor is ready to help you discover something perfect.',
+        welcomeMessage: 'Welcome to Primo!',
+        welcomeSubtext: 'Pure water, delivered your way. Let me help you get started.',
         sceneContext: {
-          setting: 'neutral',
-          mood: 'elegant-welcome',
+          setting: 'home-kitchen',
           generateBackground: false,
         },
       },
     },
-    suggestedActions: ['Show me moisturizers', 'I need travel products', 'What do you recommend?'],
+    suggestedActions: ['Show me home delivery', 'Show me sparkling water', 'Help me choose a dispenser'],
     confidence: 0.85,
   };
 }
@@ -333,70 +269,89 @@ const RESPONSE_PATTERNS: {
   response: () => Partial<AgentResponse>;
 }[] = [
   {
-    pattern: /cleanser|wash|face wash|cleanse/i,
+    pattern: /dispenser|water machine|water cooler/i,
     response: () => {
-      const product = findProduct('cleanser-gentle')!;
-      state.currentProductId = product.id;
-      state.shownCategories.push('cleanser');
+      const products = MOCK_PRODUCTS.filter((p) => p.category === 'dispenser');
+      state.lastShownProductIds = products.map((p) => p.id);
+      state.shownCategories.push('dispenser');
       return {
-        message: `I'd recommend our ${product.name}. It's a creamy, sulfate-free formula that removes impurities without stripping your skin. Great for daily use!`,
-        uiDirective: {
-          action: 'SHOW_PRODUCT' as UIAction,
-          payload: {
-            products: [product],
-            sceneContext: { setting: 'bathroom' as const, generateBackground: false },
-          },
-        },
-        suggestedActions: ['Add to bag', 'Show me something for acne', 'What else do you have?'],
-      };
-    },
-  },
-  {
-    pattern: /moisturizer|hydrat|dry skin|sensitive/i,
-    response: () => {
-      const product = findProduct('moisturizer-sensitive')!;
-      state.currentProductId = product.id;
-      state.shownCategories.push('moisturizer');
-      return {
-        message: "I'd recommend our Hydra-Calm Sensitive Moisturizer. It's specifically formulated for sensitive skin with soothing centella and hyaluronic acid.",
-        uiDirective: {
-          action: 'SHOW_PRODUCT' as UIAction,
-          payload: {
-            products: [product],
-            sceneContext: { setting: 'bathroom' as const, generateBackground: false },
-          },
-        },
-        suggestedActions: ['Add to bag', 'Tell me about the ingredients', 'Show me serums instead'],
-      };
-    },
-  },
-  {
-    pattern: /serum|vitamin c|brightening|bright/i,
-    response: () => {
-      const serums = MOCK_PRODUCTS.filter((p) => p.category === 'serum');
-      state.lastShownProductIds = serums.map((p) => p.id);
-      state.shownCategories.push('serum');
-      return {
-        message: "We have some incredible serums! Our Vitamin C is perfect for brightening, the Retinol works overnight for fine lines, the Peptide Lift is our most advanced anti-aging, and the Niacinamide is great for pores and oil control.",
+        message: "Here are our dispensers! The Bottom-Loading is our most popular — no heavy lifting required. The Top-Loading is a classic budget option. The Countertop is perfect for apartments and small offices.",
         uiDirective: {
           action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
-            products: serums,
-            sceneContext: { setting: 'lifestyle' as const, generateBackground: false },
+            products,
+            sceneContext: { setting: 'home-kitchen' as const, generateBackground: false },
           },
         },
-        suggestedActions: ['Tell me about Vitamin C', 'I want the retinol', 'What about peptides?'],
+        suggestedActions: ['Tell me about the bottom-loading', 'Which is best for an office?', 'How does delivery work?'],
       };
     },
   },
   {
-    pattern: /sunscreen|spf|sun protect|uv/i,
+    pattern: /delivery|5.?gallon|jug|5 gallon|water delivery|schedule/i,
     response: () => {
-      const products = MOCK_PRODUCTS.filter((p) => p.category === 'sunscreen');
+      const products = MOCK_PRODUCTS.filter((p) => p.category === 'delivery');
       state.lastShownProductIds = products.map((p) => p.id);
-      state.shownCategories.push('sunscreen');
+      state.shownCategories.push('delivery');
       return {
-        message: "Sun protection is essential! Our Invisible Shield SPF 50 is ultra-lightweight with zero white cast — perfect for daily wear. For sensitive or acne-prone skin, try our Barrier Shield Mineral SPF 40.",
+        message: "Our 5-gallon delivery is the most cost-effective way to get pure water at home. Choose weekly or bi-weekly — most families order 2–4 jugs per delivery at $12.99 each. Easy to pause or modify anytime.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: { setting: 'home-kitchen' as const, generateBackground: false },
+          },
+        },
+        suggestedActions: ['Weekly delivery', 'Bi-weekly delivery', 'How many jugs do I need?'],
+      };
+    },
+  },
+  {
+    pattern: /sparkling|bubbly|carbonat/i,
+    response: () => {
+      const products = MOCK_PRODUCTS.filter((p) => p.category === 'sparkling');
+      state.lastShownProductIds = products.map((p) => p.id);
+      state.shownCategories.push('sparkling');
+      return {
+        message: "Our sparkling line is zero sugar, zero calories, perfectly carbonated. Original is crisp and clean. Lemon is our #1 seller — bright and citrusy. Mixed Berry is fruity, Lime is sharp and refreshing.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: { setting: 'fitness' as const, generateBackground: false },
+          },
+        },
+        suggestedActions: ['I love citrus', 'Show me the berry', 'Mix a variety pack'],
+      };
+    },
+  },
+  {
+    pattern: /flavored|infused|cucumber|watermelon|peach/i,
+    response: () => {
+      const products = MOCK_PRODUCTS.filter((p) => p.category === 'flavored');
+      state.lastShownProductIds = products.map((p) => p.id);
+      state.shownCategories.push('flavored');
+      return {
+        message: "Our flavored still water is perfect for those who want a hint of taste without carbonation. Cucumber Mint is our spa-inspired bestseller. Watermelon is popular with families and kids. Peach Ginger has a lovely wellness warmth.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: { setting: 'wellness' as const, generateBackground: false },
+          },
+        },
+        suggestedActions: ['I like the cucumber mint', 'Perfect for my kids', 'Show me sparkling instead'],
+      };
+    },
+  },
+  {
+    pattern: /bottle|still water|pure life|spring water|single.?serve/i,
+    response: () => {
+      const products = MOCK_PRODUCTS.filter((p) => p.category === 'still');
+      state.lastShownProductIds = products.map((p) => p.id);
+      state.shownCategories.push('still');
+      return {
+        message: "Pure Life is our trusted single-serve still water line. Sourced from carefully selected springs with a blend of minerals for great taste. We have standard 16.9oz (24-pack), sport cap bottles for workouts, and 1-gallon jugs.",
         uiDirective: {
           action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
@@ -404,245 +359,190 @@ const RESPONSE_PATTERNS: {
             sceneContext: { setting: 'outdoor' as const, generateBackground: false },
           },
         },
-        suggestedActions: ['Add to bag', 'Show me travel products', 'What about moisturizers?'],
+        suggestedActions: ['The 24-pack', 'Sport cap for workouts', 'Gallon jugs for home'],
       };
     },
   },
   {
-    pattern: /acne|breakout|pimple|blemish/i,
+    pattern: /reusable bottle|water bottle|stainless|insulated|carry/i,
     response: () => {
-      const products = [findProduct('cleanser-acne')!, findProduct('serum-niacinamide')!, findProduct('spot-treatment')!];
+      const products = MOCK_PRODUCTS.filter((p) => p.category === 'bottle');
       state.lastShownProductIds = products.map((p) => p.id);
-      state.shownCategories.push('cleanser');
+      state.shownCategories.push('bottle');
       return {
-        message: "For acne-prone skin, here's a targeted trio: our Salicylic Cleanser to unclog pores, the Niacinamide Serum to calm and refine, and SOS Blemish Patches for overnight spot treatment.",
+        message: "Our stainless steel bottles keep water cold for 24 hours — perfect for filling from your Primo dispenser. The 32oz is ideal for athletes. The 24oz slim version fits in cup holders for commuters. The Kids bottle is spill-proof and drop-resistant.",
         uiDirective: {
           action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
             products,
-            sceneContext: { setting: 'bathroom' as const, generateBackground: false },
+            sceneContext: { setting: 'fitness' as const, generateBackground: false },
           },
         },
-        suggestedActions: ['Get all three', 'Just the cleanser', 'What moisturizer for oily skin?'],
+        suggestedActions: ['The 32oz for workouts', 'Slim 24oz for commuting', 'Kids bottle'],
       };
     },
   },
   {
-    pattern: /retinol|anti.?aging|wrinkle|fine line|firm|lift/i,
+    pattern: /filter|pitcher|filtration|contaminant|tap water/i,
     response: () => {
-      const products = [findProduct('serum-retinol')!, findProduct('serum-anti-aging')!, findProduct('eye-cream')!];
+      const products = MOCK_PRODUCTS.filter((p) => p.category === 'filter');
       state.lastShownProductIds = products.map((p) => p.id);
-      state.shownCategories.push('serum');
+      state.shownCategories.push('filter');
       return {
-        message: "For anti-aging, I'd recommend our Midnight Renewal Retinol for overnight cell turnover, the Peptide Lift Pro for daytime firming, and our Bright Eyes Caffeine Cream for the delicate eye area.",
+        message: "Our filter pitcher removes 30+ contaminants including chlorine, lead, and mercury. Great if your tap water has an off taste or if you want budget-friendly filtered water at home. Filter replacements last ~2 months.",
         uiDirective: {
           action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
             products,
-            sceneContext: { setting: 'lifestyle' as const, generateBackground: false },
+            sceneContext: { setting: 'home-kitchen' as const, generateBackground: false },
           },
         },
-        suggestedActions: ['Get all three', 'Tell me more about retinol', 'Just the peptide serum'],
+        suggestedActions: ['Get the filter pitcher', 'How often do I change the filter?', 'Test my tap water first'],
       };
     },
   },
   {
-    pattern: /routine|regimen|skincare routine|full routine/i,
+    pattern: /test.*(water|tap)|quality|contaminant|what.?s in.*water/i,
     response: () => {
-      const routine = [
-        findProduct('cleanser-gentle')!,
-        findProduct('toner-aha')!,
-        findProduct('serum-vitamin-c')!,
-        findProduct('moisturizer-sensitive')!,
-        findProduct('sunscreen-lightweight')!,
-      ];
-      state.lastShownProductIds = routine.map((p) => p.id);
-      return {
-        message: "Here's a complete morning routine: Cleanse with Cloud Cream, tone with our AHA Glow Tonic, treat with Vitamin C Serum, moisturize with Hydra-Calm, and protect with SPF 50. Five steps to radiant skin!",
-        uiDirective: {
-          action: 'SHOW_PRODUCTS' as UIAction,
-          payload: {
-            products: routine,
-            sceneContext: { setting: 'bathroom' as const, generateBackground: false },
-          },
-        },
-        suggestedActions: ['Get the full routine', 'Customize for my skin type', 'What about nighttime?'],
-      };
-    },
-  },
-  {
-    pattern: /evening|night routine|candlelight|warm light|wind down/i,
-    response: () => {
-      const products = [findProduct('cleanser-gentle')!, findProduct('serum-retinol')!, findProduct('mask-hydrating')!];
-      state.lastShownProductIds = products.map((p) => p.id);
-      return {
-        message: "Here's a calming evening routine: gentle cleanse, retinol serum for overnight renewal, and our hydrating sleep mask. I've set the mood with warm candlelight.",
-        uiDirective: {
-          action: 'SHOW_PRODUCTS' as UIAction,
-          payload: {
-            products,
-            sceneContext: {
-              setting: 'bathroom' as const,
-              generateBackground: true,
-              editMode: true,
-              cmsTag: 'scene-bathroom-evening',
-              backgroundPrompt: 'Add warm golden candlelight glow, evening atmosphere, dimmed soft lighting',
-            },
-          },
-        },
-        suggestedActions: ['Get the night routine', 'Tell me about retinol', 'What about an eye cream?'],
-      };
-    },
-  },
-  {
-    pattern: /mask|hydrating mask|sleeping mask|overnight/i,
-    response: () => {
-      const product = findProduct('mask-hydrating')!;
+      const product = findProduct('water-quality-test-kit');
+      if (!product) return { message: "Our Water Quality Test Kit can test 12 parameters in minutes." };
       state.currentProductId = product.id;
       return {
-        message: `Our ${product.name} is perfect for an overnight moisture boost. Apply as the last step of your evening routine — wake up to plump, dewy skin.`,
+        message: "Not sure what's in your tap water? Our Home Water Quality Test Kit tests for 12 parameters — chlorine, lead, hardness, pH, bacteria, and more. Results in minutes, easy color-chart reading.",
         uiDirective: {
-          action: 'SHOW_PRODUCT' as UIAction,
+          action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
             products: [product],
-            sceneContext: { setting: 'bedroom' as const, generateBackground: false },
+            sceneContext: { setting: 'home-kitchen' as const, generateBackground: false },
           },
         },
-        suggestedActions: ['Add to bag', 'Show me a night routine', 'What else for dry skin?'],
+        suggestedActions: ['Add test kit', 'Show me filter pitchers', 'Tell me about delivery instead'],
       };
     },
   },
   {
-    pattern: /toner|exfoli|pore|texture/i,
+    pattern: /hydration plan|daily goal|how much water|intake|oz|ounces|how much should I drink/i,
     response: () => {
-      const product = findProduct('toner-aha')!;
-      state.currentProductId = product.id;
-      return {
-        message: `Our ${product.name} is a gentle 5% glycolic acid toner that smooths texture, minimizes pores, and preps skin for your serum.`,
-        uiDirective: {
-          action: 'SHOW_PRODUCT' as UIAction,
-          payload: {
-            products: [product],
-            sceneContext: { setting: 'bathroom' as const, generateBackground: false },
-          },
-        },
-        suggestedActions: ['Add to bag', 'Show me a full routine', 'What serum pairs well?'],
-      };
-    },
-  },
-  {
-    pattern: /makeup|foundation|base|coverage|concealer/i,
-    response: () => {
-      const products = [findProduct('foundation-dewy')!, findProduct('blush-silk')!, findProduct('mascara-volume')!];
+      const primaryUse = customerCtx?.primaryUse;
+      let planText = "";
+      let products: typeof MOCK_PRODUCTS = [];
+      if (primaryUse === 'fitness') {
+        planText = "For athletes training hard, I recommend 100–128oz per day. On rest days, 80–90oz is plenty. Sparkling water post-workout is great for recovery — the carbonation helps settle the stomach.";
+        products = MOCK_PRODUCTS.filter((p) => ['sparkling', 'bottle'].includes(p.category)).slice(0, 3);
+      } else if (primaryUse === 'office') {
+        planText = "For office workers, the recommended baseline is 64oz/day — but most people fall short because they forget. Having a Primo dispenser nearby boosts intake by ~30%. A 32oz bottle at your desk is a great visual reminder.";
+        products = MOCK_PRODUCTS.filter((p) => ['dispenser', 'bottle'].includes(p.category)).slice(0, 2);
+      } else {
+        planText = "The general guideline is 64–80oz per day for most adults. Hot climates add 20–30%. Active people need more. For a family of 4, you're looking at 5+ gallons per week — our weekly delivery is perfect for that.";
+        products = MOCK_PRODUCTS.filter((p) => ['delivery', 'sparkling'].includes(p.category)).slice(0, 2);
+      }
       state.lastShownProductIds = products.map((p) => p.id);
       return {
-        message: "Let me set up our makeup station! Here are our bestsellers: the Skin Glow Serum Foundation for luminous coverage, Silk Petal Blush for a natural flush, and Lash Drama Mascara for buildable volume.",
+        message: planText,
         uiDirective: {
           action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
             products,
-            sceneContext: { setting: 'vanity' as const, generateBackground: false },
+            sceneContext: { setting: 'wellness' as const, generateBackground: false },
           },
         },
-        suggestedActions: ['Tell me about the foundation', 'Show me lipsticks', 'I want a full look'],
+        suggestedActions: ['Build my full hydration plan', 'Show me delivery options', 'What about sparkling?'],
       };
     },
   },
   {
-    pattern: /lipstick|lip color|lip/i,
+    pattern: /office|work|team|employees|workplace|corporate/i,
     response: () => {
-      const product = findProduct('lipstick-velvet')!;
-      state.currentProductId = product.id;
-      return {
-        message: `Our ${product.name} is a hydrating matte formula that feels weightless and never dries out.`,
-        uiDirective: {
-          action: 'SHOW_PRODUCT' as UIAction,
-          payload: {
-            products: [product],
-            sceneContext: { setting: 'vanity' as const, generateBackground: false },
-          },
-        },
-        suggestedActions: ['Add to bag', 'Show me more makeup', 'What about blush?'],
-      };
-    },
-  },
-  {
-    pattern: /blush|cheek/i,
-    response: () => {
-      const product = findProduct('blush-silk')!;
-      state.currentProductId = product.id;
-      return {
-        message: `The ${product.name} melts into skin for a natural, lit-from-within flush.`,
-        uiDirective: {
-          action: 'SHOW_PRODUCT' as UIAction,
-          payload: {
-            products: [product],
-            sceneContext: { setting: 'vanity' as const, generateBackground: false },
-          },
-        },
-        suggestedActions: ['Add to bag', 'Show me foundation', 'Build me a full makeup look'],
-      };
-    },
-  },
-  {
-    pattern: /mascara|lash|eyelash/i,
-    response: () => {
-      const product = findProduct('mascara-volume')!;
-      state.currentProductId = product.id;
-      return {
-        message: `The ${product.name} has an hourglass-shaped brush that coats every lash root to tip. No clumping!`,
-        uiDirective: {
-          action: 'SHOW_PRODUCT' as UIAction,
-          payload: {
-            products: [product],
-            sceneContext: { setting: 'vanity' as const, generateBackground: false },
-          },
-        },
-        suggestedActions: ['Add to bag', 'Show me a full makeup look', 'What about lipstick?'],
-      };
-    },
-  },
-  {
-    pattern: /fragrance|perfume|cologne|scent|smell|eau de/i,
-    response: () => {
-      const products = [findProduct('fragrance-floral')!, findProduct('fragrance-woody')!];
+      const products = [
+        findProduct('primo-dispenser-bottom')!,
+        findProduct('primo-5gal-delivery-weekly')!,
+      ].filter(Boolean);
       state.lastShownProductIds = products.map((p) => p.id);
       return {
-        message: "Step into our fragrance collection. Jardin de Nuit is a sophisticated floral — perfect for evening. Bois Sauvage is a fresh woody scent — great for everyday.",
+        message: "For offices, our most popular setup is the Bottom-Loading Dispenser with weekly 5-gallon delivery. Most offices of 20–30 people need 3–5 jugs per week. You'll typically save 40–60% vs. a traditional bottled water service.",
         uiDirective: {
           action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
             products,
-            sceneContext: { setting: 'bedroom' as const, generateBackground: false },
+            sceneContext: { setting: 'office' as const, generateBackground: false },
           },
         },
-        suggestedActions: ['Tell me about Jardin de Nuit', 'I prefer woody scents', 'Show me skincare instead'],
+        suggestedActions: ['How many jugs do I need?', 'Tell me about the dispenser', 'Compare to bottled service'],
       };
     },
   },
   {
-    pattern: /hair|shampoo|conditioner|damaged hair|color.?treated/i,
+    pattern: /family|kids|children|household|home setup/i,
     response: () => {
-      const products = [findProduct('shampoo-repair')!, findProduct('conditioner-hydrating')!];
+      const products = [
+        findProduct('primo-dispenser-bottom')!,
+        findProduct('primo-5gal-delivery-weekly')!,
+        findProduct('bottle-kids-16oz')!,
+        findProduct('flavored-watermelon')!,
+      ].filter(Boolean);
       state.lastShownProductIds = products.map((p) => p.id);
       return {
-        message: "For your hair, I'd recommend our Bond Repair duo: the shampoo strengthens damaged bonds, and the Silk Hydration Conditioner adds shine and detangles.",
+        message: "For families, our most popular setup is a bottom-loading dispenser with weekly delivery — kids love having water easily accessible. Our Kids Bottle is spill-proof and drop-resistant. Watermelon flavored water is a huge hit with kids who don't love plain water.",
         uiDirective: {
           action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
             products,
-            sceneContext: { setting: 'bathroom' as const, generateBackground: false },
+            sceneContext: { setting: 'home-kitchen' as const, generateBackground: false },
           },
         },
-        suggestedActions: ['Get both', 'Just the shampoo', 'Show me skincare instead'],
+        suggestedActions: ['Set up weekly delivery', 'Show me kids bottles', 'How much for a family of 5?'],
       };
     },
   },
   {
-    pattern: /restock|running low|refill|favorite|my product/i,
+    pattern: /membership|primo perks|loyalty|points|tier|reward/i,
+    response: () => {
+      const products = MOCK_PRODUCTS.filter((p) => p.category === 'subscription');
+      state.lastShownProductIds = products.map((p) => p.id);
+      const loyaltyInfo = customerCtx?.loyaltyTier
+        ? `You're currently a ${customerCtx.loyaltyTier} member with ${(customerCtx.loyaltyPoints || 0).toLocaleString()} points.`
+        : null;
+      return {
+        message: loyaltyInfo
+          ? `${loyaltyInfo} Primo Perks has 4 tiers: Hydrated (entry), Active (1,000 pts — 5% off accessories), Elite (2,500 pts — 10% off + free sanitizer kit), and Champion (5,000 pts — dedicated concierge + wellness events).`
+          : "Primo Perks is our membership program. Active members ($9.99/mo) get 5% off accessories and priority delivery. Elite ($19.99/mo) gets 10% off everything, free annual sanitizer kit, and wellness content. Champion tier is earned by spending.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: { setting: 'neutral' as const, generateBackground: false },
+          },
+        },
+        suggestedActions: ['Join Active membership', 'Upgrade to Elite', 'How do I earn points?'],
+      };
+    },
+  },
+  {
+    pattern: /sustainability|eco|plastic|recycle|environment|zero.?waste|green/i,
+    response: () => {
+      const products = [
+        findProduct('primo-5gal-delivery-biweekly')!,
+        findProduct('filter-pitcher-10cup')!,
+        findProduct('bottle-stainless-32oz')!,
+      ].filter(Boolean);
+      state.lastShownProductIds = products.map((p) => p.id);
+      return {
+        message: "Great choice for the planet! Our 5-gallon delivery uses refillable, returnable jugs — significantly reducing plastic waste vs. single-use bottles. Filter pitchers eliminate hundreds of bottles per year. Our stainless steel bottles replace thousands of single-use plastic bottles over their lifetime.",
+        uiDirective: {
+          action: 'SHOW_PRODUCTS' as UIAction,
+          payload: {
+            products,
+            sceneContext: { setting: 'outdoor' as const, generateBackground: false },
+          },
+        },
+        suggestedActions: ['Start refillable delivery', 'Get a filter pitcher', 'Show me reusable bottles'],
+      };
+    },
+  },
+  {
+    pattern: /restock|running low|refill|reorder|my order|previous|favorite/i,
     response: () => {
       if (customerCtx?.recentPurchases?.length) {
-        // Deduplicate product IDs
         const uniqueIds = [...new Set(customerCtx.recentPurchases)];
         const products = uniqueIds
           .map((id) => findProduct(id))
@@ -650,21 +550,21 @@ const RESPONSE_PATTERNS: {
         if (products.length) {
           state.lastShownProductIds = products.map((p) => p.id);
           return {
-            message: `Here are your recent purchases, ${customerCtx.name}. Shall I add any to your bag for a quick restock?`,
+            message: `Here are your recent orders, ${customerCtx.name || 'there'}. Ready to reorder?`,
             uiDirective: {
               action: 'SHOW_PRODUCTS' as UIAction,
               payload: {
                 products,
-                sceneContext: { setting: 'bathroom' as const, generateBackground: false },
+                sceneContext: { setting: 'home-kitchen' as const, generateBackground: false },
               },
             },
-            suggestedActions: ['Reorder all', 'Just the SPF', 'Show me something new instead'],
+            suggestedActions: ['Reorder all', 'Add more sparkling', 'Adjust my delivery schedule'],
           };
         }
       }
       return {
-        message: "I'd love to help you restock! What products are you running low on?",
-        suggestedActions: ['Moisturizer', 'Cleanser', 'SPF', 'Show me everything'],
+        message: "I'd be happy to help you reorder! What are you running low on?",
+        suggestedActions: ['Sparkling water', '5-gallon delivery', 'Filter replacements', 'Show me everything'],
       };
     },
   },
@@ -672,27 +572,27 @@ const RESPONSE_PATTERNS: {
     pattern: /recommend|what should|suggest|what do you|for me|bestseller|new|what.?s new/i,
     response: () => {
       const picks = [
-        findProduct('moisturizer-sensitive')!,
-        findProduct('serum-vitamin-c')!,
-        findProduct('foundation-dewy')!,
-        findProduct('fragrance-floral')!,
-      ];
+        findProduct('primo-dispenser-bottom')!,
+        findProduct('sparkling-lemon')!,
+        findProduct('flavored-cucumber-mint')!,
+        findProduct('bottle-stainless-32oz')!,
+      ].filter(Boolean);
       state.lastShownProductIds = picks.map((p) => p.id);
       return {
-        message: "Here are my top picks across categories: Hydra-Calm Moisturizer, our bestselling Vitamin C Serum, the luminous Skin Glow Foundation, and our signature Jardin de Nuit fragrance.",
+        message: "Here are my top picks: our most popular bottom-loading dispenser, the bestselling Sparkling Lemon (our #1 flavor), Cucumber Mint flavored water for a spa-quality experience, and our 24-hour insulated stainless bottle.",
         uiDirective: {
           action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
             products: picks,
-            sceneContext: { setting: 'lifestyle' as const, generateBackground: false },
+            sceneContext: { setting: 'home-kitchen' as const, generateBackground: false },
           },
         },
-        suggestedActions: ['Show me skincare', 'Show me makeup', 'Show me fragrances'],
+        suggestedActions: ['Show me dispensers', 'Show me sparkling', 'Help me build a plan'],
       };
     },
   },
   {
-    pattern: /buy|purchase|add to (bag|cart)|get (it|this|both|all|the|them)/i,
+    pattern: /buy|purchase|add to (bag|cart)|get (it|this|both|all|the|them)|checkout/i,
     response: () => ({
       message: "Perfect choice! I'll set that up for you.",
       uiDirective: {
@@ -705,45 +605,32 @@ const RESPONSE_PATTERNS: {
     }),
   },
   {
-    pattern: /travel|trip|going to|vacation|india|hot (weather|climate)/i,
+    pattern: /marathon|training|athlete|triathlon|running|cycling|workout|sport/i,
     response: () => {
-      const products = MOCK_PRODUCTS.filter((p) => p.attributes.isTravel);
+      const products = [
+        findProduct('sparkling-lemon')!,
+        findProduct('sparkling-original')!,
+        findProduct('bottle-stainless-32oz')!,
+        findProduct('pure-life-sport-700ml')!,
+      ].filter(Boolean);
       state.lastShownProductIds = products.map((p) => p.id);
       return {
-        message: "Here are our travel essentials — all compact and carry-on friendly.",
+        message: "For athletes, I love Primo Sparkling as a post-workout reward — the carbonation helps settle your stomach. Our 32oz stainless bottle stays cold all day. Pure Life Sport has a squeeze-friendly cap perfect for mid-run.",
         uiDirective: {
           action: 'SHOW_PRODUCTS' as UIAction,
           payload: {
             products,
-            sceneContext: { setting: 'travel' as const, generateBackground: false },
+            sceneContext: { setting: 'fitness' as const, generateBackground: true, backgroundPrompt: 'Trail running at golden hour through pine forest, athlete with water bottle, energizing morning light and fresh mountain air' },
           },
         },
-        suggestedActions: ['Get the travel kit', 'Just the sunscreen', 'What about a cleanser?'],
-      };
-    },
-  },
-  {
-    pattern: /ingredient|what.?s in|contain|formul/i,
-    response: () => {
-      if (state.currentProductId) {
-        const product = findProduct(state.currentProductId);
-        if (product && product.attributes?.ingredients) {
-          return {
-            message: `The ${product.name} contains: ${product.attributes.ingredients.join(', ')}.`,
-            suggestedActions: ['Add to bag', 'Show me something else', 'Any alternatives?'],
-          };
-        }
-      }
-      return {
-        message: "I'd be happy to tell you about ingredients! Which product are you curious about?",
-        suggestedActions: ['Moisturizer ingredients', 'Serum ingredients', 'Cleanser ingredients'],
+        suggestedActions: ['Build my training hydration plan', 'Show me more sparkling', 'The 32oz bottle'],
       };
     },
   },
   {
     pattern: /thank|thanks|bye|goodbye/i,
     response: () => ({
-      message: "You're welcome! It was lovely helping you today. Enjoy your new products!",
+      message: "You're welcome! Stay hydrated — it makes a real difference. Enjoy your Primo water!",
       uiDirective: {
         action: 'RESET_SCENE' as UIAction,
         payload: {},
@@ -757,8 +644,8 @@ const RESPONSE_PATTERNS: {
       const welcome = generateWelcomeResponse();
       if (welcome) return welcome;
       return {
-        message: "Hello! Welcome to your personal beauty advisor. What are you looking for today?",
-        suggestedActions: ['Show me moisturizers', 'Show me makeup', 'Show me fragrances', 'Build me a routine'],
+        message: "Hello! Welcome to Primo Brands. What can I help you with today?",
+        suggestedActions: ['Show me home delivery', 'Show me sparkling water', 'Help me choose a dispenser', 'Build my hydration plan'],
       };
     },
   },
@@ -794,8 +681,8 @@ export const generateMockResponse = async (message: string): Promise<AgentRespon
 
   return {
     sessionId: 'mock-session',
-    message: "I'd be happy to help! I can recommend skincare, makeup, fragrances, or hair care. What interests you?",
-    suggestedActions: ['Show me skincare', 'Show me makeup', 'Show me fragrances', 'Build me a routine'],
+    message: "I can help you with home delivery, dispensers, sparkling water, hydration plans, and your Primo Perks membership. What would you like to explore?",
+    suggestedActions: ['Show me home delivery', 'Show me sparkling water', 'Build my hydration plan', 'Tell me about Primo Perks'],
     confidence: 0.8,
   };
 };

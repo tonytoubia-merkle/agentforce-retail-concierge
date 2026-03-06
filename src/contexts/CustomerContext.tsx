@@ -115,7 +115,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           id: resolution.merkuryId || `appended-${personaId}`,
           name: 'Guest',
           email: '',
-          beautyProfile: {} as CustomerProfile['beautyProfile'],
+          hydrationProfile: {} as CustomerProfile['hydrationProfile'],
           orders: [],
           purchaseHistory: [],
           chatSummaries: [],
@@ -236,7 +236,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
     const appended = customer.appendedProfile;
-    // Find matching Merkury archetype for beauty hints
+    // Find matching Merkury archetype for hydration hints
     const merkuryId = customer.merkuryIdentity?.merkuryId;
     const archetype = merkuryId ? getMerkuryArchetypeByMerkuryId(merkuryId) : undefined;
     setPersonalizationProfile({
@@ -246,9 +246,9 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       householdIncome: appended?.householdIncome,
       lifestyleSignals: appended?.lifestyleSignals,
       geoRegion: appended?.geoRegion,
-      skinType: archetype?.beautyHints?.skinType,
-      skinConcerns: archetype?.beautyHints?.concerns,
-      preferredBrands: archetype?.beautyHints?.preferredBrands,
+      primaryUse: archetype?.hydrationHints?.primaryUse,
+      waterPreferences: archetype?.hydrationHints?.waterPreferences,
+      preferredBrands: archetype?.hydrationHints?.preferredBrands,
       identityTier: customer.merkuryIdentity?.identityTier,
     });
   }, [customer?.id, customer?.appendedProfile]);
@@ -278,7 +278,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             id: `customer-${Date.now()}`,
             name,
             email,
-            beautyProfile: { skinType: 'normal', concerns: [], allergies: [], preferredBrands: [] },
+            hydrationProfile: { preferredBrands: [] },
             orders: [],
             chatSummaries: [],
             meaningfulEvents: [],
@@ -354,7 +354,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           orders: fresh.orders ?? prev.orders,
           browseSessions: fresh.browseSessions ?? prev.browseSessions,
           agentCapturedProfile: fresh.agentCapturedProfile ?? prev.agentCapturedProfile,
-          beautyProfile: fresh.beautyProfile ?? prev.beautyProfile,
+          hydrationProfile: fresh.hydrationProfile ?? prev.hydrationProfile,
           loyalty: fresh.loyalty ?? prev.loyalty,
         } : prev);
         // Clear flag after React processes the state update
@@ -400,11 +400,10 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           id: archetype.merkuryId,
           name: archetype.label,
           email: `${archetype.id}@example.com`,
-          beautyProfile: {
-            skinType: (archetype.beautyHints.skinType || 'normal').toLowerCase() as CustomerProfile['beautyProfile']['skinType'],
-            concerns: archetype.beautyHints.concerns || [],
-            allergies: [],
-            preferredBrands: archetype.beautyHints.preferredBrands || [],
+          hydrationProfile: {
+            primaryUse: archetype.hydrationHints?.primaryUse,
+            waterPreferences: archetype.hydrationHints?.waterPreferences,
+            preferredBrands: archetype.hydrationHints?.preferredBrands || [],
           },
           orders: [],
           purchaseHistory: [],
@@ -445,7 +444,7 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         id: `guest-${Date.now()}`,
         name,
         email: data.email,
-        beautyProfile: { skinType: 'normal', concerns: [], allergies: [], preferredBrands: [] },
+        hydrationProfile: { preferredBrands: [] },
         orders: [],
         purchaseHistory: [],
         chatSummaries: [],

@@ -8,8 +8,8 @@ export interface CommerceConfig {
 export interface ProductSearchParams {
   query?: string;
   category?: string;
-  skinType?: string;
-  concerns?: string[];
+  primaryUse?: string;
+  waterType?: string[];
   priceRange?: { min?: number; max?: number };
   limit?: number;
   offset?: number;

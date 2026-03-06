@@ -1,26 +1,26 @@
 [
   {
-    "Name": "Bronze",
-    "Description": "Entry level tier",
+    "Name": "Hydrated",
+    "Description": "Entry level — earn points on every order, access to member pricing",
     "MinPoints": 0,
-    "Program": "Beauty Rewards"
+    "Program": "Primo Perks"
   },
   {
-    "Name": "Silver",
-    "Description": "Mid-tier benefits",
+    "Name": "Active",
+    "Description": "5% off accessories, priority delivery windows, Hydration Concierge access",
     "MinPoints": 1000,
-    "Program": "Beauty Rewards"
+    "Program": "Primo Perks"
   },
   {
-    "Name": "Gold",
-    "Description": "Premium benefits",
+    "Name": "Elite",
+    "Description": "10% off everything, free annual sanitizer kit, exclusive wellness content",
     "MinPoints": 2500,
-    "Program": "Beauty Rewards"
+    "Program": "Primo Perks"
   },
   {
-    "Name": "Platinum",
-    "Description": "Exclusive benefits",
+    "Name": "Champion",
+    "Description": "Free delivery upgrades, dedicated Hydration Intelligence Concierge, wellness events",
     "MinPoints": 5000,
-    "Program": "Premium Beauty Club"
+    "Program": "Primo Perks"
   }
 ]

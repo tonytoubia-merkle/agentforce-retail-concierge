@@ -2,21 +2,23 @@ import type { CustomerProfile } from '@/types/customer';
 
 export const MOCK_CUSTOMER: CustomerProfile = {
   id: 'cust-12345',
-  name: 'Sarah',
-  email: 'sarah@example.com',
-  beautyProfile: {
-    skinType: 'sensitive',
-    concerns: ['hydration', 'redness'],
-    allergies: ['fragrance'],
-    preferredBrands: ['SERENE', 'Gentle Care'],
-    ageRange: '30-40',
+  name: 'Alex',
+  email: 'alex@example.com',
+  hydrationProfile: {
+    primaryUse: 'fitness',
+    waterPreferences: ['still', 'sparkling'],
+    preferredBrands: ['Primo Water', 'Pure Life'],
+    dailyIntakeGoalOz: 100,
+    deliveryFrequency: 'weekly',
+    householdSize: 2,
+    hasDispenser: true,
   },
   purchaseHistory: [
     {
-      productId: 'cleanser-gentle',
-      productName: 'Gentle Foaming Cleanser',
+      productId: 'primo-5gal-delivery-weekly',
+      productName: 'Primo 5-Gallon Weekly Delivery',
       purchaseDate: '2024-11-15',
-      quantity: 1,
+      quantity: 2,
       rating: 5,
     },
   ],
@@ -32,25 +34,15 @@ export const MOCK_CUSTOMER: CustomerProfile = {
   shippingAddresses: [
     {
       id: 'addr-1',
-      name: 'Sarah Chen',
-      line1: '123 Main St',
-      city: 'San Francisco',
-      state: 'CA',
-      postalCode: '94102',
+      name: 'Alex Rivera',
+      line1: '123 Lake Shore Dr',
+      city: 'Chicago',
+      state: 'IL',
+      postalCode: '60601',
       country: 'US',
       isDefault: true,
     },
   ],
-  travelPreferences: {
-    upcomingTrips: [
-      {
-        destination: 'Mumbai, India',
-        departureDate: '2025-03-15',
-        climate: 'hot',
-      },
-    ],
-    prefersTravelSize: true,
-  },
   orders: [],
   chatSummaries: [],
   meaningfulEvents: [],

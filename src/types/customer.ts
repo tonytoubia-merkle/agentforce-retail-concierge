@@ -103,7 +103,7 @@ export type EventUrgency = 'Immediate' | 'This Week' | 'This Month' | 'Future' |
 
 export interface MeaningfulEvent {
   id?: string;  // Salesforce record ID for delete operations
-  eventType: 'preference' | 'milestone' | 'life-event' | 'concern' | 'intent' | 'skincare-video';
+  eventType: 'preference' | 'milestone' | 'life-event' | 'concern' | 'intent' | 'hydration-goal';
   description: string;
   capturedAt: string;
   agentNote?: string;
@@ -128,10 +128,18 @@ export interface BrowseSession {
 
 // ─── 1P Profile Data (Preference Center) ────────────────────────
 export interface ProfilePreferences {
-  skinType: 'dry' | 'oily' | 'combination' | 'sensitive' | 'normal';
-  concerns: string[];
-  allergies: string[];
-  fragrancePreference?: 'love' | 'sensitive' | 'fragrance-free';
+  /** Primary hydration use context */
+  primaryUse?: 'home' | 'office' | 'fitness' | 'travel' | 'mixed';
+  /** Daily intake goal in ounces */
+  dailyIntakeGoalOz?: number;
+  /** Water type preferences */
+  waterPreferences?: ('still' | 'sparkling' | 'flavored' | 'mineral')[];
+  /** Preferred delivery frequency */
+  deliveryFrequency?: 'weekly' | 'biweekly' | 'monthly' | 'on-demand';
+  /** Number of people in household */
+  householdSize?: number;
+  /** Whether customer currently has a Primo dispenser */
+  hasDispenser?: boolean;
   communicationPrefs?: {
     email: boolean;
     sms: boolean;
@@ -143,7 +151,7 @@ export interface ProfilePreferences {
 
 // ─── Loyalty Data (Salesforce Loyalty Management) ───────────────
 export interface LoyaltyData {
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum';
+  tier: 'hydrated' | 'active' | 'elite' | 'champion';
   pointsBalance: number;
   lifetimePoints: number;
   memberSince: string;
@@ -167,39 +175,47 @@ export interface AgentCapturedProfile {
   // Personal milestones & dates
   birthday?: CapturedProfileField;             // "My birthday is in March"
   anniversary?: CapturedProfileField;          // "Our anniversary is February 14"
-  partnerName?: CapturedProfileField;          // "I'm shopping for my wife, Elena"
+  partnerName?: CapturedProfileField;          // "I'm buying for my wife, Elena"
 
   // Gifting context
-  giftsFor?: CapturedProfileField<string[]>;   // ["partner", "mother", "sister"]
-  upcomingOccasions?: CapturedProfileField<string[]>; // ["anniversary", "mother's day"]
+  giftsFor?: CapturedProfileField<string[]>;   // ["partner", "coworkers", "family"]
+  upcomingOccasions?: CapturedProfileField<string[]>; // ["housewarming", "office event"]
 
-  // Lifestyle & routine
-  morningRoutineTime?: CapturedProfileField;   // "I only have 5 minutes in the morning"
-  makeupFrequency?: CapturedProfileField;      // "daily", "weekends only", "special occasions"
-  exerciseRoutine?: CapturedProfileField;      // "I run every morning", "yoga 3x/week"
-  workEnvironment?: CapturedProfileField;      // "office with AC", "outdoors", "WFH"
+  // Hydration lifestyle
+  dailyIntakeGoal?: CapturedProfileField;      // "I'm trying to drink 100oz a day"
+  activityLevel?: CapturedProfileField;        // "I run every morning", "mostly sedentary"
+  workEnvironment?: CapturedProfileField;      // "I work from home", "large office building"
+  climateContext?: CapturedProfileField;       // "It's really hot and dry where I live"
+  hydrationChallenges?: CapturedProfileField;  // "I forget to drink water", "tap tastes bad"
 
-  // Beauty philosophy
-  beautyPriority?: CapturedProfileField;       // "I care most about ingredients", "I want it fast"
-  priceRange?: CapturedProfileField;           // "I don't mind spending more for quality"
-  sustainabilityPref?: CapturedProfileField;   // "I only buy cruelty-free"
+  // Water preferences
+  flavorsPreferred?: CapturedProfileField;     // "I like citrus flavors", "plain only"
+  sparklingPreference?: CapturedProfileField;  // "I love sparkling", "only still water"
+  tapWaterQuality?: CapturedProfileField;      // "Our tap water is terrible"
 
-  // Skin/body context the agent picks up
-  climateContext?: CapturedProfileField;       // "It's really dry where I live"
-  waterIntake?: CapturedProfileField;          // "I know I don't drink enough water"
-  sleepPattern?: CapturedProfileField;         // "I'm a night owl"
+  // Delivery & subscription context
+  deliveryPreference?: CapturedProfileField;   // "Weekly would be ideal for our family"
+  householdContext?: CapturedProfileField;     // "Family of 5 including 3 kids"
+  officeContext?: CapturedProfileField;        // "I manage water for 30 employees"
+
+  // Values & priorities
+  sustainabilityGoals?: CapturedProfileField;  // "Trying to cut plastic bottle use"
+  budgetContext?: CapturedProfileField;        // "We spend too much on bottled water"
+  priceRange?: CapturedProfileField;           // "Open to premium if quality is there"
 }
 
 // ─── Legacy compat alias ────────────────────────────────────────
+export type HydrationProfile = ProfilePreferences;
+/** @deprecated Use HydrationProfile */
 export type BeautyProfile = ProfilePreferences;
 
-export interface TravelPreferences {
-  upcomingTrips?: {
-    destination: string;
-    departureDate: string;
-    climate: 'hot' | 'cold' | 'temperate' | 'humid';
-  }[];
-  prefersTravelSize: boolean;
+export interface DeliveryPreferences {
+  /** Preferred delivery frequency */
+  frequency?: 'weekly' | 'biweekly' | 'monthly' | 'on-demand';
+  /** Preferred delivery day */
+  preferredDay?: string;
+  /** Whether customer wants delivery alerts */
+  deliveryAlerts?: boolean;
 }
 
 /** @deprecated Use OrderRecord instead */
@@ -237,7 +253,9 @@ export interface CustomerProfile {
   email: string;
 
   // 1P Profile (preference center)
-  beautyProfile: ProfilePreferences;
+  hydrationProfile: ProfilePreferences;
+  /** @deprecated Use hydrationProfile */
+  beautyProfile?: ProfilePreferences;
 
   // Purchase history (order-level)
   orders: OrderRecord[];
@@ -254,7 +272,7 @@ export interface CustomerProfile {
   // Loyalty
   loyalty: LoyaltyData | null;
   /** @deprecated Use loyalty?.tier instead */
-  loyaltyTier?: 'bronze' | 'silver' | 'gold' | 'platinum';
+  loyaltyTier?: 'hydrated' | 'active' | 'elite' | 'champion';
   lifetimeValue?: number;
 
   // Agent-captured conversational profile
@@ -267,7 +285,7 @@ export interface CustomerProfile {
   // Legacy fields kept for backward compat
   savedPaymentMethods: PaymentMethod[];
   shippingAddresses: Address[];
-  travelPreferences?: TravelPreferences;
+  deliveryPreferences?: DeliveryPreferences;
   /** @deprecated Use meaningfulEvents / browseSessions instead */
   recentActivity?: RecentActivity[];
 }
@@ -287,8 +305,8 @@ export interface CustomerSessionContext {
   /** Salesforce Contact ID (starts with '003') when available, or email as fallback */
   contactId?: string;
   identityTier: IdentityTier;
-  skinType?: string;
-  concerns?: string[];
+  primaryUse?: string;
+  waterPreferences?: string[];
   recentPurchases?: string[];
   recentActivity?: string[];
   appendedInterests?: string[];

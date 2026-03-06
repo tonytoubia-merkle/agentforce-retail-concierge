@@ -31,8 +31,8 @@ function buildTraits(profile: CustomerProfile): string[] {
     return traits.slice(0, 5);
   }
 
-  if (profile.beautyProfile?.skinType && profile.beautyProfile.skinType !== 'normal') {
-    traits.push(`${profile.beautyProfile.skinType.charAt(0).toUpperCase() + profile.beautyProfile.skinType.slice(1)} skin`);
+  if (profile.hydrationProfile?.primaryUse) {
+    traits.push(`${profile.hydrationProfile.primaryUse.charAt(0).toUpperCase() + profile.hydrationProfile.primaryUse.slice(1)} use`);
   }
   const orderCount = profile.orders?.length || 0;
   if (orderCount > 0) traits.push(`${orderCount} order${orderCount !== 1 ? 's' : ''}`);
@@ -43,8 +43,8 @@ function buildTraits(profile: CustomerProfile): string[] {
   } else if (tier === 'known') {
     traits.push('Not a loyalty member');
   }
-  if (profile.beautyProfile?.concerns?.length) {
-    traits.push(profile.beautyProfile.concerns[0].charAt(0).toUpperCase() + profile.beautyProfile.concerns[0].slice(1));
+  if (profile.hydrationProfile?.waterPreferences?.length) {
+    traits.push(profile.hydrationProfile.waterPreferences[0].charAt(0).toUpperCase() + profile.hydrationProfile.waterPreferences[0].slice(1));
   }
   return traits.slice(0, 5);
 }
@@ -84,15 +84,16 @@ const Field: React.FC<{ label: string; value: string | undefined | null }> = ({ 
 
 function renderProfileSections(customer: CustomerProfile) {
   const sections: React.ReactNode[] = [];
-  const bp = customer.beautyProfile;
+  const hp = customer.hydrationProfile;
 
-  if (bp?.skinType) {
+  if (hp?.primaryUse || hp?.waterPreferences?.length || hp?.preferredBrands?.length) {
     sections.push(
-      <Section key="beauty" title="Beauty Profile" source="Contact" defaultOpen>
-        <Field label="Skin Type" value={bp.skinType} />
-        <Field label="Concerns" value={bp.concerns?.join(', ')} />
-        <Field label="Allergies" value={bp.allergies?.join(', ')} />
-        <Field label="Preferred Brands" value={bp.preferredBrands?.join(', ')} />
+      <Section key="hydration" title="Hydration Profile" source="Contact" defaultOpen>
+        <Field label="Primary Use" value={hp.primaryUse} />
+        <Field label="Daily Goal" value={hp.dailyIntakeGoalOz ? `${hp.dailyIntakeGoalOz}oz` : undefined} />
+        <Field label="Water Prefs" value={hp.waterPreferences?.join(', ')} />
+        <Field label="Delivery" value={hp.deliveryFrequency} />
+        <Field label="Preferred Brands" value={hp.preferredBrands?.join(', ')} />
       </Section>
     );
   }
