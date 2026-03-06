@@ -8,13 +8,17 @@ import { CampaignProvider } from '@/contexts/CampaignContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { StoreProvider } from '@/contexts/StoreContext';
 import { ActivityToastProvider } from '@/components/ActivityToast';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AdvisorPage } from '@/components/AdvisorPage';
 import { StorefrontPage } from '@/components/Storefront';
 import { MediaWallPage } from '@/components/MediaWall';
 import { resolveUTMToCampaign } from '@/mocks/adCreatives';
 import type { Product } from '@/types/product';
 import type { CampaignAttribution } from '@/types/campaign';
+import { getCommerceClient } from '@/services/commerce';
 import { MOCK_PRODUCTS } from '@/mocks/products';
+
+const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
 /**
  * AdvisorWrapper — wraps AdvisorPage with ConversationProvider + back button.
@@ -82,10 +86,45 @@ function AnimatedRoutes({ products }: { products: Product[] }) {
 function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | null }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    setProducts(MOCK_PRODUCTS);
-    setLoading(false);
+    if (useMockData) {
+      setProducts(MOCK_PRODUCTS);
+      setLoading(false);
+      return;
+    }
+
+    // Load products from Commerce Cloud headless API
+    const commerceClient = getCommerceClient();
+    commerceClient.searchProducts({ limit: 200 })
+      .then((results) => {
+        if (results.length > 0) {
+          setProducts(results);
+        } else {
+          // Commerce Cloud returned no products — fall back to local catalog
+          console.warn('[commerce] No products returned from Commerce Cloud, using local catalog');
+          setProducts(MOCK_PRODUCTS);
+        }
+      })
+      .catch((err) => {
+        console.error('[commerce] Failed to load products from Commerce Cloud:', err);
+        setLoadError('Failed to load product catalog. Retrying...');
+        // Retry once after a short delay, then fall back to local catalog
+        setTimeout(() => {
+          commerceClient.searchProducts({ limit: 200 })
+            .then((results) => {
+              setProducts(results.length > 0 ? results : MOCK_PRODUCTS);
+              setLoadError(null);
+            })
+            .catch(() => {
+              console.warn('[commerce] Retry failed, using local catalog');
+              setProducts(MOCK_PRODUCTS);
+              setLoadError(null);
+            });
+        }, 2000);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -98,7 +137,7 @@ function AppShell({ initialCampaign }: { initialCampaign: CampaignAttribution | 
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           </div>
-          <p className="text-stone-500">Loading...</p>
+          <p className="text-stone-500">{loadError || 'Loading products...'}</p>
         </div>
       </div>
     );
@@ -136,9 +175,11 @@ function App() {
   });
 
   return (
-    <CustomerProvider>
-      <AppShell initialCampaign={initialCampaign} />
-    </CustomerProvider>
+    <ErrorBoundary>
+      <CustomerProvider>
+        <AppShell initialCampaign={initialCampaign} />
+      </CustomerProvider>
+    </ErrorBoundary>
   );
 }
 

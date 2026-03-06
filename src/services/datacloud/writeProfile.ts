@@ -32,25 +32,12 @@ export class DataCloudWriteService {
       return this.accessToken;
     }
 
-    if (this.accessToken && !this.config.clientId) {
+    if (this.accessToken && !this.tokenExpiresAt) {
       return this.accessToken;
     }
 
-    if (!this.config.clientId || !this.config.clientSecret) {
-      if (this.accessToken) return this.accessToken;
-      throw new Error('No Data Cloud access token or OAuth credentials configured');
-    }
-
-    const tokenUrl = '/api/oauth/token';
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: this.config.clientId,
-        client_secret: this.config.clientSecret,
-      }),
-    });
+    // OAuth via server-side proxy — credentials stay server-side
+    const response = await fetch('/api/sf/token', { method: 'POST' });
 
     if (!response.ok) {
       throw new Error(`Data Cloud OAuth failed: ${response.statusText}`);
@@ -336,8 +323,6 @@ export const getDataCloudWriteService = (): DataCloudWriteService => {
     writeService = new DataCloudWriteService({
       baseUrl: import.meta.env.VITE_DATACLOUD_BASE_URL || '',
       accessToken: import.meta.env.VITE_DATACLOUD_ACCESS_TOKEN || '',
-      clientId: import.meta.env.VITE_DATACLOUD_CLIENT_ID || '',
-      clientSecret: import.meta.env.VITE_DATACLOUD_CLIENT_SECRET || '',
     });
   }
   return writeService;

@@ -20,23 +20,13 @@ export class AgentforceClient {
       return this.accessToken;
     }
 
-    if (!this.config.clientId || !this.config.clientSecret) {
-      if (this.accessToken) return this.accessToken;
-      throw new Error('No access token or client credentials configured');
+    if (this.accessToken && !this.tokenExpiresAt) {
+      // Static token with no expiry tracking
+      return this.accessToken;
     }
 
-    // Always use proxy to avoid CORS — works in both dev and production (Vercel)
-    const tokenUrl = '/api/oauth/token';
-
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: this.config.clientId,
-        client_secret: this.config.clientSecret,
-      }),
-    });
+    // OAuth via server-side proxy — credentials stay server-side, never in the browser bundle
+    const response = await fetch('/api/sf/token', { method: 'POST' });
 
     if (!response.ok) {
       const errText = await response.text();
@@ -442,8 +432,6 @@ export const getAgentforceClient = (): AgentforceClient => {
     agentforceClient = new AgentforceClient({
       baseUrl: '/api/agentforce',
       agentId: import.meta.env.VITE_AGENTFORCE_AGENT_ID || '',
-      clientId: import.meta.env.VITE_AGENTFORCE_CLIENT_ID || '',
-      clientSecret: import.meta.env.VITE_AGENTFORCE_CLIENT_SECRET || '',
       instanceUrl: import.meta.env.VITE_AGENTFORCE_INSTANCE_URL || '',
     });
   }

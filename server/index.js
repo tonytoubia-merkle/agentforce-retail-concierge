@@ -26,6 +26,8 @@ const SF_INSTANCE = env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764
 const CLIENT_ID = env.VITE_AGENTFORCE_CLIENT_ID || process.env.VITE_AGENTFORCE_CLIENT_ID;
 const CLIENT_SECRET = env.VITE_AGENTFORCE_CLIENT_SECRET || process.env.VITE_AGENTFORCE_CLIENT_SECRET;
 const BASE_URL = env.VITE_AGENTFORCE_BASE_URL || process.env.VITE_AGENTFORCE_BASE_URL;
+const COMMERCE_BASE_URL = env.VITE_COMMERCE_BASE_URL || process.env.VITE_COMMERCE_BASE_URL || '';
+const COMMERCE_SITE_ID = env.VITE_COMMERCE_SITE_ID || process.env.VITE_COMMERCE_SITE_ID || '';
 const PORT = process.env.API_PORT || 3001;
 
 const routes = [
@@ -38,6 +40,8 @@ const routes = [
   { prefix: '/api/firefly/token',          target: 'https://ims-na1.adobelogin.com',            rewrite: '/ims/token/v3' },
   { prefix: '/api/firefly/generate',       target: 'https://firefly-api.adobe.io',              rewrite: '/v3/images/generate' },
   { prefix: '/api/datacloud',              target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0' },
+  // Commerce Cloud Shopper API — proxied to SFCC headless storefront
+  ...(COMMERCE_BASE_URL ? [{ prefix: '/api/commerce', target: COMMERCE_BASE_URL, rewrite: `/s/${COMMERCE_SITE_ID}/dw/shop/v24_1` }] : []),
   // GraphQL endpoint (org-dependent) will be proxied via custom handlers below rather than static proxy
 ];
 

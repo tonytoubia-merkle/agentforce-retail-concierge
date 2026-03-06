@@ -76,19 +76,6 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (archetype) {
               profile.appendedProfile = archetype.appendedProfile;
             }
-            // Merge mock persona loyalty when Data Cloud returns null or has 0 points
-            const matchedPersona = PERSONAS.find(p => p.profile.merkuryIdentity?.merkuryId === merkuryId);
-            if (matchedPersona?.profile.loyalty) {
-              const dcLoyalty = profile.loyalty;
-              if (!dcLoyalty || dcLoyalty.pointsBalance === 0) {
-                // Keep the real tier if available, but use mock points
-                profile.loyalty = {
-                  ...matchedPersona.profile.loyalty,
-                  ...(dcLoyalty?.tier && dcLoyalty.tier !== 'bronze' ? { tier: dcLoyalty.tier } : {}),
-                  ...(dcLoyalty?.memberSince ? { memberSince: dcLoyalty.memberSince } : {}),
-                };
-              }
-            }
           }
           setCustomer(profile);
         } catch (err) {
@@ -163,29 +150,11 @@ export const CustomerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           const profile = await dataCloudService.getCustomerProfile(resolution.merkuryId);
           profile.merkuryIdentity = merkuryIdentity;
           if (resolution.appendedData) profile.appendedProfile = resolution.appendedData;
-          // Merge mock persona loyalty when Data Cloud returns null or has 0 points
-          const mockPersona = getPersonaById(personaId);
-          if (mockPersona?.profile.loyalty) {
-            const dcLoyalty = profile.loyalty;
-            if (!dcLoyalty || dcLoyalty.pointsBalance === 0) {
-              profile.loyalty = {
-                ...mockPersona.profile.loyalty,
-                ...(dcLoyalty?.tier && dcLoyalty.tier !== 'bronze' ? { tier: dcLoyalty.tier } : {}),
-                ...(dcLoyalty?.memberSince ? { memberSince: dcLoyalty.memberSince } : {}),
-              };
-            }
-          }
           setCustomer(profile);
         } catch (dcError) {
           console.error('[datacloud] Profile fetch failed:', dcError);
-          console.warn('[datacloud] Falling back to mock persona data');
-          const persona = getPersonaById(personaId);
-          if (persona) {
-            const fallback = { ...persona.profile, merkuryIdentity };
-            setCustomer(fallback);
-          } else {
-            throw new Error('Failed to load customer profile from Data Cloud');
-          }
+          setError(dcError instanceof Error ? dcError : new Error('Failed to load customer profile from Data Cloud'));
+          setCustomer(null);
         } finally {
           setIsLoading(false);
         }

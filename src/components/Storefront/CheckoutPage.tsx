@@ -6,8 +6,9 @@ import { useCustomer } from '@/contexts/CustomerContext';
 import { ProductImage } from './ProductImage';
 import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 import { trackPurchase } from '@/services/personalization';
+import { getCommerceClient } from '@/services/commerce';
 
-const API_BASE = '';
+const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
 
 export const CheckoutPage: React.FC = () => {
   const { navigateToOrderConfirmation, goBack } = useStore();
@@ -59,73 +60,52 @@ export const CheckoutPage: React.FC = () => {
       setStep('processing');
       setCheckoutError(null);
 
-      const useMock = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
-      if (useMock) {
+      const lineItemsForTracking = items.map((item) => ({
+        product2Id: item.product.salesforceId || item.product.id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        unitPrice: item.product.price,
+      }));
+
+      if (useMockData) {
         setTimeout(() => {
           const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
-          trackPurchase(orderId, total, items.map((item) => ({
-            product2Id: item.product.salesforceId || item.product.id,
-            productName: item.product.name,
-            quantity: item.quantity,
-            unitPrice: item.product.price,
-          })));
+          trackPurchase(orderId, total, lineItemsForTracking);
           clearCart();
           navigateToOrderConfirmation(orderId);
         }, 2000);
         return;
       }
 
-      // Real Salesforce checkout — require valid customer ID
-      if (!customer?.id) {
-        setCheckoutError('Please sign in to complete your purchase.');
-        setStep('payment');
-        return;
-      }
-      const last4 = formData.cardNumber.replace(/\s/g, '').slice(-4);
-      const paymentMethod = `Visa ending in ${last4}`;
-      const payload = {
-        contactId: customer?.id || undefined,
+      // Commerce Cloud headless checkout via Shopper Baskets + Orders API
+      const commerceClient = getCommerceClient();
+      commerceClient.checkout({
         items: items.map((item) => ({
-          product2Id: item.product.salesforceId || item.product.id,
+          productId: item.product.id,
           productName: item.product.name,
           quantity: item.quantity,
           unitPrice: item.product.price,
+          salesforceId: item.product.salesforceId,
         })),
-        paymentMethod,
-        subtotal,
-        shipping,
-        tax,
-        total,
-      };
-
-      fetch(`${API_BASE}/api/checkout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        email: formData.email || customer?.email || '',
+        shippingAddress: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          address1: formData.address,
+          city: formData.city,
+          stateCode: formData.state,
+          postalCode: formData.zip,
+          countryCode: 'US',
+        },
       })
-        .then((res) => res.json())
         .then((result) => {
-          if (result.success) {
-            trackPurchase(
-              result.orderNumber || result.orderId,
-              total,
-              items.map((item) => ({
-                product2Id: item.product.salesforceId || item.product.id,
-                productName: item.product.name,
-                quantity: item.quantity,
-                unitPrice: item.product.price,
-              })),
-            );
-            clearCart();
-            navigateToOrderConfirmation(result.orderNumber || result.orderId, result);
-          } else {
-            setCheckoutError(result.error || 'Checkout failed');
-            setStep('payment');
-          }
+          trackPurchase(result.orderId, total, lineItemsForTracking);
+          clearCart();
+          navigateToOrderConfirmation(result.orderId, result);
         })
         .catch((err) => {
-          console.error('[checkout] Error:', err);
-          setCheckoutError(err.message || 'Network error');
+          console.error('[checkout] Commerce Cloud checkout failed:', err);
+          setCheckoutError(err.message || 'Checkout failed. Please try again.');
           setStep('payment');
         });
     }
