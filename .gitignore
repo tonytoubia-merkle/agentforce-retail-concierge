@@ -6,3 +6,9 @@ dist/
 .env.vercel.local
 .env.temp
 .sf/
+
+# Local working files
+.claude/settings.local.json
+plan.md
+scripts/check-sarah-contact.apex
+scripts/current_agentscript.js
