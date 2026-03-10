@@ -205,16 +205,45 @@ global with sharing class ProductCatalogService {
             soql += ' AND ' + String.join(conditions, ' AND ');
         }
 
-        Integer maxResults = request.maxResults != null ? request.maxResults : 10;
+        Integer maxResults = request.maxResults != null ? request.maxResults : 6;
         soql += ' ORDER BY Rating__c DESC LIMIT ' + maxResults;
 
-        // category is already declared and normalized above
+        // For pure category lookups (no free-text query, no skin type filter), check
+        // the org platform cache first to avoid a SOQL round-trip on repeated requests.
         String skinType = request.skinType;
         String searchQuery = request.query != null ? '%' + request.query + '%' : '';
 
-        List<Product2> products = Database.query(soql);
-        List<ProductResult> results = new List<ProductResult>();
+        if (String.isNotBlank(category) && String.isBlank(skinType) && String.isBlank(searchQuery)) {
+            String cacheKey = 'products_' + category.toLowerCase().replace(' ', '_') + '_' + maxResults;
+            try {
+                Cache.OrgPartition orgPart = Cache.Org.getPartition('local.ProductCatalog');
+                String cached = (String) orgPart.get(cacheKey);
+                if (cached != null) {
+                    return (List<ProductResult>) JSON.deserialize(cached, List<ProductResult>.class);
+                }
+            } catch (Exception ex) {
+                // Cache miss or partition not configured — continue to SOQL
+            }
 
+            List<Product2> products = Database.query(soql);
+            List<ProductResult> results = buildResults(products);
+
+            try {
+                Cache.OrgPartition orgPart = Cache.Org.getPartition('local.ProductCatalog');
+                // Cache for 30 minutes (1800 seconds)
+                orgPart.put(cacheKey, JSON.serialize(results), 1800);
+            } catch (Exception ex) {
+                // Cache write failed — non-fatal
+            }
+            return results;
+        }
+
+        List<Product2> products = Database.query(soql);
+        return buildResults(products);
+    }
+
+    private static List<ProductResult> buildResults(List<Product2> products) {
+        List<ProductResult> results = new List<ProductResult>();
         for (Product2 product : products) {
             ProductResult result = new ProductResult();
             result.productId = product.Id;
@@ -231,7 +260,6 @@ global with sharing class ProductCatalogService {
             result.inStock = (Boolean) product.get('In_Stock__c');
             results.add(result);
         }
-
         return results;
     }
 }
