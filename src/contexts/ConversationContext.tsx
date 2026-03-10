@@ -119,8 +119,8 @@ function buildSessionContext(customer: CustomerProfile, campaignAttribution?: im
     taggedContext.push({ value: `Fragrance preference: ${customer.beautyProfile.fragrancePreference}`, provenance: 'declared', usage: 'direct' });
   }
 
-  // 1P-BEHAVIORAL (observed): purchase history
-  for (const order of (customer.orders || []).slice(0, 5)) {
+  // 1P-BEHAVIORAL (observed): purchase history — cap at 3 most recent to limit token cost
+  for (const order of (customer.orders || []).slice(0, 3)) {
     const items = order.lineItems.map((li) => li.productName).join(', ');
     taggedContext.push({ value: `Purchased ${items} on ${order.orderDate} (${order.channel})`, provenance: 'observed', usage: 'direct' });
   }
@@ -162,14 +162,14 @@ function buildSessionContext(customer: CustomerProfile, campaignAttribution?: im
     }
   }
 
-  // 3P-APPENDED: Merkury enrichment
+  // 3P-APPENDED: Merkury enrichment — cap at top 5 signals to limit token cost
   if (customer.appendedProfile?.interests) {
-    for (const interest of customer.appendedProfile.interests) {
+    for (const interest of customer.appendedProfile.interests.slice(0, 5)) {
       taggedContext.push({ value: interest, provenance: 'appended', usage: 'influence_only' });
     }
   }
   if (customer.appendedProfile?.lifestyleSignals) {
-    for (const signal of customer.appendedProfile.lifestyleSignals) {
+    for (const signal of customer.appendedProfile.lifestyleSignals.slice(0, 3)) {
       taggedContext.push({ value: signal, provenance: 'appended', usage: 'influence_only' });
     }
   }

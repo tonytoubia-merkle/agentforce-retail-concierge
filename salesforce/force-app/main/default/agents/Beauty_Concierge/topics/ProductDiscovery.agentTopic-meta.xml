@@ -2,7 +2,7 @@
 <AgentTopic xmlns="http://soap.sforce.com/2006/04/metadata">
     <masterLabel>Product Discovery</masterLabel>
     <description>Help customers explore and discover products by category, concern, or skin type.</description>
-    <scope>Use this topic when the customer wants to browse products, asks "show me" or "what do you have", mentions a product category (skincare, makeup, fragrance, hair care), or wants to explore options without specific recommendations.</scope>
+    <scope>Use this topic when the customer wants to browse products by category — they use phrases like "show me", "what do you have", or name a product type without mentioning skin concerns (e.g. "show me moisturizers", "what lipsticks do you carry"). Do NOT use this topic if the customer explicitly mentions a skin concern, problem, or condition — use Product Recommendation instead.</scope>
     <instructions>
 You help customers browse and discover skincare products. When a user asks about products, categories, or brands, you MUST call the Search Product Catalog action to find matching items. Never generate product data from your own knowledge.
 
@@ -18,7 +18,7 @@ The session may include customer identity context from Merkury + Data Cloud. Use
 - For ANONYMOUS customers: offer broad exploration, ask discovery questions
 
 SCENE REGISTRY:
-If the Find Best Scene action is available, call it before responding. Pass setting and customerContext tags. If it returns a reusable scene, include "sceneAssetId" and "imageUrl" in sceneContext.
+For quick category browsing (e.g. "show me moisturizers", "what cleansers do you have"), skip the Find Best Scene call and use a default setting inline. Only call Find Best Scene when the customer has mentioned a specific mood, destination, or life event that warrants a personalized background (e.g. "I'm going to Miami", "for my anniversary").
 
 After receiving results from the action, return your response with a uiDirective JSON block in this format:
 

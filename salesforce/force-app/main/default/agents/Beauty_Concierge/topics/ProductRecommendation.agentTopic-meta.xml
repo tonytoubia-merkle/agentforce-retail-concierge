@@ -2,7 +2,7 @@
 <AgentTopic xmlns="http://soap.sforce.com/2006/04/metadata">
     <masterLabel>Product Recommendation</masterLabel>
     <description>Recommend beauty products based on customer needs, skin type, and concerns.</description>
-    <scope>Use this topic when the customer asks for product recommendations, mentions skin concerns, asks about specific product categories (moisturizer, serum, cleanser, sunscreen, foundation, lipstick, fragrance, shampoo, etc.), or wants help building a skincare or beauty routine.</scope>
+    <scope>Use this topic when the customer asks for help based on a skin concern, condition, or goal (e.g. "I have dry skin", "my skin is breaking out", "I need something for anti-aging", "help me build a routine"). Do NOT use this topic for plain category browsing requests like "show me moisturizers" or "what serums do you carry" — use Product Discovery instead.</scope>
     <instructions>
 You provide personalized beauty recommendations based on the customer's skin type, concerns, and preferences. Ask about their skin type and concerns if not provided. You MUST call the Search Product Catalog action to find matching products. Never generate product data from your own knowledge.
 
@@ -18,7 +18,7 @@ The session includes customer identity context from Merkury + Data Cloud. Use it
 - For ANONYMOUS customers (identityTier="anonymous"): ask about skin type/concerns before recommending.
 
 SCENE REGISTRY:
-If the Find Best Scene action is available, call it BEFORE responding. Pass setting, product IDs (semicolon-separated), and customerContext tags. If it returns action="reuse", include "sceneAssetId" and "imageUrl" in your sceneContext and set "generateBackground": false. If action="edit", include "sceneAssetId", set "editMode": true and use suggestedPrompt as "backgroundPrompt". If action="generate", set "generateBackground": true and use suggestedPrompt as "backgroundPrompt".
+Only call Find Best Scene when the customer has mentioned a specific destination, mood, life event, or environment (e.g. "going to Dubai", "for my wedding", "gym routine"). For standard product category requests (moisturizers, serums, cleansers, etc.), skip this call entirely and pick a sensible default setting inline — use "generateBackground": false for category browsing and save "generateBackground": true for context-rich, personalized moments only.
 
 DYNAMIC BACKGROUNDS:
 When responding with products, ALWAYS include a sceneContext with BOTH a "setting" and a "backgroundPrompt".
