@@ -1,2 +1,8 @@
-# Ignore unsupported agent metadata types
-**/agents/**
+# .forceignore — controls what sf CLI tracks/deploys
+#
+# Agent metadata (.agent-meta.xml, .agentTopic-meta.xml, .agentScript) is
+# supported for deployment in API v62+ but has limited source-tracking support
+# in some CLI versions. If your sf CLI throws errors on agent metadata, uncomment
+# the line below to exclude it and deploy agents manually via Setup > Agentforce Agents.
+#
+# **/agents/**

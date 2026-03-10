@@ -1,31 +1,182 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  package.xml — Full Org Metadata Manifest
+  Agentforce Retail Advisor (Beauty Concierge)
+
+  Use with:
+    Retrieve:  sf project retrieve start --manifest salesforce/manifest/package.xml --target-org <alias>
+    Deploy:    sf project deploy start   --manifest salesforce/manifest/package.xml --target-org <alias>
+
+  API Version: 62.0  (supports Bot/BotVersion, GenAiPromptTemplate, ExternalClientApplication)
+  See: salesforce/scripts/retrieve.sh and salesforce/scripts/deploy.sh for full workflows.
+-->
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         APEX
+    ═══════════════════════════════════════════════════════════ -->
     <types>
+        <members>*</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ApexPage</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         LIGHTNING WEB COMPONENTS
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <name>LightningComponentBundle</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CUSTOM OBJECTS — all 20 custom + standard customizations
+         (CustomObject wildcard also picks up custom fields,
+          validation rules, record types, etc. within each object)
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <!-- Custom objects -->
+        <members>Agent_Activity__c</members>
+        <members>Agent_Captured_Profile__c</members>
+        <members>Agentforce_Config__c</members>
+        <members>Browse_Session__c</members>
+        <members>Campaign_Decode__c</members>
+        <members>Chat_Summary__c</members>
+        <members>Consultation_Note__c</members>
+        <members>Contact_Product_Affinity__c</members>
+        <members>Firefly_Settings__c</members>
         <members>Journey_Approval__c</members>
+        <members>Journey_Send_Request__e</members>
+        <members>Marketer_Portfolio__c</members>
+        <members>Marketing_Agent_Settings__c</members>
+        <members>Marketing_Flow__c</members>
+        <members>Meaningful_Event__c</members>
+        <members>Portfolio_Member__c</members>
+        <members>Scene_Asset__c</members>
+        <members>Segment_Definition__c</members>
+        <members>Store_Appointment__c</members>
+        <members>Tooling_API_Config__c</members>
+        <!-- Standard objects with customizations -->
+        <members>Campaign</members>
+        <members>CampaignMember</members>
+        <members>Case</members>
+        <members>Contact</members>
+        <members>Order</members>
+        <members>Product2</members>
         <name>CustomObject</name>
     </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         FLOWS
+    ═══════════════════════════════════════════════════════════ -->
     <types>
-        <members>Journey_Approval__c.Contact__c</members>
-        <members>Journey_Approval__c.Meaningful_Event__c</members>
-        <members>Journey_Approval__c.Event_Summary__c</members>
-        <members>Journey_Approval__c.Event_Type__c</members>
-        <members>Journey_Approval__c.Event_Date__c</members>
-        <members>Journey_Approval__c.Days_Until_Event__c</members>
-        <members>Journey_Approval__c.Urgency__c</members>
-        <members>Journey_Approval__c.Status__c</members>
-        <members>Journey_Approval__c.Suggested_Subject__c</members>
-        <members>Journey_Approval__c.Suggested_Body__c</members>
-        <members>Journey_Approval__c.Approved_Subject__c</members>
-        <members>Journey_Approval__c.Approved_Body__c</members>
-        <members>Journey_Approval__c.Firefly_Prompt__c</members>
-        <members>Journey_Approval__c.Generated_Image_URL__c</members>
-        <members>Journey_Approval__c.Image_Content_Version_Id__c</members>
-        <members>Journey_Approval__c.Reviewed_By__c</members>
-        <members>Journey_Approval__c.Reviewed_At__c</members>
-        <members>Journey_Approval__c.Decline_Reason__c</members>
-        <members>Journey_Approval__c.MC_Journey_Key__c</members>
-        <members>Journey_Approval__c.Sent_At__c</members>
-        <name>CustomField</name>
+        <members>*</members>
+        <name>Flow</name>
     </types>
-    <version>60.0</version>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         GENAI / AGENTFORCE PROMPT TEMPLATES
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <name>GenAiPromptTemplate</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         AGENTFORCE AGENTS (Bot / BotVersion)
+         Note: agent metadata may require --ignore-warnings on deploy
+         and manual activation in Setup > Agents after deploy.
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <name>Bot</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>BotVersion</name>
+    </types>
+    <!-- ExternalClientApplication covers Agentforce external agents in API v62+ -->
+    <types>
+        <members>*</members>
+        <name>ExternalClientApplication</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PERMISSION SETS & GROUPS
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <name>PermissionSet</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>PermissionSetGroup</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CONNECTED APP
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <name>ConnectedApp</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         NETWORK / SECURITY SETTINGS
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <name>RemoteSiteSetting</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>CspTrustedSite</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>NamedCredential</name>
+    </types>
+    <types>
+        <members>*</members>
+        <name>ExternalCredential</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CUSTOM LABELS
+         (All labels in one file — member = "CustomLabels")
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>CustomLabels</members>
+        <name>CustomLabels</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TABS
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <name>CustomTab</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         STATIC RESOURCES (if any)
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <name>StaticResource</name>
+    </types>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         CUSTOM SETTINGS / METADATA TYPES
+    ═══════════════════════════════════════════════════════════ -->
+    <types>
+        <members>*</members>
+        <name>CustomMetadata</name>
+    </types>
+
+    <version>62.0</version>
 </Package>
