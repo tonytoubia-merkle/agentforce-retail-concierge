@@ -1,7 +1,7 @@
 export interface CommerceConfig {
-  baseUrl: string;
-  clientId: string;
-  siteId: string;
+  webstoreId: string;
+  clientId?: string;
+  clientSecret?: string;
   accessToken?: string;
 }
 

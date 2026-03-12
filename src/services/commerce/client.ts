@@ -1,35 +1,29 @@
 import type { Product } from '@/types/product';
 import type { CommerceConfig, ProductSearchParams, OrderResponse } from './types';
 
-/** SFCC Shopper API product hit from product_search. */
-interface SfccProductHit {
-  product_id?: string;
+// ─── Commerce on Core Connect API response shapes ─────────────────────────
+
+interface ConnectProduct {
   id?: string;
-  product_name?: string;
   name?: string;
-  brand?: string;
-  primary_category_id?: string;
-  price?: number;
-  currency?: string;
-  long_description?: string;
+  sku?: string;
   description?: string;
-  short_description?: string;
-  image?: { link?: string };
-  imageUrl?: string;
-  image_groups?: Array<{ images?: Array<{ link: string }> }>;
-  inventory?: { orderable?: boolean };
-  c_skinType?: string[];
-  c_concerns?: string[];
-  c_ingredients?: string[];
-  c_size?: string;
-  c_isTravel?: boolean;
-  c_rating?: number;
-  c_reviewCount?: number;
-  c_personalizationScore?: number;
-  salesforceId?: string;
+  defaultImage?: { url?: string; alternateText?: string };
+  primaryProductCategory?: { id?: string; name?: string };
+  prices?: { unitPrice?: number; listPrice?: number; currencyIsoCode?: string };
+  // Custom fields on the Product2 object surfaced via Connect API
+  fields?: Record<string, unknown>;
 }
 
-/** Basket item for SFCC Shopper Baskets API. */
+interface ConnectProductSearchResponse {
+  productsPage?: {
+    count?: number;
+    total?: number;
+    products?: ConnectProduct[];
+  };
+}
+
+/** Basket item for checkout. */
 export interface BasketItem {
   productId: string;
   productName: string;
@@ -59,230 +53,148 @@ export interface PaymentInfo {
 
 export class CommerceClient {
   private config: CommerceConfig;
+  private accessToken: string | null;
+  private tokenExpiresAt = 0;
 
   constructor(config: CommerceConfig) {
     this.config = config;
+    this.accessToken = config.accessToken || null;
   }
 
-  private get headers(): Record<string, string> {
+  // ─── OAuth Token Management ─────────────────────────────────────────────
+  // Reuses the same Agentforce client credentials — Commerce on Core is the
+  // same Salesforce org, so the same token works for both.
+
+  private async getAccessToken(): Promise<string> {
+    if (this.accessToken && Date.now() < this.tokenExpiresAt) {
+      return this.accessToken;
+    }
+    if (this.accessToken && !this.config.clientId) {
+      return this.accessToken;
+    }
+
+    const response = await fetch('/api/sf/token', { method: 'POST' });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Commerce OAuth failed (${response.status}): ${errText}`);
+    }
+
+    const data = await response.json() as { access_token: string; expires_in?: number };
+    this.accessToken = data.access_token;
+    this.tokenExpiresAt = Date.now() + (data.expires_in ? data.expires_in * 1000 : 7200_000) - 300_000;
+    return this.accessToken!;
+  }
+
+  private async authHeaders(): Promise<Record<string, string>> {
+    const token = await this.getAccessToken();
     return {
-      'Authorization': `Bearer ${this.config.accessToken}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
   }
 
   private get baseUrl(): string {
-    return `/api/commerce`;
+    return '/api/commerce';
   }
 
-  // ─── Product Catalog ──────────────────────────────────────────
+  // ─── Product Catalog ────────────────────────────────────────────────────
 
   async searchProducts(params: ProductSearchParams): Promise<Product[]> {
     const searchParams = new URLSearchParams();
-    if (params.query) searchParams.set('q', params.query);
-    if (params.category) searchParams.set('refine_1', `cgid=${params.category}`);
-    if (params.limit) searchParams.set('count', String(params.limit));
-    if (params.offset) searchParams.set('start', String(params.offset));
+    if (params.query) searchParams.set('searchTerm', params.query);
+    if (params.limit) searchParams.set('pageSize', String(params.limit));
 
     const response = await fetch(
-      `${this.baseUrl}/product_search?${searchParams.toString()}`,
-      { headers: this.headers }
+      `${this.baseUrl}/search/product-search?${searchParams.toString()}`,
+      { headers: await this.authHeaders() }
     );
 
     if (!response.ok) {
       throw new Error(`Product search failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    return (data.hits || []).map((hit: SfccProductHit) => this.mapProduct(hit));
+    const data = await response.json() as ConnectProductSearchResponse;
+    return (data.productsPage?.products || []).map((p) => this.mapProduct(p));
   }
 
   async getProduct(productId: string): Promise<Product> {
     const response = await fetch(
       `${this.baseUrl}/products/${encodeURIComponent(productId)}`,
-      { headers: this.headers }
+      { headers: await this.authHeaders() }
     );
 
     if (!response.ok) {
       throw new Error(`Product fetch failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as ConnectProduct;
     return this.mapProduct(data);
   }
 
-  // ─── Shopper Baskets API ──────────────────────────────────────
+  // ─── Cart API (Commerce on Core) ────────────────────────────────────────
 
-  /** Create a new basket (shopping cart) on SFCC. */
-  async createBasket(): Promise<string> {
-    const response = await fetch(`${this.baseUrl}/baskets`, {
+  /** Create a new cart. Returns the cartId. */
+  async createCart(): Promise<string> {
+    const response = await fetch(`${this.baseUrl}/carts`, {
       method: 'POST',
-      headers: this.headers,
+      headers: await this.authHeaders(),
       body: JSON.stringify({}),
     });
 
     if (!response.ok) {
-      throw new Error(`Create basket failed: ${response.statusText}`);
+      throw new Error(`Create cart failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    return data.basket_id;
+    const data = await response.json() as { cartId?: string };
+    return data.cartId || '';
   }
 
-  /** Add items to an existing basket. */
-  async addItemsToBasket(basketId: string, items: BasketItem[]): Promise<void> {
-    const response = await fetch(
-      `${this.baseUrl}/baskets/${encodeURIComponent(basketId)}/items`,
-      {
-        method: 'POST',
-        headers: this.headers,
-        body: JSON.stringify(items.map((item) => ({
-          product_id: item.productId,
-          quantity: item.quantity,
-        }))),
+  /** Add items to an existing cart. */
+  async addItemsToCart(cartId: string, items: BasketItem[]): Promise<void> {
+    for (const item of items) {
+      const response = await fetch(
+        `${this.baseUrl}/carts/${encodeURIComponent(cartId)}/cart-items`,
+        {
+          method: 'POST',
+          headers: await this.authHeaders(),
+          body: JSON.stringify({
+            productId: item.productId,
+            quantity: item.quantity,
+            type: 'Product',
+          }),
+        }
+      );
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Add item to cart failed (${response.status}): ${errText}`);
       }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Add items to basket failed (${response.status}): ${errText}`);
     }
   }
 
-  /** Set shipping address on the basket. */
-  async setShippingAddress(basketId: string, address: ShippingAddress): Promise<void> {
-    // SFCC requires setting the shipment's shipping address
-    const response = await fetch(
-      `${this.baseUrl}/baskets/${encodeURIComponent(basketId)}/shipments/me/shipping_address`,
-      {
-        method: 'PUT',
-        headers: this.headers,
-        body: JSON.stringify({
-          first_name: address.firstName,
-          last_name: address.lastName,
-          address1: address.address1,
-          city: address.city,
-          state_code: address.stateCode,
-          postal_code: address.postalCode,
-          country_code: address.countryCode,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Set shipping address failed (${response.status}): ${errText}`);
-    }
-  }
-
-  /** Set shipping method on the basket. */
-  async setShippingMethod(basketId: string, methodId = 'standard'): Promise<void> {
-    const response = await fetch(
-      `${this.baseUrl}/baskets/${encodeURIComponent(basketId)}/shipments/me/shipping_method`,
-      {
-        method: 'PUT',
-        headers: this.headers,
-        body: JSON.stringify({ id: methodId }),
-      }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Set shipping method failed (${response.status}): ${errText}`);
-    }
-  }
-
-  /** Set billing address on the basket. */
-  async setBillingAddress(basketId: string, address: ShippingAddress): Promise<void> {
-    const response = await fetch(
-      `${this.baseUrl}/baskets/${encodeURIComponent(basketId)}/billing_address`,
-      {
-        method: 'PUT',
-        headers: this.headers,
-        body: JSON.stringify({
-          first_name: address.firstName,
-          last_name: address.lastName,
-          address1: address.address1,
-          city: address.city,
-          state_code: address.stateCode,
-          postal_code: address.postalCode,
-          country_code: address.countryCode,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Set billing address failed (${response.status}): ${errText}`);
-    }
-  }
-
-  /** Add a payment instrument to the basket. */
-  async addPaymentInstrument(basketId: string, payment: PaymentInfo): Promise<void> {
-    const response = await fetch(
-      `${this.baseUrl}/baskets/${encodeURIComponent(basketId)}/payment_instruments`,
-      {
-        method: 'POST',
-        headers: this.headers,
-        body: JSON.stringify({
-          payment_method_id: payment.methodId,
-          amount: 0, // SFCC auto-fills from basket total
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Add payment instrument failed (${response.status}): ${errText}`);
-    }
-  }
-
-  /** Set customer email on the basket. */
-  async setCustomerInfo(basketId: string, email: string): Promise<void> {
-    const response = await fetch(
-      `${this.baseUrl}/baskets/${encodeURIComponent(basketId)}/customer`,
-      {
-        method: 'PUT',
-        headers: this.headers,
-        body: JSON.stringify({ email }),
-      }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Set customer info failed (${response.status}): ${errText}`);
-    }
-  }
-
-  // ─── Shopper Orders API ───────────────────────────────────────
-
-  /** Create an order from a basket. This is the final checkout step. */
-  async createOrder(basketId: string): Promise<OrderResponse> {
-    const response = await fetch(`${this.baseUrl}/orders`, {
+  /** Create a checkout from the cart and return a simple order summary. */
+  async createCheckout(cartId: string): Promise<OrderResponse> {
+    const response = await fetch(`${this.baseUrl}/checkouts`, {
       method: 'POST',
-      headers: this.headers,
-      body: JSON.stringify({ basket_id: basketId }),
+      headers: await this.authHeaders(),
+      body: JSON.stringify({ cartId }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`Order creation failed (${response.status}): ${errText}`);
+      throw new Error(`Checkout failed (${response.status}): ${errText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { checkoutId?: string; orderReferenceNumber?: string; status?: string };
     return {
-      orderId: data.order_no || data.order_id,
+      orderId: data.orderReferenceNumber || data.checkoutId || '',
       status: 'confirmed',
-      total: data.order_total || data.product_total || 0,
-      estimatedDelivery: data.estimated_delivery || new Date(
-        Date.now() + 5 * 24 * 60 * 60 * 1000
-      ).toISOString(),
+      total: 0, // Connect API checkout doesn't return total inline
+      estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
     };
   }
 
   /**
-   * Full checkout flow: create basket → add items → set addresses → create order.
-   * Orchestrates the multi-step SFCC checkout in a single call.
+   * Full checkout flow: create cart → add items → create checkout.
    */
   async checkout(params: {
     items: BasketItem[];
@@ -290,57 +202,36 @@ export class CommerceClient {
     shippingAddress: ShippingAddress;
     paymentMethodId?: string;
   }): Promise<OrderResponse> {
-    // 1. Create basket
-    const basketId = await this.createBasket();
-
-    // 2. Add items
-    await this.addItemsToBasket(basketId, params.items);
-
-    // 3. Set customer email
-    await this.setCustomerInfo(basketId, params.email);
-
-    // 4. Set shipping address + method
-    await this.setShippingAddress(basketId, params.shippingAddress);
-    await this.setShippingMethod(basketId);
-
-    // 5. Set billing address (same as shipping for simplicity)
-    await this.setBillingAddress(basketId, params.shippingAddress);
-
-    // 6. Add payment instrument
-    await this.addPaymentInstrument(basketId, {
-      methodId: params.paymentMethodId || 'CREDIT_CARD',
-    });
-
-    // 7. Create order
-    return this.createOrder(basketId);
+    const cartId = await this.createCart();
+    await this.addItemsToCart(cartId, params.items);
+    return this.createCheckout(cartId);
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────
+  // ─── Helpers ─────────────────────────────────────────────────────────────
 
-  private mapProduct(raw: SfccProductHit): Product {
+  private mapProduct(raw: ConnectProduct): Product {
+    const category = raw.primaryProductCategory?.name?.toLowerCase().replace(/\s+/g, '-') || 'moisturizer';
     return {
-      id: raw.product_id || raw.id || '',
-      salesforceId: raw.salesforceId,
-      name: raw.product_name || raw.name || '',
-      brand: raw.brand || 'Unknown',
-      category: (raw.primary_category_id || 'moisturizer') as import('@/types/product').ProductCategory,
-      price: raw.price || 0,
-      currency: raw.currency || 'USD',
-      description: raw.long_description || raw.description || '',
-      shortDescription: raw.short_description || '',
-      imageUrl: raw.image?.link || raw.imageUrl || '',
-      images: raw.image_groups?.[0]?.images?.map((img) => img.link) || [],
+      id: raw.id || '',
+      name: raw.name || '',
+      brand: (raw.fields?.['Brand__c'] as string) || 'Beaute',
+      category: category as import('@/types/product').ProductCategory,
+      price: raw.prices?.unitPrice || raw.prices?.listPrice || 0,
+      currency: raw.prices?.currencyIsoCode || 'USD',
+      description: raw.description || '',
+      shortDescription: raw.description?.substring(0, 120) || '',
+      imageUrl: raw.defaultImage?.url || '',
+      images: raw.defaultImage?.url ? [raw.defaultImage.url] : [],
       attributes: {
-        skinType: (raw.c_skinType || []) as ('dry' | 'oily' | 'combination' | 'sensitive' | 'normal')[],
-        concerns: raw.c_concerns || [],
-        ingredients: raw.c_ingredients || [],
-        size: raw.c_size || '',
-        isTravel: raw.c_isTravel || false,
+        skinType: [] as ('dry' | 'oily' | 'combination' | 'sensitive' | 'normal')[],
+        concerns: [],
+        ingredients: [],
+        size: (raw.fields?.['Size__c'] as string) || '',
+        isTravel: false,
       },
-      rating: raw.c_rating || 0,
-      reviewCount: raw.c_reviewCount || 0,
-      inStock: raw.inventory?.orderable ?? true,
-      personalizationScore: raw.c_personalizationScore,
+      rating: (raw.fields?.['Average_Rating__c'] as number) || 0,
+      reviewCount: (raw.fields?.['Review_Count__c'] as number) || 0,
+      inStock: true,
     };
   }
 }
@@ -350,10 +241,10 @@ let commerceClient: CommerceClient | null = null;
 export const getCommerceClient = (): CommerceClient => {
   if (!commerceClient) {
     commerceClient = new CommerceClient({
-      baseUrl: import.meta.env.VITE_COMMERCE_BASE_URL || '',
-      clientId: import.meta.env.VITE_COMMERCE_CLIENT_ID || '',
-      siteId: import.meta.env.VITE_COMMERCE_SITE_ID || '',
-      accessToken: import.meta.env.VITE_COMMERCE_ACCESS_TOKEN || '',
+      webstoreId: import.meta.env.VITE_COMMERCE_SITE_ID || '',
+      // Reuse Agentforce OAuth credentials — same org
+      clientId: import.meta.env.VITE_AGENTFORCE_CLIENT_ID || '',
+      clientSecret: import.meta.env.VITE_AGENTFORCE_CLIENT_SECRET || '',
     });
   }
   return commerceClient;

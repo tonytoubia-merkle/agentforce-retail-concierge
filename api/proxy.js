@@ -6,11 +6,11 @@ import https from 'node:https';
 const SF_INSTANCE = process.env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764.my.salesforce.com';
 const CLIENT_ID = process.env.VITE_AGENTFORCE_CLIENT_ID;
 const CLIENT_SECRET = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
-const COMMERCE_BASE_URL = process.env.VITE_COMMERCE_BASE_URL || '';
-const COMMERCE_SITE_ID = process.env.VITE_COMMERCE_SITE_ID || '';
+const WEBSTORE_ID = process.env.VITE_COMMERCE_SITE_ID || '';
 
 const routes = [
-  ...(COMMERCE_BASE_URL ? [{ prefix: '/api/commerce', target: COMMERCE_BASE_URL, rewrite: `/s/${COMMERCE_SITE_ID}/dw/shop/v24_1` }] : []),
+  // Commerce on Core (B2B/D2C Commerce) — same SF instance, Connect API
+  ...(WEBSTORE_ID ? [{ prefix: '/api/commerce', target: SF_INSTANCE, rewrite: `/services/data/v60.0/commerce/webstores/${WEBSTORE_ID}` }] : []),
   { prefix: '/api/oauth/token',            target: SF_INSTANCE,                                 rewrite: '/services/oauth2/token' },
   { prefix: '/api/agentforce',             target: 'https://api.salesforce.com',                rewrite: '/einstein/ai-agent/v1' },
   { prefix: '/api/cms-media',              target: SF_INSTANCE,                                 rewrite: '/cms/delivery/media' },
