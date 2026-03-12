@@ -1,4 +1,4 @@
-import { SCENE_PROMPTS, buildScenePrompt } from './prompts';
+import { SCENE_PROMPTS, buildScenePrompt, BRAND_STYLE_PRESETS, BRAND_STYLE_STRENGTH } from './prompts';
 import type { SceneSetting } from '@/types/scene';
 import type { Product } from '@/types/product';
 import type { FireflyConfig, GenerationOptions } from './types';
@@ -112,6 +112,10 @@ export class FireflyClient {
         contentClass: 'photo',
         size: { width, height },
         numVariations: 1,
+        style: {
+          presets: [...BRAND_STYLE_PRESETS],
+          strength: BRAND_STYLE_STRENGTH,
+        },
       }),
     });
 

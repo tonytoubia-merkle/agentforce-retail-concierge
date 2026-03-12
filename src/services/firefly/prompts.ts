@@ -1,27 +1,25 @@
 import type { SceneSetting } from '@/types/scene';
 
 /**
- * Brand standards for BEAUTÉ beauty brand.
- * Applied to all generated backgrounds for visual consistency.
+ * Brand aesthetic expressed as Firefly style presets — keeps these out of the
+ * prompt text and frees up chars for the actual scene description.
+ * Presets: muted_color (pastels/neutrals), studio_light (soft diffused),
+ *          shallow_depth_of_field (editorial bokeh quality).
  */
-export const BRAND_CONTEXT = `
-Luxury beauty brand aesthetic. Soft, elegant, aspirational mood.
-Color palette: muted pastels, warm neutrals, soft rose gold accents.
-Lighting: soft diffused natural light, gentle highlights, no harsh shadows.
-Style: high-end editorial photography, magazine-quality, sophisticated.
-`.trim();
+export const BRAND_STYLE_PRESETS = ['muted_color', 'studio_light', 'shallow_depth_of_field'] as const;
+export const BRAND_STYLE_STRENGTH = 50;
 
 /**
- * Composition guidance for chat/product overlay.
- * Ensures the generated background leaves space for UI elements.
+ * Composition guidance for chat/product overlay (~127 chars).
+ * Kept as prompt text — no style preset covers center-muted composition.
  */
-export const COMPOSITION_GUIDANCE = `
-IMPORTANT COMPOSITION: This image will be used as a background behind a chat interface.
-Keep the CENTER of the image relatively simple, muted, and low-contrast.
-Place visual interest, textures, and details toward the EDGES and CORNERS.
-The middle 40% should be subtle enough to allow text and product overlays to remain readable.
-Avoid bright highlights, text, or busy patterns in the center area.
-`.trim();
+export const COMPOSITION_GUIDANCE =
+  'Background for UI overlay: keep center simple and low-contrast. Visual interest at edges/corners only. No busy patterns in middle 40%.';
+
+// Firefly generate-async hard limit.
+const FIREFLY_PROMPT_MAX = 1024;
+// Overhead: COMPOSITION_GUIDANCE (~135) + connectors + suffix (~80) ≈ 250 chars → 750 left for scene.
+const MAX_RAW_PROMPT_LENGTH = 750;
 
 export const SCENE_PROMPTS: Record<SceneSetting, string> = {
   neutral:
@@ -56,25 +54,27 @@ export function buildScenePrompt(setting: SceneSetting): string {
   const base = SCENE_PROMPTS[setting];
   return `${base}.
 
-${BRAND_CONTEXT}
-
 ${COMPOSITION_GUIDANCE}
 
-Empty background scene only, no products, no bottles, no cosmetics, no text or labels. Professional interior photography, ultra high quality, photorealistic.`;
+Empty background scene only, no products, no bottles, no cosmetics, no text. Photorealistic.`.substring(0, FIREFLY_PROMPT_MAX);
 }
 
 /**
- * Wrap an agent-provided prompt with brand and composition guidance.
- * Used for "novel" prompts like specific locations or weather conditions.
+ * Wrap an agent-provided prompt with composition guidance.
+ * Brand aesthetic is handled separately via BRAND_STYLE_PRESETS on the API call.
  */
 export function wrapAgentPrompt(rawPrompt: string): string {
-  return `${rawPrompt}.
+  const truncated = rawPrompt.length > MAX_RAW_PROMPT_LENGTH
+    ? rawPrompt.substring(0, MAX_RAW_PROMPT_LENGTH).trimEnd()
+    : rawPrompt;
 
-${BRAND_CONTEXT}
+  const full = `${truncated}.
 
 ${COMPOSITION_GUIDANCE}
 
-Do not include any products, bottles, containers, or packaging in the image. Scene only, no objects. Ultra high quality, photorealistic.`;
+No products, bottles, or packaging. Scene only. Photorealistic.`;
+
+  return full.length > FIREFLY_PROMPT_MAX ? full.substring(0, FIREFLY_PROMPT_MAX) : full;
 }
 
 /**
