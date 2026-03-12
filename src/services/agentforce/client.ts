@@ -9,6 +9,11 @@ export class AgentforceClient {
   private accessToken: string | null = null;
   private tokenExpiresAt = 0;
   private sequenceId = 0;
+  // Serialization lock — Agentforce sessions don't support concurrent messages.
+  // The background welcome (seq=1) and the user's first message (seq=2) must be
+  // sent sequentially, or the API may process seq=2 before seq=1's context is
+  // established (contactId, instructions, etc.), causing missing event captures.
+  private _sendLock: Promise<void> = Promise.resolve();
 
   constructor(config: AgentforceConfig) {
     this.config = config;
@@ -43,6 +48,7 @@ export class AgentforceClient {
   async initSession(customerContext?: CustomerSessionContext): Promise<string> {
     const token = await this.getAccessToken();
     this.sequenceId = 0;
+    this._sendLock = Promise.resolve(); // reset lock for fresh session
 
     const url = `${this.config.baseUrl}/agents/${this.config.agentId}/sessions`;
 
@@ -83,6 +89,20 @@ export class AgentforceClient {
       throw new Error('Session not initialized. Call initSession() first.');
     }
 
+    // Acquire the send lock — wait for any in-flight message (e.g. background welcome)
+    // to complete before sending the next one. This prevents seq=2 from racing seq=1.
+    let releaseLock!: () => void;
+    const nextLock = new Promise<void>(resolve => { releaseLock = resolve; });
+    const prevLock = this._sendLock;
+    this._sendLock = nextLock;
+
+    try {
+      await prevLock;
+    } catch {
+      // Previous send failed — lock chain is broken, proceed anyway
+    }
+
+    try {
     const token = await this.getAccessToken();
     this.sequenceId++;
 
@@ -400,6 +420,9 @@ export class AgentforceClient {
         : (uiDirective?.payload as Record<string, unknown>)?.suggestedActions as string[] || [],
       confidence: data.confidence || 1,
     };
+    } finally {
+      releaseLock();
+    }
   }
 
   /** Snapshot current session state for later restoration. */
