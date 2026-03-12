@@ -10,7 +10,6 @@ import { generateMockResponse, setMockCustomerContext, getMockAgentSnapshot, res
 import type { MockAgentSnapshot } from '@/services/mock/mockAgent';
 import type { AgentResponse } from '@/types/agent';
 import { getAgentforceClient } from '@/services/agentforce/client';
-import { generateUIDirective } from '@/services/claude/directiveClient';
 import { getDataCloudWriteService } from '@/services/datacloud';
 import type { SceneSnapshot } from './SceneContext';
 import { useActivityToast } from '@/components/ActivityToast';
@@ -357,10 +356,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     'I need travel products',
     'What do you recommend?',
   ]);
-  const { scene, processUIDirective, resetScene, setBackground, getSceneSnapshot, restoreSceneSnapshot } = useScene();
-  // Track scene in a ref so sendMessage can read it without stale closure issues
-  const sceneRef = useRef(scene);
-  useEffect(() => { sceneRef.current = scene; }, [scene]);
+  const { processUIDirective, resetScene, setBackground, getSceneSnapshot, restoreSceneSnapshot } = useScene();
   const { customer, selectedPersonaId, isAuthenticated, isResolving, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
   const { campaign } = useCampaign();
   const { showCapture } = useActivityToast();
@@ -625,58 +621,8 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setSuggestedActions([]);
     setIsAgentTyping(true);
 
-    // ─── Parallel execution: Agentforce + Claude ──────────────────────────────
-    // Fire both calls simultaneously. Claude Haiku returns a UIDirective in
-    // ~300-500ms which is applied optimistically so products / scene appear
-    // immediately. Agentforce (3-7s) provides the authoritative conversational
-    // text and may also supply a directive — which takes precedence when present.
-    //
-    // This completely bypasses the Prompt Template reliability issue: we no
-    // longer depend on Agentforce Prompt Templates for UIDirectives. The agent
-    // still controls ALL conversational responses and CRM actions.
-    const agentPromise = getAgentResponse(content);
-
-    // Flag: prevents a late-arriving Claude callback from applying after Agentforce
-    let agentDone = false;
-
-    if (!useMockData && customer) {
-      const currentScene = sceneRef.current;
-      generateUIDirective({
-        message: content,
-        customerContext: {
-          name: customer.name?.split(' ')[0],
-          skinType: customer.beautyProfile?.skinType,
-          concerns: customer.beautyProfile?.concerns,
-          loyaltyTier: customer.loyalty?.tier || customer.loyaltyTier,
-          recentPurchaseIds: (customer.orders || [])
-            .flatMap((o) => o.lineItems.map((li) => li.productId))
-            .slice(0, 5),
-        },
-        currentScene: {
-          setting: currentScene.setting,
-          layout: currentScene.layout,
-          shownProductIds: currentScene.products?.map((p) => p.id),
-        },
-      }).then((claudeDirective) => {
-        // Apply optimistically only when:
-        // • Agentforce hasn't responded yet (agentDone guard)
-        // • It's a UI-relevant action (not a CRM-only action)
-        if (
-          claudeDirective &&
-          !agentDone &&
-          claudeDirective.action !== 'CAPTURE_ONLY' &&
-          claudeDirective.action !== 'IDENTIFY_CUSTOMER'
-        ) {
-          console.log('[conversation] Optimistic Claude directive applied:', claudeDirective.action);
-          processUIDirective(claudeDirective);
-        }
-      }).catch(() => {}); // Claude failures are always non-fatal
-    }
-    // ─────────────────────────────────────────────────────────────────────────
-
     try {
-      const response = await agentPromise;
-      agentDone = true; // Block any late Claude callback from interfering
+      const response = await getAgentResponse(content);
 
       // If the agent returns a WELCOME_SCENE during a normal conversation
       // (user typed a message), downgrade it to CHANGE_SCENE so products
@@ -711,9 +657,6 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             showCapture({ type: 'contact_created', label: 'New Contact Created' });
           }
         } else {
-          // Always apply Agentforce's directive — it is authoritative.
-          // If Claude already applied the same scene/products, the coalesced
-          // background cache and idempotent product state make this a no-op.
           await processUIDirective(response.uiDirective);
         }
 
