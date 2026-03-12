@@ -79,6 +79,9 @@ export interface BackgroundOptions {
 
 export function useGenerativeBackground() {
   const cacheRef = useRef<Record<string, string>>({});
+  // Tracks in-flight promises so concurrent requests for the same key
+  // share a single generation call instead of firing multiple API requests.
+  const pendingRef = useRef<Record<string, Promise<string>>>({});
 
   const generateBackground = useCallback(
     async (setting: SceneSetting, products: Product[], options?: BackgroundOptions): Promise<string> => {
@@ -99,6 +102,19 @@ export function useGenerativeBackground() {
       if (cacheRef.current[cacheKey]) {
         return cacheRef.current[cacheKey];
       }
+
+      // Return the existing in-flight promise if an identical request is already running.
+      // This prevents duplicate Imagen/Gemini calls when multiple components (e.g.,
+      // the optimistic Claude directive and the Agentforce directive) request the same
+      // scene simultaneously.
+      if (pendingRef.current[cacheKey]) {
+        console.log('[bg] Coalescing duplicate in-flight request for', cacheKey);
+        return pendingRef.current[cacheKey];
+      }
+
+      // Wrap the full generation pipeline in a tracked promise so concurrent
+      // callers share the same in-flight request instead of spawning duplicates.
+      const pending = (async (): Promise<string> => {
 
       // 0. Preserve existing background if provided (avoids regeneration on product updates)
       if (options?.existingBackground) {
@@ -280,6 +296,11 @@ export function useGenerativeBackground() {
         console.error(`Background generation failed (${provider}):`, error);
         return cmsImageUrl || getFallbackGradient(setting);
       }
+
+      })(); // end pending IIFE
+
+      pendingRef.current[cacheKey] = pending;
+      return pending.finally(() => { delete pendingRef.current[cacheKey]; });
     },
     []
   );

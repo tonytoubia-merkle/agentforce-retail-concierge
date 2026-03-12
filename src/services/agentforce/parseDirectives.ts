@@ -24,8 +24,11 @@ for (const p of MOCK_PRODUCTS) {
  * Ensure every product has an `id` and valid `imageUrl`.
  * The agent often returns Salesforce Product2 record IDs instead of local
  * catalog IDs, so we resolve them against the mock product catalog.
+ *
+ * Exported so Card Carousel items from Adaptive Response Formats can be
+ * enriched with the same catalog data as text-parsed directives.
  */
-function normalizeProducts(products: unknown[]): Product[] {
+export function normalizeProducts(products: unknown[]): Product[] {
   return products.map((p, i) => {
     const raw = p as Record<string, unknown>;
     if (!raw.id) {
