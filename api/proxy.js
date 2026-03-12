@@ -6,8 +6,11 @@ import https from 'node:https';
 const SF_INSTANCE = process.env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me1769724439764.my.salesforce.com';
 const CLIENT_ID = process.env.VITE_AGENTFORCE_CLIENT_ID;
 const CLIENT_SECRET = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
+const COMMERCE_BASE_URL = process.env.VITE_COMMERCE_BASE_URL || '';
+const COMMERCE_SITE_ID = process.env.VITE_COMMERCE_SITE_ID || '';
 
 const routes = [
+  ...(COMMERCE_BASE_URL ? [{ prefix: '/api/commerce', target: COMMERCE_BASE_URL, rewrite: `/s/${COMMERCE_SITE_ID}/dw/shop/v24_1` }] : []),
   { prefix: '/api/oauth/token',            target: SF_INSTANCE,                                 rewrite: '/services/oauth2/token' },
   { prefix: '/api/agentforce',             target: 'https://api.salesforce.com',                rewrite: '/einstein/ai-agent/v1' },
   { prefix: '/api/cms-media',              target: SF_INSTANCE,                                 rewrite: '/cms/delivery/media' },
@@ -206,6 +209,31 @@ export default async function handler(req, res) {
 
     res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
     return res.end(result);
+  }
+
+  // --- Salesforce OAuth token (server-side, keeps secrets out of client) ---
+  if (url === '/api/sf/token' && req.method === 'POST') {
+    if (!CLIENT_ID || !CLIENT_SECRET) {
+      res.writeHead(500, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(JSON.stringify({ error: 'Missing CLIENT_ID or CLIENT_SECRET' }));
+    }
+    const sfUrl = new URL(SF_INSTANCE);
+    const tokenBody = 'grant_type=client_credentials';
+    const tokenResult = await httpsRequest({
+      hostname: sfUrl.hostname,
+      port: 443,
+      path: '/services/oauth2/token',
+      method: 'POST',
+      headers: {
+        host: sfUrl.hostname,
+        'content-type': 'application/x-www-form-urlencoded',
+        'content-length': Buffer.byteLength(tokenBody),
+        authorization: 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+        accept: 'application/json',
+      },
+    }, tokenBody);
+    res.writeHead(tokenResult.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+    return res.end(tokenResult.body);
   }
 
   try {
