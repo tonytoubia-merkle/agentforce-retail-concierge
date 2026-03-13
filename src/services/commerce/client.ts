@@ -218,17 +218,22 @@ export class CommerceClient {
 
   private mapProduct(raw: ConnectProduct): Product {
     const category = raw.primaryProductCategory?.name?.toLowerCase().replace(/\s+/g, '-') || 'moisturizer';
+    // SKU matches the local asset filename (e.g. 'moisturizer-sensitive' → /assets/products/moisturizer-sensitive.png)
+    const sku = raw.sku || (raw.fields?.['StockKeepingUnit'] as string) || '';
+    const localImage = sku ? `/assets/products/${sku}.png` : '';
+    const imageUrl = raw.defaultImage?.url || localImage;
     return {
       id: raw.id || '',
+      salesforceId: raw.id,
       name: raw.name || '',
-      brand: (raw.fields?.['Brand__c'] as string) || 'Beaute',
+      brand: (raw.fields?.['Family'] as string) || 'SERENE',
       category: category as import('@/types/product').ProductCategory,
       price: raw.prices?.unitPrice || raw.prices?.listPrice || 0,
       currency: raw.prices?.currencyIsoCode || 'USD',
       description: raw.description || '',
       shortDescription: raw.description?.substring(0, 120) || '',
-      imageUrl: raw.defaultImage?.url || '',
-      images: raw.defaultImage?.url ? [raw.defaultImage.url] : [],
+      imageUrl,
+      images: imageUrl ? [imageUrl] : [],
       attributes: {
         skinType: [] as ('dry' | 'oily' | 'combination' | 'sensitive' | 'normal')[],
         concerns: [],
@@ -236,8 +241,8 @@ export class CommerceClient {
         size: (raw.fields?.['Size__c'] as string) || '',
         isTravel: false,
       },
-      rating: (raw.fields?.['Average_Rating__c'] as number) || 0,
-      reviewCount: (raw.fields?.['Review_Count__c'] as number) || 0,
+      rating: 0,
+      reviewCount: 0,
       inStock: true,
     };
   }
