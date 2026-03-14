@@ -7,7 +7,7 @@ import { MerkuryProfilePicker } from './MerkuryProfilePicker';
 export const ProfileDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showMerkuryPicker, setShowMerkuryPicker] = useState(false);
-  const { customer, isAuthenticated, signIn, signOut } = useCustomer();
+  const { customer, isAuthenticated, signIn, signOut, selectPersona } = useCustomer();
   const { navigateToAccount, navigateToAppointment } = useStore();
 
   const isKnown = customer?.merkuryIdentity?.identityTier === 'known';
@@ -25,7 +25,7 @@ export const ProfileDropdown: React.FC = () => {
   };
 
   const handleNotMe = () => {
-    signOut();
+    selectPersona('anonymous');
   };
 
   const handleRegister = () => {
