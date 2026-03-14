@@ -25,9 +25,9 @@ export const ProfileDropdown: React.FC = () => {
   };
 
   const handleNotMe = () => {
-    // Reset to anonymous — handled by DemoPanel now but kept for "Not you?" button
     signOut();
     setIsOpen(false);
+    setShowMerkuryPicker(true);
   };
 
   const handleRegister = () => {

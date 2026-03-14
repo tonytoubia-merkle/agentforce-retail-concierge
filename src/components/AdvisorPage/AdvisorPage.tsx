@@ -2,7 +2,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useScene } from '@/contexts/SceneContext';
 import { useConversation } from '@/contexts/ConversationContext';
-import { useCustomer } from '@/contexts/CustomerContext';
 import { GenerativeBackground } from '@/components/GenerativeBackground';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CheckoutOverlay } from '@/components/CheckoutOverlay';
@@ -15,12 +14,7 @@ import { sceneAnimationVariants } from '@/utils/animations';
 export const AdvisorPage: React.FC = () => {
   const { scene } = useScene();
   const { messages, sendMessage, isAgentTyping, isLoadingWelcome, suggestedActions } = useConversation();
-  const { customer, isAuthenticated, signIn } = useCustomer();
   const navigate = useNavigate();
-
-  const isKnown = customer?.merkuryIdentity?.identityTier === 'known';
-  const isAppended = customer?.merkuryIdentity?.identityTier === 'appended';
-  const isPseudonymous = (isKnown || isAppended) && !isAuthenticated;
 
   return (
     <div className="relative min-h-screen">
@@ -42,16 +36,8 @@ export const AdvisorPage: React.FC = () => {
           Store
         </button>
 
-        {/* Right side: Sign In + Profile */}
+        {/* Right side: Profile */}
         <div className="flex items-center gap-2">
-          {isPseudonymous && (
-            <button
-              onClick={signIn}
-              className="px-3 py-1.5 text-sm font-medium bg-white/90 hover:bg-white text-stone-900 rounded-full backdrop-blur-sm transition-all shadow-sm"
-            >
-              Sign In
-            </button>
-          )}
           <ProfileDropdown />
         </div>
       </div>
