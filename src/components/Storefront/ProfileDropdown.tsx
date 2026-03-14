@@ -26,8 +26,6 @@ export const ProfileDropdown: React.FC = () => {
 
   const handleNotMe = () => {
     signOut();
-    setIsOpen(false);
-    setShowMerkuryPicker(true);
   };
 
   const handleRegister = () => {
