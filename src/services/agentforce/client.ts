@@ -94,9 +94,12 @@ export class AgentforceClient {
   private accessToken: string | null = null;
   private tokenExpiresAt = 0;
   private sequenceId = 0;
-  // Set to true after the first 406 from the messages endpoint — SSE not supported by this org.
-  // All subsequent calls in this session skip the SSE attempt and go straight to JSON.
-  private _sseUnsupported = false;
+  // Tracks whether SSE streaming is supported by the connected Agentforce org.
+  // Defaults to true (unsupported) because the Agentforce /messages endpoint currently
+  // returns 500 for Accept: text/event-stream, and a failed SSE attempt sends the message
+  // to SF which processes it, causing a duplicate-sequenceId error on the JSON retry.
+  // Reset to false on each new session so future SF SSE support is auto-detected per session.
+  private _sseUnsupported = true;
   // Serialization lock — Agentforce sessions don't support concurrent messages.
   // The background welcome (seq=1) and the user's first message (seq=2) must be
   // sent sequentially, or the API may process seq=2 before seq=1's context is
@@ -139,6 +142,7 @@ export class AgentforceClient {
     const token = await this.getAccessToken();
     this.sequenceId = 0;
     this._sendLock = Promise.resolve(); // reset lock for fresh session
+    this._sseUnsupported = true; // re-detect SSE support per session (currently unsupported)
 
     const url = `${this.config.baseUrl}/agents/${this.config.agentId}/sessions`;
 
