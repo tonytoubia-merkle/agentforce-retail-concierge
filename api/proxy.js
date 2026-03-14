@@ -16,9 +16,7 @@ const routes = [
   // Commerce on Core (B2B/D2C Commerce) — same SF instance, Connect API
   ...(WEBSTORE_ID ? [{ prefix: '/api/commerce', target: SF_INSTANCE, rewrite: `/services/data/v60.0/commerce/webstores/${WEBSTORE_ID}` }] : []),
   { prefix: '/api/oauth/token',            target: SF_INSTANCE,                                 rewrite: '/services/oauth2/token' },
-  // Route Agentforce directly to the org instance instead of the global gateway
-  // (api.salesforce.com adds an extra routing hop that increases latency significantly)
-  { prefix: '/api/agentforce',             target: SF_INSTANCE,                                 rewrite: '/einstein/ai-agent/v1' },
+  { prefix: '/api/agentforce',             target: 'https://api.salesforce.com',                rewrite: '/einstein/ai-agent/v1' },
   { prefix: '/api/cms-media',              target: SF_INSTANCE,                                 rewrite: '/cms/delivery/media' },
   { prefix: '/api/cms',                    target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0/connect/cms' },
   { prefix: '/api/imagen/generate',        target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/imagen-4.0-generate-001:predict' },

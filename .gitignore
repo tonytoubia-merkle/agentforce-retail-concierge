@@ -12,3 +12,7 @@ dist/
 plan.md
 scripts/check-sarah-contact.apex
 scripts/current_agentscript.js
+
+# One-off probe/diagnostic scripts and data files
+scripts/*.cjs
+simpleCommerceImport.csv
