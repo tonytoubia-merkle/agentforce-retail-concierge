@@ -23,7 +23,7 @@ export const AdvisorPage: React.FC = () => {
   const isPseudonymous = (isKnown || isAppended) && !isAuthenticated;
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen">
       <GenerativeBackground
         background={scene.background}
         setting={scene.setting}
@@ -52,9 +52,7 @@ export const AdvisorPage: React.FC = () => {
               Sign In
             </button>
           )}
-          <div className="bg-black/20 hover:bg-black/30 backdrop-blur-sm rounded-full transition-all">
-            <ProfileDropdown />
-          </div>
+          <ProfileDropdown />
         </div>
       </div>
 
