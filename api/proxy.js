@@ -8,7 +8,7 @@ const CLIENT_ID = process.env.VITE_AGENTFORCE_CLIENT_ID;
 const CLIENT_SECRET = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
 const WEBSTORE_ID = (process.env.VITE_COMMERCE_SITE_ID || '').trim();
 const PERFECT_CORP_API_KEY = process.env.VITE_PERFECT_CORP_API_KEY || '';
-const PERFECT_CORP_BASE = 'api.perfectcorp.com';
+const PERFECT_CORP_BASE = 'yce-api-01.makeupar.com';
 
 // Server-side token cache — persists across requests within the same warm function instance
 let _cachedToken = null;
@@ -23,7 +23,7 @@ const routes = [
   { prefix: '/api/cms',                    target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0/connect/cms' },
   { prefix: '/api/imagen/generate',        target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/imagen-4.0-generate-001:predict' },
   { prefix: '/api/gemini/generateContent', target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.5-flash-image:generateContent' },
-  { prefix: '/api/gemini/vision',          target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.0-flash-lite:generateContent' },
+  { prefix: '/api/gemini/vision',          target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-1.5-flash:generateContent' },
   { prefix: '/api/firefly/token',          target: 'https://ims-na1.adobelogin.com',            rewrite: '/ims/token/v3' },
   { prefix: '/api/firefly/generate',       target: 'https://firefly-api.adobe.io',              rewrite: '/v3/images/generate-async' },
   { prefix: '/api/firefly/status',         target: 'https://firefly-api.adobe.io',              rewrite: '/v3/status' },

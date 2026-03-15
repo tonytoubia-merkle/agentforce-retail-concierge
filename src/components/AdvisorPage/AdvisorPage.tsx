@@ -19,7 +19,7 @@ interface AdvisorPageProps {
 }
 
 export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => {
-  const { scene, setAdvisorMode, setBackground } = useScene();
+  const { scene, setAdvisorMode } = useScene();
   const { messages, sendMessage, isAgentTyping, isLoadingWelcome, suggestedActions } = useConversation();
   const navigate = useNavigate();
 
@@ -31,20 +31,16 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
     setAdvisorMode(mode);
   }, [mode, setAdvisorMode]);
 
-  // Skin concierge gets its own consultative gradient — never the generative beauty background
-  useEffect(() => {
-    if (mode === 'skin-concierge') {
-      setBackground({
-        type: 'gradient',
-        value: 'linear-gradient(150deg, #071419 0%, #0d2530 35%, #0c2a34 55%, #0a1e28 80%, #051018 100%)',
-      });
-    }
-  }, [mode, setBackground]);
+  // Skin concierge always uses a fixed consultative gradient — bypasses scene state entirely
+  const SKIN_CONCIERGE_BG = {
+    type: 'gradient' as const,
+    value: 'linear-gradient(150deg, #071419 0%, #0d2530 35%, #0c2a34 55%, #0a1e28 80%, #051018 100%)',
+  };
 
   return (
     <div className="relative min-h-screen">
       <GenerativeBackground
-        background={scene.background}
+        background={mode === 'skin-concierge' ? SKIN_CONCIERGE_BG : scene.background}
         setting={scene.setting}
       />
 
