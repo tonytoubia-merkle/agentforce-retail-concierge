@@ -178,9 +178,11 @@ export class PerfectCorpClient {
           const zipRes = await fetch(zipUrl);
           const zipBuf = new Uint8Array(await zipRes.arrayBuffer());
           const files = unzipSync(zipBuf);
-          const firstKey = Object.keys(files)[0];
-          console.log('[perfectcorp] ZIP entry:', firstKey);
-          const scores = JSON.parse(new TextDecoder().decode(files[firstKey]));
+          console.log('[perfectcorp] ZIP entries:', Object.keys(files).join(', '));
+          const jsonKey = Object.keys(files).find((k) => k.endsWith('.json'));
+          if (!jsonKey) throw new Error(`No JSON entry in ZIP: ${Object.keys(files).join(', ')}`);
+          console.log('[perfectcorp] ZIP JSON entry:', jsonKey);
+          const scores = JSON.parse(new TextDecoder().decode(files[jsonKey]));
           console.log('[perfectcorp] scores keys:', Object.keys(scores).join(', '));
           // Merge scores into the results block
           if (json?.data?.results) json.data.results = { ...json.data.results, ...scores };
