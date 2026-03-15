@@ -366,6 +366,11 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       case 'RETAILER_HANDOFF':
+        // If the agent passes products (cold-start "where to buy" with no prior recommendation),
+        // set them into scene state so the retailer panel has something to resolve against.
+        if (payload.products && payload.products.length > 0) {
+          dispatch({ type: 'SET_PRODUCTS', products: payload.products });
+        }
         dispatch({ type: 'OPEN_RETAILER_HANDOFF' });
         break;
 
