@@ -16,27 +16,29 @@
 import type { SkinAnalysisResult, SkinConcernScore } from '@/types/skinanalysis';
 import { getGeminiClient } from '@/services/gemini/client';
 
-/** The 15 skin concerns YouCam AI reports on, with human-readable labels. */
-const CONCERN_LABELS: Record<string, string> = {
-  acne: 'Acne',
-  wrinkle: 'Wrinkles',
-  dark_circle: 'Dark Circles',
-  eye_bag: 'Eye Bags',
-  pore: 'Enlarged Pores',
-  spot: 'Dark Spots',
-  redness: 'Redness',
-  texture: 'Uneven Texture',
-  oiliness: 'Oiliness',
-  hydration: 'Dehydration',
-  firmness: 'Loss of Firmness',
-  radiance: 'Dullness',
-  sensitivity: 'Sensitivity',
-  uv_damage: 'UV Damage',
-  uneven_tone: 'Uneven Tone',
-};
+/** HD dst_actions to request — all HD (cannot mix HD + SD). */
+const HD_ACTIONS = [
+  'hd_wrinkle', 'hd_pore', 'hd_texture', 'hd_acne', 'hd_oiliness',
+  'hd_radiance', 'hd_eye_bag', 'hd_age_spot', 'hd_dark_circle',
+  'hd_firmness', 'hd_moisture', 'hd_redness', 'hd_skin_type',
+];
 
-/** All concerns the API should assess in every request. */
-const DEFAULT_CONCERNS = Object.keys(CONCERN_LABELS);
+/** Maps Perfect Corp HD action result keys → our internal concern keys + labels. */
+const HD_CONCERN_MAP: Record<string, { key: string; label: string }> = {
+  hd_acne:        { key: 'acne',        label: 'Acne' },
+  hd_wrinkle:     { key: 'wrinkle',     label: 'Wrinkles' },
+  hd_dark_circle: { key: 'dark_circle', label: 'Dark Circles' },
+  hd_eye_bag:     { key: 'eye_bag',     label: 'Eye Bags' },
+  hd_pore:        { key: 'pore',        label: 'Enlarged Pores' },
+  hd_age_spot:    { key: 'spot',        label: 'Dark Spots' },
+  hd_redness:     { key: 'redness',     label: 'Redness' },
+  hd_texture:     { key: 'texture',     label: 'Uneven Texture' },
+  hd_oiliness:    { key: 'oiliness',    label: 'Oiliness' },
+  hd_moisture:    { key: 'hydration',   label: 'Dehydration' },
+  hd_firmness:    { key: 'firmness',    label: 'Loss of Firmness' },
+  hd_radiance:    { key: 'radiance',    label: 'Dullness' },
+  hd_skin_type:   { key: 'skin_type',   label: 'Skin Type' },
+};
 
 export interface PerfectCorpConfig {
   apiKey?: string;
@@ -132,7 +134,7 @@ export class PerfectCorpClient {
   }
 
   private async submitTask(fileId: string): Promise<string> {
-    const taskBody = { src_file_id: fileId, dst_actions: [], concerns: DEFAULT_CONCERNS };
+    const taskBody = { src_file_id: fileId, dst_actions: HD_ACTIONS };
     console.log('[perfectcorp] submitTask body:', JSON.stringify(taskBody));
     const res = await fetch('/api/perfectcorp/task', {
       method: 'POST',
@@ -176,27 +178,21 @@ export class PerfectCorpClient {
   // ─── Result normalisation ─────────────────────────────────────────────────
 
   private normalizeResult(raw: Record<string, unknown>): SkinAnalysisResult {
-    // V2.0: { status, task_status, results: { concern_results: [...], result_image_url } }
+    // V2.0 poll response: { status, task_status, results: { hd_acne: {score}, hd_wrinkle: {score}, ... } }
     const resultsBlock = (raw.results ?? (raw.data as Record<string, unknown>)?.results ?? {}) as Record<string, unknown>;
-    // concern_results may be an array [{concern, score}] or a map {concern_name: {score}}
-    const concernResultsRaw = resultsBlock.concern_results ?? resultsBlock;
-    const concernMap: Record<string, number> = {};
-    if (Array.isArray(concernResultsRaw)) {
-      for (const entry of concernResultsRaw as Array<{ concern?: string; name?: string; score?: number }>) {
-        const key = entry.concern ?? entry.name ?? '';
-        if (key) concernMap[key] = entry.score ?? 0;
-      }
-    } else {
-      for (const [k, v] of Object.entries(concernResultsRaw as Record<string, unknown>)) {
-        concernMap[k] = typeof v === 'number' ? v : (v as Record<string, number>)?.score ?? 0;
-      }
-    }
+    console.log('[perfectcorp] results keys:', Object.keys(resultsBlock).join(', '));
 
-    const concerns: SkinConcernScore[] = DEFAULT_CONCERNS.map((key) => {
-      const score = Math.round((concernMap[key] ?? 0) * 100);
+    const concerns: SkinConcernScore[] = HD_ACTIONS.map((action) => {
+      const mapping = HD_CONCERN_MAP[action];
+      const resultEntry = resultsBlock[action] as Record<string, unknown> | undefined;
+      // score may be a float 0-1 or an object with a score property
+      const raw_score = typeof resultEntry === 'number'
+        ? resultEntry
+        : (resultEntry?.score as number) ?? 0;
+      const score = Math.round(raw_score * 100);
       return {
-        concern: key,
-        label: CONCERN_LABELS[key] ?? key,
+        concern: mapping?.key ?? action,
+        label: mapping?.label ?? action,
         score,
         severity: scoreToseverity(score),
       };
@@ -206,12 +202,15 @@ export class PerfectCorpClient {
       .filter((c) => c.severity !== 'none')
       .sort((a, b) => b.score - a.score)[0];
 
-    // V2.1 doesn't return skin_type/skin_age/overall_score — derive overall from concerns
     const avgConcernScore = concerns.reduce((s, c) => s + c.score, 0) / concerns.length;
     const overallScore = Math.max(0, Math.round(100 - avgConcernScore));
 
+    // hd_skin_type result is a string, not a score
+    const skinTypeEntry = resultsBlock.hd_skin_type as Record<string, unknown> | string | undefined;
+    const skinTypeRaw = typeof skinTypeEntry === 'string' ? skinTypeEntry : (skinTypeEntry?.skin_type as string) ?? 'normal';
+
     return {
-      skinType: (resultsBlock.skin_type as SkinAnalysisResult['skinType']) ?? 'normal',
+      skinType: skinTypeRaw as SkinAnalysisResult['skinType'],
       skinAge: (resultsBlock.skin_age as number) ?? 0,
       overallScore,
       concerns,
