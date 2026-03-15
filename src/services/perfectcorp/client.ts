@@ -83,19 +83,21 @@ export class PerfectCorpClient {
   // ─── Live API flow ────────────────────────────────────────────────────────
 
   private async liveAnalysis(imageFile: File): Promise<SkinAnalysisResult> {
-    // Step 1: Upload image → file_id
-    const fileId = await this.uploadFile(imageFile);
+    // Step 1: Upload image → get back a src_file_url or file_id
+    const fileRef = await this.uploadFile(imageFile);
 
-    // Step 2: Submit task → task_id
-    const taskId = await this.submitTask(fileId);
+    // Step 2: Submit task using the file reference → task_id
+    const taskId = await this.submitTask(fileRef);
 
-    // Step 3: Poll until complete (max 30s)
+    // Step 3: Poll until complete (max 60s)
     const raw = await this.pollTask(taskId);
 
     return this.normalizeResult(raw);
   }
 
-  private async uploadFile(imageFile: File): Promise<string> {
+  /** Upload the image and return whatever file reference the API gives back
+   *  (could be { src_file_url } or { file_id } depending on API version). */
+  private async uploadFile(imageFile: File): Promise<Record<string, string>> {
     const res = await fetch('/api/perfectcorp/file', {
       method: 'POST',
       headers: { 'Content-Type': imageFile.type || 'image/jpeg' },
@@ -107,19 +109,28 @@ export class PerfectCorpClient {
       throw new Error(`Perfect Corp file upload failed (${res.status}): ${err}`);
     }
 
-    const data = await res.json();
-    if (!data.file_id) throw new Error('Perfect Corp: no file_id in upload response');
-    return data.file_id as string;
+    const json = await res.json();
+    console.log('[perfectcorp] upload response:', JSON.stringify(json).substring(0, 300));
+    // Response wraps data in json.data
+    const inner = (json?.data ?? json) as Record<string, string>;
+    return inner;
   }
 
-  private async submitTask(fileId: string): Promise<string> {
+  private async submitTask(fileRef: Record<string, string>): Promise<string> {
+    // Build task body — use src_file_url if available, otherwise src_file_id / file_id
+    const body: Record<string, unknown> = {
+      dst_actions: [],
+      miniserver_args: { enable_mask_overlay: false },
+      format: 'json',
+    };
+    if (fileRef.src_file_url) body.src_file_url = fileRef.src_file_url;
+    else if (fileRef.file_id) body.src_file_id = fileRef.file_id;
+    else if (fileRef.src_file_id) body.src_file_id = fileRef.src_file_id;
+
     const res = await fetch('/api/perfectcorp/task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        file_id: fileId,
-        concerns: DEFAULT_CONCERNS,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!res.ok) {
@@ -127,13 +138,16 @@ export class PerfectCorpClient {
       throw new Error(`Perfect Corp task submission failed (${res.status}): ${err}`);
     }
 
-    const data = await res.json();
-    if (!data.task_id) throw new Error('Perfect Corp: no task_id in task response');
-    return data.task_id as string;
+    const json = await res.json();
+    console.log('[perfectcorp] task start response:', JSON.stringify(json).substring(0, 300));
+    // Response wraps data in json.data
+    const taskId = json?.data?.task_id ?? json?.task_id;
+    if (!taskId) throw new Error(`Perfect Corp: no task_id in response: ${JSON.stringify(json).substring(0, 200)}`);
+    return taskId as string;
   }
 
-  private async pollTask(taskId: string, maxWaitMs = 30_000): Promise<Record<string, unknown>> {
-    const interval = 800;
+  private async pollTask(taskId: string, maxWaitMs = 60_000): Promise<Record<string, unknown>> {
+    const interval = 2000;
     const deadline = Date.now() + maxWaitMs;
 
     while (Date.now() < deadline) {
@@ -142,22 +156,27 @@ export class PerfectCorpClient {
       const res = await fetch(`/api/perfectcorp/task/${encodeURIComponent(taskId)}`);
       if (!res.ok) continue;
 
-      const data = await res.json();
-      if (data.task_status === 'success') return data as Record<string, unknown>;
-      if (data.task_status === 'error') {
-        throw new Error(`Perfect Corp analysis failed: ${data.error_message ?? 'unknown error'}`);
+      const json = await res.json();
+      // Response wraps data in json.data
+      const taskStatus = json?.data?.task_status ?? json?.task_status;
+      console.log('[perfectcorp] poll status:', taskStatus);
+      if (taskStatus === 'success') return json as Record<string, unknown>;
+      if (taskStatus === 'error') {
+        throw new Error(`Perfect Corp analysis failed: ${JSON.stringify(json?.data ?? json)}`);
       }
       // still processing — keep polling
     }
 
-    throw new Error('Perfect Corp analysis timed out after 30 seconds');
+    throw new Error('Perfect Corp analysis timed out after 60 seconds');
   }
 
   // ─── Result normalisation ─────────────────────────────────────────────────
 
   private normalizeResult(raw: Record<string, unknown>): SkinAnalysisResult {
-    const result = (raw.result ?? {}) as Record<string, unknown>;
-    const concernsRaw = (result.concerns ?? {}) as Record<string, number>;
+    // API wraps everything in raw.data
+    const dataWrapper = (raw.data ?? raw) as Record<string, unknown>;
+    const results = (dataWrapper.results ?? dataWrapper.result ?? {}) as Record<string, unknown>;
+    const concernsRaw = (results.concerns ?? results) as Record<string, number>;
 
     const concerns: SkinConcernScore[] = DEFAULT_CONCERNS.map((key) => {
       const score = Math.round((concernsRaw[key] ?? 0) * 100);
@@ -174,9 +193,9 @@ export class PerfectCorpClient {
       .sort((a, b) => b.score - a.score)[0];
 
     return {
-      skinType: (result.skin_type as SkinAnalysisResult['skinType']) ?? 'normal',
-      skinAge: (result.skin_age as number) ?? 0,
-      overallScore: Math.round(((result.overall_score as number) ?? 0.7) * 100),
+      skinType: (results.skin_type as SkinAnalysisResult['skinType']) ?? 'normal',
+      skinAge: (results.skin_age as number) ?? 0,
+      overallScore: Math.round(((results.overall_score as number) ?? 0.7) * 100),
       concerns,
       primaryConcern: topConcern?.label ?? 'None detected',
       analyzedAt: new Date().toISOString(),
