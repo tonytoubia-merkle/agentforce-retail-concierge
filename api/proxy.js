@@ -7,6 +7,8 @@ const SF_INSTANCE = process.env.VITE_AGENTFORCE_INSTANCE_URL || 'https://me17697
 const CLIENT_ID = process.env.VITE_AGENTFORCE_CLIENT_ID;
 const CLIENT_SECRET = process.env.VITE_AGENTFORCE_CLIENT_SECRET;
 const WEBSTORE_ID = (process.env.VITE_COMMERCE_SITE_ID || '').trim();
+const PERFECT_CORP_API_KEY = process.env.VITE_PERFECT_CORP_API_KEY || '';
+const PERFECT_CORP_BASE = 'api.perfectcorp.com';
 
 // Server-side token cache — persists across requests within the same warm function instance
 let _cachedToken = null;
@@ -21,7 +23,7 @@ const routes = [
   { prefix: '/api/cms',                    target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0/connect/cms' },
   { prefix: '/api/imagen/generate',        target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/imagen-4.0-generate-001:predict' },
   { prefix: '/api/gemini/generateContent', target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.5-flash-image:generateContent' },
-  { prefix: '/api/gemini/vision',          target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.0-flash:generateContent' },
+  { prefix: '/api/gemini/vision',          target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.0-flash-lite:generateContent' },
   { prefix: '/api/firefly/token',          target: 'https://ims-na1.adobelogin.com',            rewrite: '/ims/token/v3' },
   { prefix: '/api/firefly/generate',       target: 'https://firefly-api.adobe.io',              rewrite: '/v3/images/generate-async' },
   { prefix: '/api/firefly/status',         target: 'https://firefly-api.adobe.io',              rewrite: '/v3/status' },
@@ -939,6 +941,56 @@ export default async function handler(req, res) {
       const json = JSON.stringify({ appointments });
       res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
       return res.end(json);
+    }
+
+    // --- Perfect Corp YouCam AI Skin Analysis ---
+    // POST /api/perfectcorp/file   → upload image, receive file_id
+    // POST /api/perfectcorp/task   → submit analysis task, receive task_id
+    // GET  /api/perfectcorp/task/:id → poll until complete
+    if (url === '/api/perfectcorp/file' && req.method === 'POST') {
+      if (!PERFECT_CORP_API_KEY) {
+        res.writeHead(503, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'VITE_PERFECT_CORP_API_KEY not configured' }));
+      }
+      const body = await readBody(req);
+      const contentType = req.headers['content-type'] || 'application/octet-stream';
+      const result = await httpsRequest({
+        hostname: PERFECT_CORP_BASE, port: 443,
+        path: '/s2s/v2.0/file/skin-analysis', method: 'POST',
+        headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}`, 'Content-Type': contentType, 'Content-Length': body.length },
+      }, body);
+      res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(result.body);
+    }
+
+    if (url === '/api/perfectcorp/task' && req.method === 'POST') {
+      if (!PERFECT_CORP_API_KEY) {
+        res.writeHead(503, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'VITE_PERFECT_CORP_API_KEY not configured' }));
+      }
+      const body = await readBody(req);
+      const result = await httpsRequest({
+        hostname: PERFECT_CORP_BASE, port: 443,
+        path: '/s2s/v2.0/task/skin-analysis', method: 'POST',
+        headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}`, 'Content-Type': 'application/json', 'Content-Length': body.length },
+      }, body);
+      res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(result.body);
+    }
+
+    if (url.startsWith('/api/perfectcorp/task/') && req.method === 'GET') {
+      if (!PERFECT_CORP_API_KEY) {
+        res.writeHead(503, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+        return res.end(JSON.stringify({ error: 'VITE_PERFECT_CORP_API_KEY not configured' }));
+      }
+      const taskId = decodeURIComponent(url.replace('/api/perfectcorp/task/', '').split('?')[0]);
+      const result = await httpsRequest({
+        hostname: PERFECT_CORP_BASE, port: 443,
+        path: `/s2s/v2.0/task/skin-analysis/${encodeURIComponent(taskId)}`, method: 'GET',
+        headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}` },
+      });
+      res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      return res.end(result.body);
     }
 
     // --- Generic route-based proxy ---

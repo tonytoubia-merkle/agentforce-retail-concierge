@@ -202,6 +202,8 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     switch (action) {
       case 'SHOW_PRODUCT':
       case 'SHOW_PRODUCTS': {
+        // Skin concierge never triggers generative backgrounds
+        const skinConciergeMode = sceneRef.current.advisorMode === 'skin-concierge';
         if (payload.products && payload.products.length > 0) {
           const layout = payload.products.length === 1 ? 'product-hero' : 'product-grid';
           dispatch({ type: 'TRANSITION_LAYOUT', layout, products: payload.products });
@@ -244,7 +246,7 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         dispatch({ type: 'SET_SETTING', setting });
 
-        if (shouldGenerate && !alreadyHasImage) {
+        if (shouldGenerate && !alreadyHasImage && !skinConciergeMode) {
           dispatch({
             type: 'SET_BACKGROUND',
             background: { type: 'generative', value: '', isLoading: true },
@@ -272,6 +274,9 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       case 'CHANGE_SCENE': {
+        // Skin concierge never triggers generative backgrounds
+        if (sceneRef.current.advisorMode === 'skin-concierge') break;
+
         // Keep current setting when agent doesn't explicitly provide one and we have a background.
         // Also try inferring from agent's theme/context text (e.g. "luxury travel essentials" → travel).
         const curForChange = sceneRef.current;
@@ -387,6 +392,9 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             subtext: payload.welcomeSubtext,
           },
         });
+
+        // Skin concierge has its own fixed gradient — never override with a generated/default image
+        if (sceneRef.current.advisorMode === 'skin-concierge') break;
 
         // Generate background for welcome scene
         const welcomeSetting: SceneSetting = payload.sceneContext?.setting || 'neutral';
