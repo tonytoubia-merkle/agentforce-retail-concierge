@@ -947,22 +947,23 @@ export default async function handler(req, res) {
     // POST /api/perfectcorp/file   → upload image, receive file_id
     // POST /api/perfectcorp/task   → submit analysis task, receive task_id
     // GET  /api/perfectcorp/task/:id → poll until complete
+    // Perfect Corp V2.1 — POST /api/perfectcorp/file → create file slot, returns file_id + upload_url
     if (url === '/api/perfectcorp/file' && req.method === 'POST') {
       if (!PERFECT_CORP_API_KEY) {
         res.writeHead(503, { 'Content-Type': 'application/json', ...CORS_HEADERS });
         return res.end(JSON.stringify({ error: 'VITE_PERFECT_CORP_API_KEY not configured' }));
       }
       const body = await readBody(req);
-      const contentType = req.headers['content-type'] || 'application/octet-stream';
       const result = await httpsRequest({
         hostname: PERFECT_CORP_BASE, port: 443,
-        path: '/s2s/v2.0/file/skin-analysis', method: 'POST',
-        headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}`, 'Content-Type': contentType, 'Content-Length': body.length },
+        path: '/s2s/v2.1/file/skin-analysis', method: 'POST',
+        headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}`, 'Content-Type': 'application/json', 'Content-Length': body.length },
       }, body);
       res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
       return res.end(result.body);
     }
 
+    // Perfect Corp V2.1 — POST /api/perfectcorp/task → start task with file_id + concerns
     if (url === '/api/perfectcorp/task' && req.method === 'POST') {
       if (!PERFECT_CORP_API_KEY) {
         res.writeHead(503, { 'Content-Type': 'application/json', ...CORS_HEADERS });
@@ -971,22 +972,23 @@ export default async function handler(req, res) {
       const body = await readBody(req);
       const result = await httpsRequest({
         hostname: PERFECT_CORP_BASE, port: 443,
-        path: '/s2s/v2.0/task/skin-analysis', method: 'POST',
+        path: '/s2s/v2.1/task/skin-analysis', method: 'POST',
         headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}`, 'Content-Type': 'application/json', 'Content-Length': body.length },
       }, body);
       res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });
       return res.end(result.body);
     }
 
-    if (url.startsWith('/api/perfectcorp/task/') && req.method === 'GET') {
+    // Perfect Corp V2.1 — GET /api/perfectcorp/task?task_id=... → poll task status
+    if (url.startsWith('/api/perfectcorp/task') && req.method === 'GET') {
       if (!PERFECT_CORP_API_KEY) {
         res.writeHead(503, { 'Content-Type': 'application/json', ...CORS_HEADERS });
         return res.end(JSON.stringify({ error: 'VITE_PERFECT_CORP_API_KEY not configured' }));
       }
-      const taskId = decodeURIComponent(url.replace('/api/perfectcorp/task/', '').split('?')[0]);
+      const qs = url.includes('?') ? url.slice(url.indexOf('?')) : '';
       const result = await httpsRequest({
         hostname: PERFECT_CORP_BASE, port: 443,
-        path: `/s2s/v2.0/task/skin-analysis/${encodeURIComponent(taskId)}`, method: 'GET',
+        path: `/s2s/v2.1/task/skin-analysis${qs}`, method: 'GET',
         headers: { 'Authorization': `Bearer ${PERFECT_CORP_API_KEY}` },
       });
       res.writeHead(result.statusCode, { 'Content-Type': 'application/json', ...CORS_HEADERS });

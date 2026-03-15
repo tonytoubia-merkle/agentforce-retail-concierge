@@ -83,66 +83,65 @@ export class PerfectCorpClient {
   // ─── Live API flow ────────────────────────────────────────────────────────
 
   private async liveAnalysis(imageFile: File): Promise<SkinAnalysisResult> {
-    // Step 1: Upload image → get back a src_file_url or file_id
-    const fileRef = await this.uploadFile(imageFile);
+    // Step 1: Create file slot → get file_id + pre-signed upload_url
+    const { fileId, uploadUrl, uploadHeaders } = await this.createFileSlot(imageFile.name);
 
-    // Step 2: Submit task using the file reference → task_id
-    const taskId = await this.submitTask(fileRef);
+    // Step 2: PUT image directly to pre-signed URL (no proxy needed)
+    await this.uploadToPresignedUrl(imageFile, uploadUrl, uploadHeaders);
 
-    // Step 3: Poll until complete (max 60s)
+    // Step 3: Submit task with file_id + concerns → task_id
+    const taskId = await this.submitTask(fileId);
+
+    // Step 4: Poll until complete
     const raw = await this.pollTask(taskId);
 
     return this.normalizeResult(raw);
   }
 
-  /** Upload the image and return whatever file reference the API gives back
-   *  (could be { src_file_url } or { file_id } depending on API version). */
-  private async uploadFile(imageFile: File): Promise<Record<string, string>> {
+  private async createFileSlot(fileName: string): Promise<{ fileId: string; uploadUrl: string; uploadHeaders: Record<string, string> }> {
     const res = await fetch('/api/perfectcorp/file', {
       method: 'POST',
-      headers: { 'Content-Type': imageFile.type || 'image/jpeg' },
-      body: imageFile,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_name: fileName }),
     });
-
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(`Perfect Corp file upload failed (${res.status}): ${err}`);
+      throw new Error(`Perfect Corp file slot failed (${res.status}): ${err}`);
     }
-
     const json = await res.json();
-    console.log('[perfectcorp] upload response:', JSON.stringify(json).substring(0, 300));
-    // Response wraps data in json.data
-    const inner = (json?.data ?? json) as Record<string, string>;
-    return inner;
+    const result = (json?.result ?? json) as Record<string, unknown>;
+    if (!result.file_id || !result.upload_url) {
+      throw new Error(`Perfect Corp: missing file_id/upload_url: ${JSON.stringify(json).substring(0, 300)}`);
+    }
+    return {
+      fileId: result.file_id as string,
+      uploadUrl: result.upload_url as string,
+      uploadHeaders: (result.upload_headers ?? {}) as Record<string, string>,
+    };
   }
 
-  private async submitTask(fileRef: Record<string, string>): Promise<string> {
-    // Build task body — use src_file_url if available, otherwise src_file_id / file_id
-    const body: Record<string, unknown> = {
-      dst_actions: [],
-      miniserver_args: { enable_mask_overlay: false },
-      format: 'json',
-    };
-    if (fileRef.src_file_url) body.src_file_url = fileRef.src_file_url;
-    else if (fileRef.file_id) body.src_file_id = fileRef.file_id;
-    else if (fileRef.src_file_id) body.src_file_id = fileRef.src_file_id;
+  private async uploadToPresignedUrl(imageFile: File, uploadUrl: string, uploadHeaders: Record<string, string>): Promise<void> {
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': imageFile.type || 'image/jpeg', ...uploadHeaders },
+      body: imageFile,
+    });
+    if (!res.ok) throw new Error(`Perfect Corp image upload to pre-signed URL failed (${res.status})`);
+  }
 
+  private async submitTask(fileId: string): Promise<string> {
     const res = await fetch('/api/perfectcorp/task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ file_id: fileId, concerns: DEFAULT_CONCERNS }),
     });
-
     if (!res.ok) {
       const err = await res.text();
       throw new Error(`Perfect Corp task submission failed (${res.status}): ${err}`);
     }
-
     const json = await res.json();
-    console.log('[perfectcorp] task start response:', JSON.stringify(json).substring(0, 300));
-    // Response wraps data in json.data
-    const taskId = json?.data?.task_id ?? json?.task_id;
-    if (!taskId) throw new Error(`Perfect Corp: no task_id in response: ${JSON.stringify(json).substring(0, 200)}`);
+    const taskId = json?.result?.task_id ?? json?.data?.task_id;
+    if (!taskId) throw new Error(`Perfect Corp: no task_id: ${JSON.stringify(json).substring(0, 300)}`);
     return taskId as string;
   }
 
@@ -153,18 +152,16 @@ export class PerfectCorpClient {
     while (Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, interval));
 
-      const res = await fetch(`/api/perfectcorp/task/${encodeURIComponent(taskId)}`);
+      const res = await fetch(`/api/perfectcorp/task?task_id=${encodeURIComponent(taskId)}`);
       if (!res.ok) continue;
 
       const json = await res.json();
-      // Response wraps data in json.data
-      const taskStatus = json?.data?.task_status ?? json?.task_status;
+      const taskStatus = json?.result?.task_status ?? json?.data?.task_status;
       console.log('[perfectcorp] poll status:', taskStatus);
       if (taskStatus === 'success') return json as Record<string, unknown>;
       if (taskStatus === 'error') {
-        throw new Error(`Perfect Corp analysis failed: ${JSON.stringify(json?.data ?? json)}`);
+        throw new Error(`Perfect Corp analysis failed: ${JSON.stringify(json?.result ?? json)}`);
       }
-      // still processing — keep polling
     }
 
     throw new Error('Perfect Corp analysis timed out after 60 seconds');
@@ -173,13 +170,15 @@ export class PerfectCorpClient {
   // ─── Result normalisation ─────────────────────────────────────────────────
 
   private normalizeResult(raw: Record<string, unknown>): SkinAnalysisResult {
-    // API wraps everything in raw.data
-    const dataWrapper = (raw.data ?? raw) as Record<string, unknown>;
-    const results = (dataWrapper.results ?? dataWrapper.result ?? {}) as Record<string, unknown>;
-    const concernsRaw = (results.concerns ?? results) as Record<string, number>;
+    // V2.1: { status, result: { task_id, task_status, results: { concern_name: { score, result_url } } } }
+    const result = (raw.result ?? raw.data ?? raw) as Record<string, unknown>;
+    const resultsMap = (result.results ?? {}) as Record<string, { score: number }>;
+    const concernsRaw = resultsMap as unknown as Record<string, number>;
 
+    // V2.1 results: { concern_name: { score: 0.0–1.0, result_url } }
     const concerns: SkinConcernScore[] = DEFAULT_CONCERNS.map((key) => {
-      const score = Math.round((concernsRaw[key] ?? 0) * 100);
+      const entry = resultsMap[key];
+      const score = Math.round((entry?.score ?? 0) * 100);
       return {
         concern: key,
         label: CONCERN_LABELS[key] ?? key,
@@ -192,10 +191,14 @@ export class PerfectCorpClient {
       .filter((c) => c.severity !== 'none')
       .sort((a, b) => b.score - a.score)[0];
 
+    // V2.1 doesn't return skin_type/skin_age/overall_score — derive overall from concerns
+    const avgConcernScore = concerns.reduce((s, c) => s + c.score, 0) / concerns.length;
+    const overallScore = Math.max(0, Math.round(100 - avgConcernScore));
+
     return {
-      skinType: (results.skin_type as SkinAnalysisResult['skinType']) ?? 'normal',
-      skinAge: (results.skin_age as number) ?? 0,
-      overallScore: Math.round(((results.overall_score as number) ?? 0.7) * 100),
+      skinType: (result.skin_type as SkinAnalysisResult['skinType']) ?? 'normal',
+      skinAge: (result.skin_age as number) ?? 0,
+      overallScore,
       concerns,
       primaryConcern: topConcern?.label ?? 'None detected',
       analyzedAt: new Date().toISOString(),
