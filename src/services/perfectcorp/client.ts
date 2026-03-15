@@ -182,7 +182,9 @@ export class PerfectCorpClient {
   // ─── Result normalisation ─────────────────────────────────────────────────
 
   private normalizeResult(raw: Record<string, unknown>): SkinAnalysisResult {
-    // V2.0 poll response: { status, task_status, results: { hd_acne: {score}, hd_wrinkle: {score}, ... } }
+    // V2.0 poll response: { status, task_status, results: { url, hd_acne: {score}, ... } }
+    // or results may only contain { url } pointing to a JSON file with the actual scores
+    console.log('[perfectcorp] raw poll response:', JSON.stringify(raw).substring(0, 800));
     const resultsBlock = (raw.results ?? (raw.data as Record<string, unknown>)?.results ?? {}) as Record<string, unknown>;
     console.log('[perfectcorp] results keys:', Object.keys(resultsBlock).join(', '));
 
