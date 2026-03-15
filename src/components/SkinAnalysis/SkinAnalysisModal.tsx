@@ -150,7 +150,7 @@ export const SkinAnalysisModal: React.FC = () => {
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">AI Skin Analysis</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Powered by Perfect Corp YouCam AI</p>
+            <p className="text-xs text-gray-500 mt-0.5">Powered by BEAUTÉ in partnership with Perfect Corp</p>
           </div>
           {step !== 'analyzing' && (
             <button
