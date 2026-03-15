@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/cn';
 import { ProductShowcase } from '@/components/ProductShowcase';
@@ -133,6 +134,9 @@ interface ChatMessagesProps {
 
 export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayout, advisorMode }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  // Use URL as the authoritative source for skin-advisor mode
+  const isSkinAdvisor = location.pathname.includes('skin-advisor') || advisorMode === 'skin-concierge';
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -157,8 +161,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
         const hasProducts = products && products.length > 0;
         const isLatestDirective = i === lastDirectiveIdx;
 
-        // In skin-concierge mode, try to parse routine sections from agent messages
-        const isSkinAgent = advisorMode === 'skin-concierge' && msg.role === 'agent' && !msg.isStreaming;
+        // In skin-advisor mode, parse routine sections from completed agent messages
+        const isSkinAgent = isSkinAdvisor && msg.role === 'agent' && !msg.isStreaming;
         const routine = isSkinAgent ? parseRoutines(msg.content) : null;
 
         return (
