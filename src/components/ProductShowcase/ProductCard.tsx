@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { useScene } from '@/contexts/SceneContext';
 import { Badge } from '@/components/ui/Badge';
 import type { Product } from '@/types/product';
@@ -8,15 +9,16 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { scene, openCheckout, openRetailerHandoff } = useScene();
-  const isSkinConcierge = scene.advisorMode === 'skin-concierge';
+  const { openCheckout, openRetailerHandoff } = useScene();
+  const location = useLocation();
+  const isSkinConcierge = location.pathname.includes('skin-concierge');
 
   return (
     <motion.div
       whileHover={{ y: -4, scale: 1.03 }}
       transition={{ duration: 0.2 }}
       className="w-36 flex-shrink-0 rounded-xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10 cursor-pointer"
-      onClick={isSkinConcierge ? () => openRetailerHandoff() : undefined}
+      onClick={isSkinConcierge ? () => openRetailerHandoff([product]) : undefined}
     >
       <div className="relative w-full h-28">
         <img

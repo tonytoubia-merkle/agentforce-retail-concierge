@@ -89,6 +89,7 @@ export const AdvisorPage: React.FC<AdvisorPageProps> = ({ mode = 'beauty' }) => 
               isMinimized={scene.layout === 'checkout' || scene.retailerHandoffActive}
               suggestedActions={suggestedActions}
               sceneLayout={scene.layout}
+              advisorMode={mode}
             />
           </motion.div>
         )}

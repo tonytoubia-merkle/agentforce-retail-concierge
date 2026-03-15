@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/cn';
 import { ChatInput } from './ChatInput';
@@ -8,7 +8,14 @@ import { SuggestedActions } from './SuggestedActions';
 import { RememberMeButton } from './RememberMeButton';
 import { useCustomer } from '@/contexts/CustomerContext';
 import type { AgentMessage } from '@/types/agent';
-import type { SceneLayout } from '@/types/scene';
+import type { AdvisorMode, SceneLayout } from '@/types/scene';
+
+const SKIN_TYPING_LABELS = [
+  'Reviewing your skin analysis...',
+  'Mapping to key ingredients...',
+  'Building your personalized routine...',
+  'Finding the right products for you...',
+];
 
 interface ChatInterfaceProps {
   position: 'center' | 'bottom' | 'minimized';
@@ -18,6 +25,7 @@ interface ChatInterfaceProps {
   isMinimized?: boolean;
   suggestedActions?: string[];
   sceneLayout: SceneLayout;
+  advisorMode?: AdvisorMode;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -28,9 +36,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   isMinimized = false,
   suggestedActions = [],
   sceneLayout,
+  advisorMode,
 }) => {
   const [inputValue, setInputValue] = useState('');
+  const [typingLabelIdx, setTypingLabelIdx] = useState(0);
   const { customer } = useCustomer();
+
+  useEffect(() => {
+    if (!isAgentTyping || advisorMode !== 'skin-concierge') return;
+    setTypingLabelIdx(0);
+    const id = setInterval(() => setTypingLabelIdx((i) => (i + 1) % SKIN_TYPING_LABELS.length), 2800);
+    return () => clearInterval(id);
+  }, [isAgentTyping, advisorMode]);
+
+  const typingLabel = isAgentTyping && advisorMode === 'skin-concierge'
+    ? SKIN_TYPING_LABELS[typingLabelIdx]
+    : undefined;
 
   // Show "Remember Me" button for users who are not fully identified
   // (anonymous = no customer, appended = 3P data only, both should see it)
@@ -115,9 +136,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="flex-1 overflow-y-auto min-h-0 pb-2 scrollbar-hide">
         <div className="min-h-full flex flex-col">
           <div className="flex-1" />
-          <ChatMessages messages={messages} sceneLayout={sceneLayout} />
+          <ChatMessages messages={messages} sceneLayout={sceneLayout} advisorMode={advisorMode} />
 
-          {isAgentTyping && <TypingIndicator />}
+          {isAgentTyping && <TypingIndicator label={typingLabel} />}
 
           {!isAgentTyping && suggestedActions.length > 0 && (
             <SuggestedActions actions={suggestedActions} onSelect={onSendMessage} />

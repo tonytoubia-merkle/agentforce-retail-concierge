@@ -83,7 +83,7 @@ interface SceneContextValue {
   closeCheckout: () => void;
   openSkinAnalysis: () => void;
   closeSkinAnalysis: () => void;
-  openRetailerHandoff: () => void;
+  openRetailerHandoff: (products?: Product[]) => void;
   closeRetailerHandoff: () => void;
   setAdvisorMode: (mode: AdvisorMode) => void;
   dismissWelcome: () => void;
@@ -448,7 +448,8 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     dispatch({ type: 'CLOSE_SKIN_ANALYSIS' });
   }, []);
 
-  const openRetailerHandoff = useCallback(() => {
+  const openRetailerHandoff = useCallback((products?: Product[]) => {
+    if (products && products.length > 0) dispatch({ type: 'SET_PRODUCTS', products });
     dispatch({ type: 'OPEN_RETAILER_HANDOFF' });
   }, []);
 
