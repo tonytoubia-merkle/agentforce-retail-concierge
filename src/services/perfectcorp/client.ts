@@ -210,11 +210,10 @@ export class PerfectCorpClient {
     const concerns: SkinConcernScore[] = HD_ACTIONS.map((action) => {
       const mapping = HD_CONCERN_MAP[action];
       const resultEntry = resultsBlock[action] as Record<string, unknown> | undefined;
-      // score may be a float 0-1 or an object with a score property
-      const raw_score = typeof resultEntry === 'number'
-        ? resultEntry
-        : (resultEntry?.score as number) ?? 0;
-      const score = Math.round(raw_score * 100);
+      // ui_score is 0-100 directly; raw_score is a float that needs scaling
+      const score = typeof resultEntry === 'number'
+        ? Math.round(resultEntry * 100)
+        : Math.round((resultEntry?.ui_score as number) ?? (resultEntry?.score as number) ?? 0);
       return {
         concern: mapping?.key ?? action,
         label: mapping?.label ?? action,
@@ -230,9 +229,17 @@ export class PerfectCorpClient {
     const avgConcernScore = concerns.reduce((s, c) => s + c.score, 0) / concerns.length;
     const overallScore = Math.max(0, Math.round(100 - avgConcernScore));
 
-    // hd_skin_type result is a string, not a score
+    // hd_skin_type: check for a string field, or fall back from the 'all' summary block
     const skinTypeEntry = resultsBlock.hd_skin_type as Record<string, unknown> | string | undefined;
-    const skinTypeRaw = typeof skinTypeEntry === 'string' ? skinTypeEntry : (skinTypeEntry?.skin_type as string) ?? 'normal';
+    const allBlock = resultsBlock.all as Record<string, unknown> | undefined;
+    console.log('[perfectcorp] hd_skin_type entry:', JSON.stringify(skinTypeEntry));
+    console.log('[perfectcorp] all block:', JSON.stringify(allBlock));
+    const skinTypeRaw = typeof skinTypeEntry === 'string'
+      ? skinTypeEntry
+      : (skinTypeEntry?.skin_type as string)
+        ?? (skinTypeEntry?.type as string)
+        ?? (allBlock?.skin_type as string)
+        ?? 'normal';
 
     return {
       skinType: skinTypeRaw as SkinAnalysisResult['skinType'],
