@@ -699,3 +699,12 @@ export const getAgentforceClient = (): AgentforceClient => {
   }
   return agentforceClient;
 };
+
+/** Create a fresh client for a specific agent ID (e.g. Skin Concierge agent). */
+export const createAgentforceClient = (agentId: string): AgentforceClient => {
+  return new AgentforceClient({
+    baseUrl: '/api/agentforce',
+    agentId,
+    instanceUrl: import.meta.env.VITE_AGENTFORCE_INSTANCE_URL || '',
+  });
+};

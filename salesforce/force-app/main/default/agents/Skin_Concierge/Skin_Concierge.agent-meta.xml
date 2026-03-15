@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Agent xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>Skin Concierge</masterLabel>
+    <description>AI-powered skin concierge for personalized skin analysis, concern-based routine recommendations, and retailer routing. Supports both conversational consultation and AI photo analysis via Perfect Corp YouCam integration.</description>
+    <agentType>ExternalClientAgent</agentType>
+    <isActive>true</isActive>
+</Agent>

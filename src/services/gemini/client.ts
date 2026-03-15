@@ -8,6 +8,7 @@
 
 import { base64ToBlobUrl, imageUrlToBase64 } from '@/services/imagen/utils';
 import type { SceneSetting } from '@/types/scene';
+import type { SkinAnalysisResult, SkinConcernScore } from '@/types/skinanalysis';
 
 interface GeminiConfig {
   apiKey: string;
@@ -140,6 +141,99 @@ export class GeminiClient {
   ): Promise<string> {
     return this.removeBackground(productImageUrl);
   }
+
+  /**
+   * Analyse a skin photo using Gemini 2.0 Flash vision.
+   * Returns a structured SkinAnalysisResult parsed from the model's JSON output.
+   */
+  async analyzeSkin(imageFile: File): Promise<SkinAnalysisResult> {
+    const base64 = await fileToBase64(imageFile);
+    const mimeType = imageFile.type || 'image/jpeg';
+
+    const prompt = `You are a professional dermatologist AI. Analyze the skin in this photo and return ONLY a JSON object (no markdown, no explanation) with this exact structure:
+{
+  "skinType": "dry|oily|combination|normal|sensitive",
+  "skinAge": <estimated skin age as integer>,
+  "overallScore": <0-100 integer, higher is healthier>,
+  "concerns": [
+    { "concern": "hydration", "label": "Dehydration", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "redness", "label": "Redness", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "pore", "label": "Enlarged Pores", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "texture", "label": "Uneven Texture", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "oiliness", "label": "Oiliness", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "acne", "label": "Acne", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "wrinkle", "label": "Wrinkles", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "dark_circle", "label": "Dark Circles", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "spot", "label": "Dark Spots", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "radiance", "label": "Dullness", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "sensitivity", "label": "Sensitivity", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "uv_damage", "label": "UV Damage", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "firmness", "label": "Loss of Firmness", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "uneven_tone", "label": "Uneven Tone", "score": <0-100>, "severity": "none|mild|moderate|severe" },
+    { "concern": "eye_bag", "label": "Eye Bags", "score": <0-100>, "severity": "none|mild|moderate|severe" }
+  ]
+}
+Score each concern 0–100 (0 = not present, 100 = very severe). Set severity based on score: 0–19 = none, 20–39 = mild, 40–64 = moderate, 65+ = severe.`;
+
+    const response = await fetch('/api/gemini/vision', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': this.config.apiKey,
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: mimeType, data: base64 } },
+          ],
+        }],
+        generationConfig: { temperature: 0.1 },
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Gemini vision failed (${response.status}): ${errText}`);
+    }
+
+    const data: GeminiResponse = await response.json();
+    const textPart = data.candidates?.[0]?.content?.parts?.find((p) => p.text);
+    if (!textPart?.text) throw new Error('Gemini vision returned no text');
+
+    const jsonText = textPart.text.replace(/```json\n?|\n?```/g, '').trim();
+    const parsed = JSON.parse(jsonText) as {
+      skinType: SkinAnalysisResult['skinType'];
+      skinAge: number;
+      overallScore: number;
+      concerns: SkinConcernScore[];
+    };
+
+    const primaryConcern = parsed.concerns
+      .filter((c) => c.severity !== 'none')
+      .sort((a, b) => b.score - a.score)[0]?.label ?? 'None detected';
+
+    return {
+      skinType: parsed.skinType,
+      skinAge: parsed.skinAge,
+      overallScore: parsed.overallScore,
+      concerns: parsed.concerns,
+      primaryConcern,
+      analyzedAt: new Date().toISOString(),
+    };
+  }
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(',')[1]); // strip data URL prefix
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 let geminiClient: GeminiClient | null = null;

@@ -9,14 +9,13 @@ import { useCampaign } from './CampaignContext';
 import { generateMockResponse, setMockCustomerContext, getMockAgentSnapshot, restoreMockAgentSnapshot } from '@/services/mock/mockAgent';
 import type { MockAgentSnapshot } from '@/services/mock/mockAgent';
 import type { AgentResponse } from '@/types/agent';
-import { getAgentforceClient } from '@/services/agentforce/client';
+import { getAgentforceClient, createAgentforceClient } from '@/services/agentforce/client';
+import type { AgentforceClient } from '@/services/agentforce/client';
 import { getDataCloudWriteService } from '@/services/datacloud';
 import type { SceneSnapshot } from './SceneContext';
 import { useActivityToast } from '@/components/ActivityToast';
 
 const useMockData = import.meta.env.VITE_USE_MOCK_DATA !== 'false';
-
-let sessionInitialized = false;
 
 /** Snapshot of a persona's full session state for instant restore. */
 interface SessionSnapshot {
@@ -296,14 +295,17 @@ function buildWelcomeMessage(ctx: CustomerSessionContext): string {
   return lines.join('\n');
 }
 
-async function getAgentResponse(content: string): Promise<AgentResponse> {
+async function getAgentResponse(
+  content: string,
+  client: AgentforceClient,
+  sessionRef: { current: boolean },
+): Promise<AgentResponse> {
   if (useMockData) {
     return generateMockResponse(content);
   }
-  const client = getAgentforceClient();
-  if (!sessionInitialized) {
+  if (!sessionRef.current) {
     await client.initSession();
-    sessionInitialized = true;
+    sessionRef.current = true;
   }
   return client.sendMessage(content);
 }
@@ -316,14 +318,15 @@ async function getAgentResponse(content: string): Promise<AgentResponse> {
 async function getAgentResponseStreaming(
   content: string,
   onChunk: (text: string) => void,
+  client: AgentforceClient,
+  sessionRef: { current: boolean },
 ): Promise<AgentResponse> {
   if (useMockData) {
     return generateMockResponse(content);
   }
-  const client = getAgentforceClient();
-  if (!sessionInitialized) {
+  if (!sessionRef.current) {
     await client.initSession();
-    sessionInitialized = true;
+    sessionRef.current = true;
   }
   return client.sendMessageStreaming(content, onChunk);
 }
@@ -372,7 +375,7 @@ interface ConversationContextValue {
 
 const ConversationContext = createContext<ConversationContextValue | null>(null);
 
-export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ConversationProvider: React.FC<{ children: React.ReactNode; agentId?: string }> = ({ children, agentId }) => {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [isAgentTyping, setIsAgentTyping] = useState(false);
   const [isLoadingWelcome, setIsLoadingWelcome] = useState(false);
@@ -381,6 +384,11 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     'I need travel products',
     'What do you recommend?',
   ]);
+  // Per-instance agent client and session tracking (supports multiple ConversationProviders)
+  const agentClientRef = useRef<AgentforceClient>(
+    agentId ? createAgentforceClient(agentId) : getAgentforceClient()
+  );
+  const sessionInitializedRef = useRef(false);
   const { processUIDirective, resetScene, setBackground, getSceneSnapshot, restoreSceneSnapshot } = useScene();
   const { customer, selectedPersonaId, isAuthenticated, isResolving, identifyByEmail, _isRefreshRef, _onSessionReset } = useCustomer();
   const { campaign } = useCampaign();
@@ -423,7 +431,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Helper: save current persona's state into the session cache
   const saveCurrentSession = useCallback((personaId: string) => {
-    const client = getAgentforceClient();
+    const client = agentClientRef.current;
     const agentSnap = client.getSessionSnapshot();
     const snapshot: SessionSnapshot = {
       messages: [...messagesRef.current],
@@ -432,7 +440,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       agentSessionId: agentSnap.sessionId,
       agentSequenceId: agentSnap.sequenceId,
       mockSnapshot: useMockData ? getMockAgentSnapshot() : null,
-      sessionInitialized,
+      sessionInitialized: sessionInitializedRef.current,
     };
     sessionCacheRef.current.set(personaId, snapshot);
     console.log('[session] Saved session for', personaId, `(${snapshot.messages.length} messages)`);
@@ -476,9 +484,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       // Eagerly create the Agentforce session in the background so the first
       // message doesn't pay the session-creation round trip cost.
-      if (!useMockData && !sessionInitialized) {
-        getAgentforceClient().initSession().then(() => {
-          sessionInitialized = true;
+      if (!useMockData && !sessionInitializedRef.current) {
+        agentClientRef.current.initSession().then(() => {
+          sessionInitializedRef.current = true;
           console.log('[session] Anonymous session pre-initialized');
         }).catch(err => {
           console.warn('[session] Anonymous pre-init failed (will retry on first message):', err);
@@ -518,9 +526,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (useMockData && cached.mockSnapshot) {
         restoreMockAgentSnapshot(cached.mockSnapshot);
       } else if (cached.agentSessionId) {
-        getAgentforceClient().restoreSession(cached.agentSessionId, cached.agentSequenceId);
+        agentClientRef.current.restoreSession(cached.agentSessionId, cached.agentSequenceId);
       }
-      sessionInitialized = cached.sessionInitialized;
+      sessionInitializedRef.current = cached.sessionInitialized;
       return;
     }
 
@@ -538,7 +546,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (useMockData) {
       setMockCustomerContext(sessionCtx);
     } else {
-      sessionInitialized = false;
+      sessionInitializedRef.current = false;
     }
 
     // Clear conversation, scene state, and trigger welcome
@@ -555,8 +563,8 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // Await session init so profile variables are available to the agent
         if (!useMockData) {
           try {
-            await getAgentforceClient().initSession(sessionCtx);
-            sessionInitialized = true;
+            await agentClientRef.current.initSession(sessionCtx);
+            sessionInitializedRef.current = true;
           } catch (err) {
             console.error('Failed to init session:', err);
           }
@@ -581,7 +589,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // WelcomeLoader stays visible throughout — same loading experience as
         // authenticated users — then the default chat view appears when ready.
         if (sessionCtx.identityTier === 'known' && !isAuthenticated) {
-          await getAgentResponse(welcomeMsg).catch(err => {
+          await getAgentResponse(welcomeMsg, agentClientRef.current, sessionInitializedRef).catch(err => {
             console.error('[welcome] Background identity resolution failed:', err);
           });
           setBackground({ type: 'image', value: '/assets/backgrounds/default.png' });
@@ -593,7 +601,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return;
         }
 
-        const response = await getAgentResponse(welcomeMsg);
+        const response = await getAgentResponse(welcomeMsg, agentClientRef.current, sessionInitializedRef);
 
         // The real Agentforce agent may return CHANGE_SCENE, SHOW_PRODUCTS,
         // or even plain text with no uiDirective on the first message. Since we
@@ -713,7 +721,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           updated[idx] = { ...updated[idx], content: streamingContent };
           return updated;
         });
-      });
+      }, agentClientRef.current, sessionInitializedRef);
 
       // If the agent returns a WELCOME_SCENE during a normal conversation
       // (user typed a message), downgrade it to CHANGE_SCENE so products

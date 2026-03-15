@@ -14,6 +14,7 @@
  */
 
 import type { SkinAnalysisResult, SkinConcernScore } from '@/types/skinanalysis';
+import { getGeminiClient } from '@/services/gemini/client';
 
 /** The 15 skin concerns YouCam AI reports on, with human-readable labels. */
 const CONCERN_LABELS: Record<string, string> = {
@@ -52,13 +53,31 @@ export class PerfectCorpClient {
 
   /**
    * Analyse a skin photo.
-   * @param imageFile  File object from an <input type="file"> or camera capture
+   * Tier 1: Perfect Corp YouCam API (when VITE_PERFECT_CORP_API_KEY is set)
+   * Tier 2: Gemini 2.0 Flash Vision (when VITE_IMAGEN_API_KEY is set)
+   * Tier 3: Mock data (local dev / no API keys)
    */
   async analyzeSkin(imageFile: File): Promise<SkinAnalysisResult> {
-    if (this.useMock) {
-      return this.mockAnalysis();
+    if (!this.useMock) {
+      try {
+        return await this.liveAnalysis(imageFile);
+      } catch (err) {
+        console.warn('[skin-analysis] Perfect Corp failed, trying Gemini fallback:', err);
+      }
     }
-    return this.liveAnalysis(imageFile);
+
+    // Gemini fallback (works when VITE_IMAGEN_API_KEY is set, even without Perfect Corp key)
+    const geminiApiKey = import.meta.env.VITE_IMAGEN_API_KEY as string | undefined;
+    if (geminiApiKey) {
+      try {
+        console.log('[skin-analysis] Using Gemini Vision fallback');
+        return await getGeminiClient().analyzeSkin(imageFile);
+      } catch (err) {
+        console.warn('[skin-analysis] Gemini Vision failed, falling back to mock:', err);
+      }
+    }
+
+    return this.mockAnalysis();
   }
 
   // ─── Live API flow ────────────────────────────────────────────────────────

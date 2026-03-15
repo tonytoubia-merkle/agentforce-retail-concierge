@@ -28,6 +28,7 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
   const { customer, isAuthenticated } = useCustomer();
   const navigate = useNavigate();
   const navigateToAdvisor = useCallback(() => navigate('/advisor'), [navigate]);
+  const navigateToSkinAdvisor = useCallback(() => navigate('/skin-advisor'), [navigate]);
   useBrowseTracking();
 
   // Group products by category for home page sections
@@ -294,6 +295,75 @@ export const StorefrontPage: React.FC<StorefrontPageProps> = ({
                 />
               </div>
             )}
+
+            {/* Skin Analyzer Banner */}
+            <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-rose-950 to-purple-950 py-20 px-4">
+              {/* decorative background blobs */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute -top-20 -left-20 w-96 h-96 bg-rose-500/20 rounded-full blur-3xl" />
+                <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-400/10 rounded-full blur-2xl" />
+              </div>
+
+              <div className="relative max-w-5xl mx-auto flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+                {/* Left: text */}
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-rose-500/20 border border-rose-400/30 rounded-full text-rose-300 text-xs font-medium tracking-wide uppercase mb-5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                    AI-Powered · Free · No Account Needed
+                  </div>
+                  <h2 className="text-4xl sm:text-5xl font-light text-white leading-tight mb-4">
+                    Know your skin.<br />
+                    <span className="font-semibold bg-gradient-to-r from-rose-300 to-purple-300 bg-clip-text text-transparent">
+                      Build your routine.
+                    </span>
+                  </h2>
+                  <p className="text-lg text-white/60 mb-8 max-w-lg mx-auto lg:mx-0">
+                    Take a 30-second selfie analysis or answer a few questions. Our Skin Concierge identifies
+                    your skin type, flags your top concerns, and recommends a complete routine — then shows you
+                    exactly where to buy each product.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                    <button
+                      onClick={navigateToSkinAdvisor}
+                      className="group px-8 py-4 bg-gradient-to-r from-rose-500 to-purple-600 text-white font-semibold rounded-full hover:shadow-2xl hover:shadow-rose-500/40 hover:scale-105 transition-all duration-200 text-base"
+                    >
+                      <span className="flex items-center gap-2 justify-center">
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="8" r="4" />
+                          <path strokeLinecap="round" d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                          <path strokeLinecap="round" d="M15 5.5A3 3 0 0118 8" />
+                        </svg>
+                        Analyze My Skin
+                      </span>
+                    </button>
+                    <button
+                      onClick={navigateToSkinAdvisor}
+                      className="px-8 py-4 bg-white/10 border border-white/20 text-white/80 font-medium rounded-full hover:bg-white/15 hover:text-white transition-all text-base"
+                    >
+                      Answer Questions Instead
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right: feature chips */}
+                <div className="flex-shrink-0 grid grid-cols-2 gap-3 lg:w-72">
+                  {[
+                    { icon: '🔬', title: '15 Skin Concerns', desc: 'Scored and ranked by severity' },
+                    { icon: '🧴', title: 'Routine Builder', desc: 'Morning + evening, complete' },
+                    { icon: '📍', title: 'Where to Buy', desc: 'In-store & online retailers' },
+                    { icon: '🔒', title: '100% Private', desc: 'Photos never leave your device' },
+                  ].map(({ icon, title, desc }) => (
+                    <div key={title} className="p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm">
+                      <div className="text-2xl mb-2">{icon}</div>
+                      <div className="text-white text-sm font-semibold mb-0.5">{title}</div>
+                      <div className="text-white/50 text-xs leading-snug">{desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
 
             {/* Email Signup */}
             <EmailSignup />

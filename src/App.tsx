@@ -32,11 +32,13 @@ function AdvisorWrapper() {
 
 /**
  * SkinAdvisorWrapper — wraps AdvisorPage in skin-concierge mode.
- * Uses its own ConversationProvider so history is isolated from the beauty advisor.
+ * Uses its own ConversationProvider (with skin concierge agent ID) so history
+ * and session are fully isolated from the beauty advisor.
  */
 function SkinAdvisorWrapper() {
+  const skinAgentId = import.meta.env.VITE_SKIN_ADVISOR_AGENT_ID as string | undefined;
   return (
-    <ConversationProvider>
+    <ConversationProvider agentId={skinAgentId}>
       <AdvisorPage mode="skin-concierge" />
     </ConversationProvider>
   );

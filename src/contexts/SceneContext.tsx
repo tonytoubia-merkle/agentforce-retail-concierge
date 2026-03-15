@@ -339,6 +339,32 @@ export const SceneProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         dispatch({ type: 'OPEN_SKIN_ANALYSIS' });
         break;
 
+      case 'SHOW_SKIN_REPORT': {
+        // Display products from the skin report (same layout as SHOW_PRODUCTS)
+        // and open the skin analysis modal if products are included.
+        if (payload.products && payload.products.length > 0) {
+          const layout = payload.products.length === 1 ? 'product-hero' : 'product-grid';
+          dispatch({ type: 'TRANSITION_LAYOUT', layout, products: payload.products });
+        }
+        // If a scene context was provided, apply it
+        if (payload.sceneContext) {
+          const { setting, generateBackground, backgroundPrompt } = payload.sceneContext;
+          if (setting) dispatch({ type: 'CHANGE_SETTING', setting });
+          if (generateBackground) {
+            dispatch({
+              type: 'SET_BACKGROUND',
+              background: {
+                type: 'generative',
+                value: '',
+                isLoading: true,
+                prompt: backgroundPrompt,
+              },
+            });
+          }
+        }
+        break;
+      }
+
       case 'RETAILER_HANDOFF':
         dispatch({ type: 'OPEN_RETAILER_HANDOFF' });
         break;

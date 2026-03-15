@@ -38,6 +38,7 @@ const routes = [
   { prefix: '/api/cms',                    target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0/connect/cms' },
   { prefix: '/api/imagen/generate',        target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/imagen-4.0-generate-001:predict' },
   { prefix: '/api/gemini/generateContent', target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.5-flash-image:generateContent' },
+  { prefix: '/api/gemini/vision',          target: 'https://generativelanguage.googleapis.com', rewrite: '/v1beta/models/gemini-2.0-flash:generateContent' },
   { prefix: '/api/firefly/token',          target: 'https://ims-na1.adobelogin.com',            rewrite: '/ims/token/v3' },
   { prefix: '/api/firefly/generate',       target: 'https://firefly-api.adobe.io',              rewrite: '/v3/images/generate' },
   { prefix: '/api/datacloud',              target: SF_INSTANCE,                                 rewrite: '/services/data/v60.0' },
