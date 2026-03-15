@@ -132,10 +132,12 @@ export class PerfectCorpClient {
   }
 
   private async submitTask(fileId: string): Promise<string> {
+    const taskBody = { src_file_id: fileId, dst_actions: [], concerns: DEFAULT_CONCERNS };
+    console.log('[perfectcorp] submitTask body:', JSON.stringify(taskBody));
     const res = await fetch('/api/perfectcorp/task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ src_file_id: fileId, dst_actions: [], concerns: DEFAULT_CONCERNS }),
+      body: JSON.stringify(taskBody),
     });
     if (!res.ok) {
       const err = await res.text();
