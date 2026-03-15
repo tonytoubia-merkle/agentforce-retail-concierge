@@ -22,71 +22,53 @@ interface ParsedRoutine {
 }
 
 function parseRoutines(text: string): ParsedRoutine | null {
-  // Strip any embedded uiDirective JSON (agent appends it at the end of message text)
-  const jsonIdx = text.indexOf('{"uiDirective"');
-  const cleanText = jsonIdx > 0 ? text.slice(0, jsonIdx).trim() : text;
+  // Flatten newlines — msg.content arrives as a single line from the agent client
+  const flat = text.replace(/\r?\n+/g, ' ').replace(/\s+/g, ' ').trim();
 
-  const lines = cleanText.split('\n');
+  // Find section header positions (Morning Routine: / Evening Routine:)
+  const morningMatch = /\bMorning Routine\s*:/i.exec(flat);
+  const eveningMatch = /\bEvening Routine\s*:/i.exec(flat);
+  if (!morningMatch && !eveningMatch) return null;
+
+  // Step separator: "Step N — " (handles em dash \u2014, en dash \u2013, hyphen)
+  const STEP_RE = /Step\s*\d+\s*[\u2014\u2013-]+\s*/i;
+
+  const splitSteps = (fragment: string): string[] =>
+    fragment
+      .split(new RegExp(STEP_RE.source, 'gi'))
+      .slice(1) // first element is empty string before first Step
+      .map((s, idx, arr) => {
+        const t = s.trim();
+        // For the last step, strip any trailing closing sentence
+        if (idx === arr.length - 1) {
+          const closeIdx = t.search(/\s+(?:This|These|Would|Let|You|Feel|I |If )\b/);
+          return closeIdx > 0 ? t.slice(0, closeIdx).trim() : t;
+        }
+        return t;
+      })
+      .filter(Boolean);
+
   const sections: RoutineSection[] = [];
-  let current: RoutineSection | null = null;
-  let firstSectionLine = -1;
-  let lastStepLine = -1;
 
-  const isHeaderLike = (l: string) => /[*#:]/.test(l) || l.split(/\s+/).length <= 6;
-  const isMorningHeader = (l: string) =>
-    l.length < 80 && /\b(morning|a\.?m\.?)\b/i.test(l) && !/\b(evening|night|p\.?m\.?)\b/i.test(l) && isHeaderLike(l);
-  const isEveningHeader = (l: string) =>
-    l.length < 80 && /\b(evening|p\.?m\.?|night(?:time)?|bedtime)\b/i.test(l) && !/\bmorning\b/i.test(l) && isHeaderLike(l);
-  // Match dash/bullet markers OR "Step N — " style lines
-  const isStep = (l: string) =>
-    /^\s*[-*•]/.test(l) ||
-    /^\s*\d+[.)]\s/.test(l) ||
-    /^\s*step\s*\d+/i.test(l);
-
-  for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    if (!trimmed) continue;
-
-    if (isMorningHeader(trimmed)) {
-      if (firstSectionLine === -1) firstSectionLine = i;
-      current = { title: 'Morning Routine', steps: [], isMorning: true };
-      sections.push(current);
-    } else if (isEveningHeader(trimmed)) {
-      if (firstSectionLine === -1) firstSectionLine = i;
-      current = { title: 'Evening Routine', steps: [], isMorning: false };
-      sections.push(current);
-    } else if (current && isStep(trimmed)) {
-      // Strip "Step N — ", dash bullet, numbered marker, and bold markers
-      const step = trimmed
-        .replace(/^\s*step\s*\d+\s*[—–\-]+\s*/i, '')
-        .replace(/^\s*[-*•]\s*/, '')
-        .replace(/^\s*\d+[.)]\s*/, '')
-        .replace(/\*\*/g, '')
-        .trim();
-      if (step) {
-        current.steps.push(step);
-        lastStepLine = i;
-      }
-    } else if (current) {
-      // Non-step line after section started — stop collecting
-      current = null;
-    }
+  if (morningMatch) {
+    const start = morningMatch.index + morningMatch[0].length;
+    const end = eveningMatch ? eveningMatch.index : flat.length;
+    const steps = splitSteps(flat.slice(start, end));
+    if (steps.length) sections.push({ title: 'Morning Routine', steps, isMorning: true });
   }
 
-  const validSections = sections.filter((s) => s.steps.length > 0);
-  if (validSections.length === 0) return null;
+  if (eveningMatch) {
+    const start = eveningMatch.index + eveningMatch[0].length;
+    const steps = splitSteps(flat.slice(start));
+    if (steps.length) sections.push({ title: 'Evening Routine', steps, isMorning: false });
+  }
 
-  const preText = firstSectionLine > 0
-    ? lines.slice(0, firstSectionLine).join('\n').trim()
-    : '';
-  const rawPost = lastStepLine >= 0 && lastStepLine < lines.length - 1
-    ? lines.slice(lastStepLine + 1).join('\n').trim()
-    : '';
-  // Strip any JSON that leaked into post-text
-  const postJsonIdx = rawPost.indexOf('{');
-  const postText = postJsonIdx > 0 ? rawPost.slice(0, postJsonIdx).trim() : rawPost;
+  if (!sections.length) return null;
 
-  return { preText, sections: validSections, postText };
+  const firstIdx = morningMatch ? morningMatch.index : eveningMatch!.index;
+  const preText = flat.slice(0, firstIdx).trim();
+
+  return { preText, sections, postText: '' };
 }
 
 // ─── Routine card component ────────────────────────────────────────────────
@@ -164,11 +146,6 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, sceneLayou
         // In skin-advisor mode, parse routine sections from completed agent messages
         const isSkinAgent = isSkinAdvisor && msg.role === 'agent' && !msg.isStreaming;
         const routine = isSkinAgent ? parseRoutines(msg.content) : null;
-        // Debug: always log agent messages on skin-advisor path
-        if (isSkinAgent) {
-          const lines = msg.content.split('\n');
-          console.log('[routine] result:', routine ? 'PARSED ✓' : 'null', '| lines:', lines.length, '| line[0]:', JSON.stringify(lines[0]?.substring(0, 60)), '| line[1]:', JSON.stringify(lines[1]));
-        }
 
         return (
           <div key={msg.id}>
